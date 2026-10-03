@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { getTenantContext } from "@/core/tenant";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
 
@@ -7,7 +8,10 @@ export const metadata = { title: "Entrar" };
 
 export default async function LoginPage() {
   const session = await auth();
-  if (session?.user) redirect("/painel");
+  if (session?.user) {
+    const context = await getTenantContext();
+    redirect(context ? "/painel" : "/selecionar-organizacao");
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-4">

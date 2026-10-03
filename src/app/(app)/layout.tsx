@@ -1,16 +1,20 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { getTenantContext } from "@/core/tenant";
 import { listUserOrganizations } from "@/modules/identity/services";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
 
 // Shell autenticado (§71): sidebar + topbar + conteúdo.
-// Sem contexto de tenant ativo ⇒ volta para /entrar (seleção de organização).
+// Sem sessão ⇒ /entrar. Sessão sem tenant ativo ⇒ /selecionar-organizacao.
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
+  const session = await auth();
+  if (!session?.user) redirect("/entrar");
+
   const context = await getTenantContext();
-  if (!context) redirect("/entrar");
+  if (!context) redirect("/selecionar-organizacao");
 
   const organizations = await listUserOrganizations(context.userId);
 

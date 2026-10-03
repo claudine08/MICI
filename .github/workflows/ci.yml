@@ -8,7 +8,27 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: mici_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d mici_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/mici_test?schema=public
+      AUTH_SECRET: ci-secret-for-tests
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,8 +49,10 @@ jobs:
       - name: Testes unitários
         run: npm test
 
+      - name: Testes de integração (isolamento de tenant)
+        run: npm run test:integration
+
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
           AUTH_SECRET: ci-secret-for-build-only

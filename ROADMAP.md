@@ -17,7 +17,7 @@ Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 | Épico | Escopo resumido | Status |
 |---|---|---|
 | **E01 Platform Foundation** | Base do sistema, CI, observabilidade | 🟦 Fase 0 (ver abaixo) |
-| **E02 Identity** | Usuário↔organização, roles, permissions, tenant isolation | 🟦 Fase 0/1 |
+| **E02 Identity** | Usuário↔organização, roles, permissions, tenant isolation | 🟦 Fase 0/1 ✅ (OIDC/Keycloak no backlog) |
 | **E03 Project** | Organization, Client, Project, ProjectTemplate, clonagem | ⬜ |
 | **E04 Requirements** | Requisito, versionamento, vínculo WBS/evidência, DRP | ⬜ |
 | **E05 WBS** | Árvore, reordenar, importar/exportar, versionar | ⬜ |
@@ -58,12 +58,18 @@ Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 - [x] GitHub Actions CI (lint → typecheck → test → build)
 - [x] README (runbook), ROADMAP, ADR-014/ADR-015
 
-### Fase 1 — Identity/Tenancy (E02)
+### Fase 1 — Identity/Tenancy (E02) ✅
 
-- [ ] UI de administração: usuários, convites, papéis e permissões
-- [ ] Troca de organização completa + guarda de rotas
-- [ ] Testes automatizados de isolamento de tenant (CI)
-- [ ] Trilha de auditoria visível (histórico por objeto)
+- [x] UI de administração: usuários, convites, papéis e permissões
+      (`/administracao/usuarios`, `/administracao/papeis`)
+- [x] Troca de organização completa + guarda de rotas
+      (`/selecionar-organizacao` + guards em layout/entrar)
+- [x] Testes automatizados de isolamento de tenant no CI
+      (13 testes em `tests/integration/tenant-isolation.test.ts` + Postgres service)
+- [x] Trilha de auditoria visível (`/administracao/auditoria` com filtros e
+      histórico por objeto)
+- [x] Salvaguardas: auto-bloqueio de edição da própria membresia; proteção do
+      último ADMIN ativo; papéis do sistema imutáveis
 
 ### Fase 2 — Portfólio e Projetos (E03) + Gates (E06)
 

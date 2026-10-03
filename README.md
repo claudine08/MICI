@@ -68,6 +68,18 @@ Usuários demo (seed — apenas ambiente local):
 
 Senha de todos: `Demo@1234`.
 
+## Testes de integração (isolamento de tenant)
+
+```bash
+cp .env.test.example .env.test   # aponta para o banco mici_test (dedicado)
+npm run test:integration         # reseta o schema (prisma db push --force-reset) e roda
+```
+
+- Banco local: crie `mici_test` no mesmo Postgres (o `db push --force-reset`
+  também o cria).
+- O reset **só** pode rodar em bancos de desenvolvimento/teste — nunca em
+  produção. O CI usa o Postgres service do GitHub Actions.
+
 ## Scripts
 
 | Comando | Descrição |
@@ -75,7 +87,8 @@ Senha de todos: `Demo@1234`.
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Vitest (unit) |
+| `npm test` | Vitest unit (`tests/unit`) |
+| `npm run test:integration` | Testes de integração/tenant (exige Postgres + `.env.test`) |
 | `npm run seed` | Seed idempotente |
 | `npm run db:migrate` | `prisma migrate dev` |
 | `npm run db:deploy` | `prisma migrate deploy` (produção/CI) |

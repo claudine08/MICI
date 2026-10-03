@@ -46,9 +46,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Administração",
     items: [
-      { label: "Usuários", icon: Users, soon: true },
-      { label: "Papéis e permissões", icon: KeyRound, soon: true },
-      { label: "Auditoria", icon: ScrollText, soon: true },
+      { label: "Usuários", href: "/administracao/usuarios", icon: Users },
+      { label: "Papéis e permissões", href: "/administracao/papeis", icon: KeyRound },
+      { label: "Auditoria", href: "/administracao/auditoria", icon: ScrollText },
       { label: "Configurações", icon: Settings, soon: true },
     ],
   },

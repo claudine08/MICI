@@ -13,23 +13,23 @@ import { Label } from "@/components/ui/label";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-async function activateFirstOrganization(): Promise<void> {
+async function activateSingleOrganization(): Promise<boolean> {
   try {
     const response = await fetch("/api/v1/session/context");
-    if (!response.ok) return;
+    if (!response.ok) return false;
     const data = (await response.json()) as {
       organizations?: { organizationId: string }[];
     };
-    const first = data.organizations?.[0];
-    if (first) {
-      await fetch("/api/v1/session/context", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: first.organizationId }),
-      });
-    }
+    const organizations = data.organizations ?? [];
+    if (organizations.length !== 1) return false;
+    const activate = await fetch("/api/v1/session/context", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organizationId: organizations[0].organizationId }),
+    });
+    return activate.ok;
   } catch {
-    // contexto implícito cobre o caso de organização única
+    return false;
   }
 }
 
@@ -55,8 +55,8 @@ export function LoginForm() {
       setSubmitError("E-mail ou senha inválidos.");
       return;
     }
-    await activateFirstOrganization();
-    router.push("/painel");
+    const activated = await activateSingleOrganization();
+    router.push(activated ? "/painel" : "/selecionar-organizacao");
     router.refresh();
   });
 
