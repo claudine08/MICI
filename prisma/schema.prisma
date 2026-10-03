@@ -1,0 +1,288 @@
+// MICI SaaS — Prisma schema
+// Fase 0: Foundation + Identity/Tenancy
+// Referências: §10 (tenancy), §13 (identidade das entidades), §54 (auditoria),
+// §58 (tabelas), §59 (integridade de dados), ADR-009 (outbox), Anexo F.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+
+  @@map("organization_status")
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  PENDING_INVITE
+
+  @@map("user_status")
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+
+  @@map("membership_status")
+}
+
+enum DomainEventStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  DEAD
+
+  @@map("domain_event_status")
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+
+  @@map("job_status")
+}
+
+// ---------------------------------------------------------------------------
+// Identity / Tenancy
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id              String             @id @default(uuid()) @db.Uuid
+  name            String             @db.VarChar(200)
+  slug            String             @unique @db.VarChar(80)
+  status          OrganizationStatus @default(ACTIVE)
+  timezone        String             @default("America/Sao_Paulo") @db.VarChar(64)
+  defaultCurrency String             @default("BRL") @db.VarChar(3)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  memberships OrganizationMembership[]
+  roles       Role[]
+  auditEvents AuditEvent[]
+
+  @@index([status])
+  @@map("organizations")
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique @db.VarChar(320)
+  name         String     @db.VarChar(200)
+  passwordHash String?    @map("password_hash") @db.VarChar(512)
+  status       UserStatus @default(ACTIVE)
+  locale       String     @default("pt-BR") @db.VarChar(10)
+  timezone     String     @default("America/Sao_Paulo") @db.VarChar(64)
+  lastLoginAt  DateTime?  @map("last_login_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  memberships OrganizationMembership[]
+
+  @@index([status])
+  @@map("users")
+}
+
+model OrganizationMembership {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  status         MembershipStatus @default(ACTIVE)
+  invitedAt      DateTime?        @map("invited_at")
+  invitedBy      String?          @map("invited_by") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+  roles        MembershipRole[]
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId, status])
+  @@map("organization_memberships")
+}
+
+model Role {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  code           String  @db.VarChar(64)
+  name           String  @db.VarChar(120)
+  description    String?
+  isSystem       Boolean @default(true) @map("is_system")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  permissions    RolePermission[]
+  memberships    MembershipRole[]
+
+  @@unique([organizationId, code])
+  @@map("roles")
+}
+
+model Permission {
+  id          String @id @default(uuid()) @db.Uuid
+  code        String @unique @db.VarChar(120)
+  module      String @db.VarChar(64)
+  action      String @db.VarChar(32)
+  description String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by") @db.Uuid
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by") @db.Uuid
+  version   Int      @default(1)
+
+  roles RolePermission[]
+
+  @@index([module, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String @id @default(uuid()) @db.Uuid
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model MembershipRole {
+  id           String @id @default(uuid()) @db.Uuid
+  membershipId String @map("membership_id") @db.Uuid
+  roleId       String @map("role_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by") @db.Uuid
+
+  membership OrganizationMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  role       Role                   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, roleId])
+  @@map("membership_roles")
+}
+
+// ---------------------------------------------------------------------------
+// Auditoria append-only (§54) — sem updated_at/sem updates
+// ---------------------------------------------------------------------------
+
+model AuditEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  actorId        String?  @map("actor_id") @db.Uuid
+  actorLabel     String?  @map("actor_label") @db.VarChar(320)
+  projectId      String?  @map("project_id") @db.Uuid
+  objectType     String   @map("object_type") @db.VarChar(64)
+  objectId       String?  @map("object_id") @db.Uuid
+  action         String   @db.VarChar(64)
+  oldValue       Json?    @map("old_value")
+  newValue       Json?    @map("new_value")
+  reason         String?
+  ipAddress      String?  @map("ip_address") @db.VarChar(64)
+  correlationId  String?  @map("correlation_id") @db.VarChar(64)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([objectType, objectId])
+  @@index([actorId, createdAt])
+  @@map("audit_events")
+}
+
+// ---------------------------------------------------------------------------
+// Outbox de eventos de domínio (§53, ADR-009)
+// ---------------------------------------------------------------------------
+
+model DomainEvent {
+  id            String            @id @default(uuid()) @db.Uuid
+  organizationId String?          @map("organization_id") @db.Uuid
+  projectId     String?           @map("project_id") @db.Uuid
+  actorId       String?           @map("actor_id") @db.Uuid
+  eventType     String            @map("event_type") @db.VarChar(120)
+  eventVersion  Int               @default(1) @map("event_version")
+  aggregateType String            @map("aggregate_type") @db.VarChar(64)
+  aggregateId   String            @map("aggregate_id") @db.Uuid
+  payload       Json              @default("{}")
+  status        DomainEventStatus @default(PENDING)
+  attempts      Int               @default(0)
+  lastError     String?           @map("last_error")
+  availableAt   DateTime          @default(now()) @map("available_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  processedAt   DateTime?         @map("processed_at")
+
+  @@index([status, availableAt])
+  @@index([eventType])
+  @@map("domain_events")
+}
+
+// ---------------------------------------------------------------------------
+// Fila de jobs para Vercel Cron (decisão de stack do MVP)
+// ---------------------------------------------------------------------------
+
+model JobQueue {
+  id          String    @id @default(uuid()) @db.Uuid
+  type        String    @db.VarChar(120)
+  payload     Json      @default("{}")
+  status      JobStatus @default(PENDING)
+  runAt       DateTime  @default(now()) @map("run_at")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5) @map("max_attempts")
+  lockedAt    DateTime? @map("locked_at")
+  lockedBy    String?   @map("locked_by") @db.VarChar(64)
+  lastError   String?   @map("last_error")
+  dedupeKey   String?   @unique @map("dedupe_key") @db.VarChar(200)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status, runAt])
+  @@map("job_queue")
+}

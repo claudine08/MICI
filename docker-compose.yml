@@ -1,0 +1,23 @@
+# MICI SaaS — infraestrutura local de desenvolvimento (§5.7)
+# Produção (Vercel): Neon Postgres gerenciado; este compose é só para local.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mici-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mici
+      POSTGRES_PASSWORD: mici
+      POSTGRES_DB: mici
+    ports:
+      - "5432:5432"
+    volumes:
+      - mici_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mici -d mici"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mici_pgdata:
