@@ -1,7 +1,9 @@
 // MICI SaaS — Prisma schema
 // Fase 0: Foundation + Identity/Tenancy
-// Referências: §10 (tenancy), §13 (identidade das entidades), §54 (auditoria),
-// §58 (tabelas), §59 (integridade de dados), ADR-009 (outbox), Anexo F.
+// Fase 2: Portfólio (Client/Project/Template) + Gates (E03, E06, BR-001/002)
+// Referências: §10 (tenancy), §13 (identidade das entidades), §14 (projeto),
+// §15.1 (snapshot de clonagem), §17 (gates), §54 (auditoria), §58 (tabelas),
+// §59 (integridade de dados), ADR-009 (outbox), Anexo F.
 
 generator client {
   provider = "prisma-client"
@@ -58,6 +60,30 @@ enum JobStatus {
   @@map("job_status")
 }
 
+enum ProjectStatus {
+  DRAFT
+  QUALIFICATION
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+
+  @@map("project_status")
+}
+
+enum GateStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  WAIVED
+
+  @@map("gate_status")
+}
+
 // ---------------------------------------------------------------------------
 // Identity / Tenancy
 // ---------------------------------------------------------------------------
@@ -81,6 +107,10 @@ model Organization {
   memberships OrganizationMembership[]
   roles       Role[]
   auditEvents AuditEvent[]
+  clients     Client[]
+  projectTemplates ProjectTemplate[]
+  projects    Project[]
+  gateDefinitions  GateDefinition[]
 
   @@index([status])
   @@map("organizations")
@@ -285,4 +315,231 @@ model JobQueue {
 
   @@index([status, runAt])
   @@map("job_queue")
+}
+
+// ---------------------------------------------------------------------------
+// Portfólio (E03): Client, ProjectTemplate, Project (§14, §15)
+// ---------------------------------------------------------------------------
+
+model Client {
+  id              String  @id @default(uuid()) @db.Uuid
+  organizationId  String  @map("organization_id") @db.Uuid
+  code            String? @db.VarChar(32)
+  name            String  @db.VarChar(200)
+  email           String? @db.VarChar(320)
+  phone           String? @db.VarChar(40)
+  address         String? @db.VarChar(300)
+  notes           String?
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  projects     Project[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, name])
+  @@map("clients")
+}
+
+model ProjectTemplate {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  code           String  @db.VarChar(32)
+  name           String  @db.VarChar(200)
+  description    String?
+  isDefault      Boolean @default(false) @map("is_default")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  projects     Project[]
+
+  @@unique([organizationId, code])
+  @@map("project_templates")
+}
+
+model Project {
+  id                String        @id @default(uuid()) @db.Uuid
+  organizationId    String        @map("organization_id") @db.Uuid
+  code              String        @db.VarChar(32)
+  name              String        @db.VarChar(200)
+  description       String?
+  clientId          String?       @map("client_id") @db.Uuid
+  projectType       String?       @map("project_type") @db.VarChar(64)
+  location          String?       @db.VarChar(300)
+  status            ProjectStatus @default(DRAFT)
+  currentPhase      String        @default("F0") @map("current_phase") @db.VarChar(8)
+  projectTemplateId String?       @map("project_template_id") @db.Uuid
+  projectManagerId  String?       @map("project_manager_id") @db.Uuid
+  sponsorId         String?       @map("sponsor_id") @db.Uuid
+  startDate         DateTime?     @map("start_date") @db.Date
+  plannedEndDate    DateTime?     @map("planned_end_date") @db.Date
+  contractEndDate   DateTime?     @map("contract_end_date") @db.Date
+  currency          String        @default("BRL") @db.VarChar(3)
+  contractValue     Decimal?      @map("contract_value") @db.Decimal(18, 2)
+  timezone          String        @default("America/Sao_Paulo") @db.VarChar(64)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  client         Client?         @relation(fields: [clientId], references: [id])
+  template       ProjectTemplate? @relation(fields: [projectTemplateId], references: [id])
+  gateInstances  GateInstance[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([organizationId, clientId])
+  @@map("projects")
+}
+
+// ---------------------------------------------------------------------------
+// Gates (E06, §17, BR-001/BR-002): GateDefinition/GateInstance/Critério/
+// Evidência/Aprovação. Instâncias fazem snapshot da configuração na criação
+// do projeto (§15.1 — alterar a definição não muda gates existentes).
+// ---------------------------------------------------------------------------
+
+model GateDefinition {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  code           String  @db.VarChar(16)
+  name           String  @db.VarChar(120)
+  description    String?
+  phase          String  @db.VarChar(8)
+  required       Boolean @default(true)
+  requiresEvidence Boolean @default(true) @map("requires_evidence")
+  minimumApprovals Int   @default(1) @map("minimum_approvals")
+  orderIndex     Int     @default(0) @map("order_index")
+  isSystem       Boolean @default(false) @map("is_system")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization  Organization    @relation(fields: [organizationId], references: [id])
+  criteria      GateCriterion[]
+  gateInstances GateInstance[]
+
+  @@index([organizationId, phase])
+  @@map("gate_definitions")
+}
+
+model GateCriterion {
+  id               String @id @default(uuid()) @db.Uuid
+  gateDefinitionId String @map("gate_definition_id") @db.Uuid
+  code             String @db.VarChar(32)
+  description      String @db.VarChar(300)
+  required         Boolean @default(true)
+  orderIndex       Int    @default(0) @map("order_index")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  gateDefinition GateDefinition @relation(fields: [gateDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([gateDefinitionId, code])
+  @@map("gate_criteria")
+}
+
+model GateInstance {
+  id                String     @id @default(uuid()) @db.Uuid
+  organizationId    String     @map("organization_id") @db.Uuid
+  projectId         String     @map("project_id") @db.Uuid
+  gateDefinitionId  String     @map("gate_definition_id") @db.Uuid
+  status            GateStatus @default(NOT_STARTED)
+  criteriaSnapshot  Json       @default("[]") @map("criteria_snapshot")
+  decision          String?    @db.VarChar(16)
+  decisionReason    String?    @map("decision_reason")
+  decidedBy         String?    @map("decided_by") @db.Uuid
+  decidedAt         DateTime?  @map("decided_at")
+  startedAt         DateTime?  @map("started_at")
+  submittedAt       DateTime?  @map("submitted_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  definition     GateDefinition      @relation(fields: [gateDefinitionId], references: [id])
+  criterionResults GateCriterionResult[]
+  evidences      GateEvidence[]
+  approvals      GateApproval[]
+
+  @@unique([projectId, gateDefinitionId])
+  @@index([organizationId, status])
+  @@map("gate_instances")
+}
+
+// Resultado de critério por instância, referenciado pelo código do snapshot
+// (sobrevive a edições posteriores da definição).
+model GateCriterionResult {
+  id              String    @id @default(uuid()) @db.Uuid
+  gateInstanceId  String    @map("gate_instance_id") @db.Uuid
+  criterionCode   String    @map("criterion_code") @db.VarChar(32)
+  completed       Boolean   @default(false)
+  note            String?
+  completedBy     String?   @map("completed_by") @db.Uuid
+  completedAt     DateTime? @map("completed_at")
+
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  gateInstance GateInstance @relation(fields: [gateInstanceId], references: [id], onDelete: Cascade)
+
+  @@unique([gateInstanceId, criterionCode])
+  @@map("gate_criterion_results")
+}
+
+model GateEvidence {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  gateInstanceId String   @map("gate_instance_id") @db.Uuid
+  label          String   @db.VarChar(200)
+  url            String?  @db.VarChar(500)
+  createdBy      String?  @map("created_by") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  gateInstance GateInstance @relation(fields: [gateInstanceId], references: [id], onDelete: Cascade)
+
+  @@index([gateInstanceId])
+  @@map("gate_evidences")
+}
+
+model GateApproval {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  gateInstanceId String   @map("gate_instance_id") @db.Uuid
+  approverId     String   @map("approver_id") @db.Uuid
+  decision       String   @db.VarChar(16)
+  comment        String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  gateInstance GateInstance @relation(fields: [gateInstanceId], references: [id], onDelete: Cascade)
+
+  @@index([gateInstanceId])
+  @@map("gate_approvals")
 }

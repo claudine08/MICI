@@ -18,10 +18,10 @@ Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 |---|---|---|
 | **E01 Platform Foundation** | Base do sistema, CI, observabilidade | 🟦 Fase 0 (ver abaixo) |
 | **E02 Identity** | Usuário↔organização, roles, permissions, tenant isolation | 🟦 Fase 0/1 ✅ (OIDC/Keycloak no backlog) |
-| **E03 Project** | Organization, Client, Project, ProjectTemplate, clonagem | ⬜ |
+| **E03 Project** | Organization, Client, Project, ProjectTemplate, clonagem | ✅ Fase 2 (clonagem plena em Fase 3+) |
 | **E04 Requirements** | Requisito, versionamento, vínculo WBS/evidência, DRP | ⬜ |
 | **E05 WBS** | Árvore, reordenar, importar/exportar, versionar | ⬜ |
-| **E06 Gates** | GateDefinition/Instance, critérios, aprovação, bloqueio (BR-001/002), auditoria | ⬜ |
+| **E06 Gates** | GateDefinition/Instance, critérios, aprovação, bloqueio (BR-001/002), auditoria | ✅ Fase 2 |
 | **E07 Schedule** | Atividades, dependências, calendário, baseline, forecast, caminho crítico | ⬜ |
 | **E08 Cost** | Budget, CostItem, Commitment, Actual, Forecast, EVM | ⬜ |
 | **E09 Documents** | Upload, revisão, aprovação, release, link de objetos | ⬜ |
@@ -71,12 +71,23 @@ Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 - [x] Salvaguardas: auto-bloqueio de edição da própria membresia; proteção do
       último ADMIN ativo; papéis do sistema imutáveis
 
-### Fase 2 — Portfólio e Projetos (E03) + Gates (E06)
+### Fase 2 — Portfólio e Projetos (E03) + Gates (E06) ✅
 
-- [ ] CRUD Project/Client/ProjectTemplate + clonagem de template
-- [ ] GateDefinition/GateInstance com critérios e evidências
-- [ ] Bloqueio BR-001/BR-002 + auditoria de decisão
-- [ ] Navegação completa do shell (rotas de Portfólio/Administração)
+- [x] CRUD Project/Client/ProjectTemplate com validação e escopo de tenant
+      (`/projetos`, `/clientes`, `/templates` + 6 endpoints `/api/v1`)
+- [x] Gates G0–G8 oficiais (§17/§18) criados por organização; gates
+      customizados em `/administracao/gates`
+- [x] GateInstance com snapshot de critérios imutável na criação do projeto
+      (§15.1) + evidências + aprovações (múltiplo aprover por `minimumApprovals`)
+- [x] Bloqueio BR-001 (avanço de fase depende de gates aprovados/dispensados) e
+      BR-002 (aprovação exige critérios obrigatórios + evidência) com auditoria
+      de decisão (start/submit/analyze/approve/reject/waive)
+- [x] Detalhe de projeto com stepper de fases F0–F10 e tabela de gates
+      (`/projetos/[id]`)
+- [x] Navegação completa do shell (Projetos/Clientes/Templates + Gates em
+      Administração) e `/painel` com portfólio real
+- [x] Testes: 15 unitários do motor de gates + 16 de integração
+      (`project-gates.test.ts`, inclui isolamento cross-tenant)
 
 ### Fase 3 — Requirements/DRP (E04) + WBS (E05)
 

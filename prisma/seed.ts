@@ -2,9 +2,12 @@ import { prisma } from "../src/lib/prisma";
 import { hashPassword } from "../src/lib/password";
 import { allPermissionCodes } from "../src/core/rbac";
 import { createOrganization } from "../src/modules/identity/services";
+import { ensureDefaultGateDefinitions } from "../src/modules/gates/definitions";
+import { createProject } from "../src/modules/portfolio/projects";
 
 // Seed idempotente (§72): catálogo de permissões + organização demo + papéis +
-// usuários de demonstração. Senhas demo: Demo@1234 (apenas ambiente local).
+// usuários de demonstração + gates G0–G8 + portfólio demo (Fase 2).
+// Senhas demo: Demo@1234 (apenas ambiente local).
 
 const DEMO_PASSWORD = "Demo@1234";
 
@@ -99,6 +102,68 @@ async function main() {
     }
   }
   console.log("[seed] memberships + papéis demo ok");
+
+  // Gates oficiais G0–G8 (§17) — idempotente.
+  await ensureDefaultGateDefinitions(prisma, organizationId, founderId);
+  console.log("[seed] gate definitions G0–G8 ok");
+
+  // Portfólio demo (E03): template padrão, cliente e projeto.
+  let template = await prisma.projectTemplate.findFirst({
+    where: { organizationId, code: "MICI-PADRAO", deletedAt: null },
+  });
+  if (!template) {
+    template = await prisma.projectTemplate.create({
+      data: {
+        organizationId,
+        code: "MICI-PADRAO",
+        name: "MICI Padrão",
+        description: "Template corporativo para projetos de cozinhas profissionais.",
+        isDefault: true,
+        createdBy: founderId,
+        updatedBy: founderId,
+      },
+    });
+    console.log("[seed] template MICI-PADRAO criado");
+  }
+
+  let client = await prisma.client.findFirst({
+    where: { organizationId, code: "CLI-001", deletedAt: null },
+  });
+  if (!client) {
+    client = await prisma.client.create({
+      data: {
+        organizationId,
+        code: "CLI-001",
+        name: "Restaurante Central Ltda",
+        email: "contato@restaurantecentral.demo",
+        createdBy: founderId,
+        updatedBy: founderId,
+      },
+    });
+    console.log("[seed] cliente CLI-001 criado");
+  }
+
+  const existingProject = await prisma.project.findFirst({
+    where: { organizationId, code: "DEMO-001", deletedAt: null },
+  });
+  if (!existingProject) {
+    await createProject({
+      organizationId,
+      actorId: founderId,
+      actorLabel: "admin@mici.demo",
+      code: "DEMO-001",
+      name: "Cozinha Central — Reforma e Expansão",
+      description: "Projeto demonstração do ciclo MICI (Fase 2).",
+      clientId: client.id,
+      projectTemplateId: template.id,
+      projectType: "REMOVER_E_EXPANDIR",
+      location: "São Paulo, SP",
+      status: "ACTIVE",
+      startDate: "2026-01-15",
+      plannedEndDate: "2026-11-30",
+    });
+    console.log("[seed] projeto DEMO-001 criado (com snapshot de gates)");
+  }
 
   console.log("[seed] concluído.");
   console.log("[seed] login: admin@mici.demo / Demo@1234");

@@ -2,7 +2,8 @@ import { getTenantContext } from "@/core/tenant";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, KeyRound, ShieldCheck, ScrollText } from "lucide-react";
+import Link from "next/link";
+import { Users, KeyRound, ShieldCheck, ScrollText, FolderKanban, Milestone } from "lucide-react";
 
 const PROJECT_PHASES = [
   { code: "F0", name: "Oportunidade" },
@@ -32,19 +33,38 @@ const PROJECT_GATES = [
 
 export default async function PainelPage() {
   const context = (await getTenantContext())!;
-  const [memberCount, roleCount, auditCount] = await Promise.all([
-    prisma.organizationMembership.count({
-      where: { organizationId: context.organizationId, status: "ACTIVE", deletedAt: null },
-    }),
-    prisma.role.count({ where: { organizationId: context.organizationId, deletedAt: null } }),
-    prisma.auditEvent.count({
-      where: { organizationId: context.organizationId },
-    }),
-  ]);
+  const [memberCount, roleCount, auditCount, projectCount, recentProjects, pendingGates] =
+    await Promise.all([
+      prisma.organizationMembership.count({
+        where: { organizationId: context.organizationId, status: "ACTIVE", deletedAt: null },
+      }),
+      prisma.role.count({ where: { organizationId: context.organizationId, deletedAt: null } }),
+      prisma.auditEvent.count({
+        where: { organizationId: context.organizationId },
+      }),
+      prisma.project.count({
+        where: { organizationId: context.organizationId, deletedAt: null },
+      }),
+      prisma.project.findMany({
+        where: { organizationId: context.organizationId, deletedAt: null },
+        select: { id: true, code: true, name: true, currentPhase: true, status: true },
+        orderBy: { updatedAt: "desc" },
+        take: 5,
+      }),
+      prisma.gateInstance.count({
+        where: {
+          organizationId: context.organizationId,
+          status: { in: ["NOT_STARTED", "IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW", "REJECTED"] },
+          project: { deletedAt: null },
+        },
+      }),
+    ]);
 
   const stats = [
     { label: "Membros", value: memberCount, icon: Users },
     { label: "Papéis", value: roleCount, icon: KeyRound },
+    { label: "Projetos", value: projectCount, icon: FolderKanban },
+    { label: "Gates pendentes", value: pendingGates, icon: Milestone },
     { label: "Permissões suas", value: context.permissions.size, icon: ShieldCheck },
     { label: "Eventos de auditoria", value: auditCount, icon: ScrollText },
   ];
@@ -79,13 +99,33 @@ export default async function PainelPage() {
 
       <Card>
           <CardHeader>
-            <CardTitle>Nenhum projeto ainda</CardTitle>
+            <CardTitle>
+              {recentProjects.length > 0 ? "Projetos recentes" : "Nenhum projeto ainda"}
+            </CardTitle>
             <CardDescription>
-              O portfólio de projetos, requisitos e gates chega com a Fase 2 do roadmap
-              (Portfólio e Projetos). A base — autenticação, multiempresa e RBAC — já está
-              ativa.
+              {recentProjects.length > 0
+                ? "Últimos projetos do portfólio — abra para ver fases e gates."
+                : "Crie o primeiro projeto em Portfólio → Projetos. Gates oficiais G0–G8 já "
+                  + "estão configurados para a organização."}
             </CardDescription>
           </CardHeader>
+          {recentProjects.length > 0 && (
+            <CardContent className="flex flex-col gap-2">
+              {recentProjects.map((project) => (
+                <Link
+                  key={project.id}
+                  href={`/projetos/${project.id}`}
+                  className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-hover"
+                >
+                  <span>
+                    <span className="font-mono text-xs text-muted-foreground">{project.code}</span>{" "}
+                    <span className="font-medium">{project.name}</span>
+                  </span>
+                  <Badge variant="outline">{project.currentPhase}</Badge>
+                </Link>
+              ))}
+            </CardContent>
+          )}
         </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">

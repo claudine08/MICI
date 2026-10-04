@@ -1,6 +1,8 @@
 import {
   LayoutDashboard,
   FolderKanban,
+  UsersRound,
+  LayoutTemplate,
   FileText,
   CalendarRange,
   Coins,
@@ -9,6 +11,7 @@ import {
   Users,
   KeyRound,
   ScrollText,
+  Milestone,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -35,7 +38,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Portfólio",
     items: [
-      { label: "Projetos", icon: FolderKanban, soon: true },
+      { label: "Projetos", href: "/projetos", icon: FolderKanban },
+      { label: "Clientes", href: "/clientes", icon: UsersRound },
+      { label: "Templates", href: "/templates", icon: LayoutTemplate },
       { label: "Requisitos", icon: FileText, soon: true },
       { label: "Cronograma", icon: CalendarRange, soon: true },
       { label: "Custos", icon: Coins, soon: true },
@@ -48,6 +53,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Usuários", href: "/administracao/usuarios", icon: Users },
       { label: "Papéis e permissões", href: "/administracao/papeis", icon: KeyRound },
+      { label: "Gates e critérios", href: "/administracao/gates", icon: Milestone },
       { label: "Auditoria", href: "/administracao/auditoria", icon: ScrollText },
       { label: "Configurações", icon: Settings, soon: true },
     ],

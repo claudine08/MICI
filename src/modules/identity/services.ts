@@ -5,6 +5,7 @@ import {
   expandRolePermissions,
   allPermissionCodes,
 } from "@/core/rbac";
+import { ensureDefaultGateDefinitions } from "@/modules/gates/definitions";
 
 // Serviços de identidade/tenancy (§10, E02). Efeitos colaterais (auditoria +
 // outbox) acontecem na MESMA transação do comando (BR-011, ADR-009).
@@ -46,21 +47,24 @@ export async function createOrganization(input: CreateOrganizationInput) {
       });
 
       // Catálogo global de permissões (idempotente — seed normalmente já criou).
+      // skipDuplicates: criações concorrentes de organização disputam as mesas linhas.
       const permissionRows = await tx.permission.findMany({
         select: { id: true, code: true },
       });
       const permissionIds = new Map(permissionRows.map((p) => [p.code, p.id]));
-      for (const code of allPermissionCodes()) {
-        if (!permissionIds.has(code)) {
-          const created = await tx.permission.create({
-            data: {
-              code,
-              module: code.split(":")[0],
-              action: code.split(":")[1],
-            },
-            select: { id: true, code: true },
-          });
-          permissionIds.set(created.code, created.id);
+      const missingCodes = allPermissionCodes().filter((code) => !permissionIds.has(code));
+      if (missingCodes.length > 0) {
+        await tx.permission.createMany({
+          data: missingCodes.map((code) => ({
+            code,
+            module: code.split(":")[0],
+            action: code.split(":")[1],
+          })),
+          skipDuplicates: true,
+        });
+        const refreshed = await tx.permission.findMany({ select: { id: true, code: true } });
+        for (const row of refreshed) {
+          permissionIds.set(row.code, row.id);
         }
       }
 
@@ -95,6 +99,9 @@ export async function createOrganization(input: CreateOrganizationInput) {
           },
         },
       });
+
+      // Gates oficiais G0–G8 (§17) como padrão da organização (E06-US01).
+      await ensureDefaultGateDefinitions(tx, organization.id, input.actorId);
 
       await tx.auditEvent.create({
         data: {
