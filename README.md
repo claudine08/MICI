@@ -128,12 +128,31 @@ docs/adr/               # registros de decisão
 
 ## Deploy (Vercel)
 
-1. Criar conta Neon (PostgreSQL) e obter `DATABASE_URL`.
-2. `vercel link` + configurar env vars: `DATABASE_URL`, `AUTH_SECRET`
-   (`openssl rand -base64 32`), `AUTH_URL` (domínio do app).
-3. `npm run db:deploy` (migrations) e `npm run seed` (apenas primeiro deploy).
-4. GitHub Actions (`.github/workflows/ci.yml`): lint → typecheck → test → build.
-5. Cron: configurar Vercel Cron para `/api/v1/jobs/run` (ADR-015).
+Estado atual (Fase 2):
+
+- Produção: **https://mici-theta.vercel.app** (projeto `mici`, team `homeland1`)
+- Banco: **Neon** provisionado pela integração da Vercel
+  (`neon-byzantium-fountain`) — `DATABASE_URL` injetado automaticamente nos
+  ambientes Production/Preview/Development
+- Repositório: `github.com/claudine08/MICI` (`main`); para auto-deploy a cada
+  push, conectar em *Project Settings → Git* (autoriza o GitHub App da Vercel)
+
+Runbook de deploy:
+
+1. `vercel link` (uma vez) + `vercel env ls production` (envs vêm da integração Neon)
+2. `npx dotenv -e .env.vercel.tmp -- prisma migrate deploy` — com
+   `vercel env pull --environment=production .env.vercel.tmp` antes (o arquivo é
+   local-only, `.env*` está no `.gitignore`)
+3. Seed na primeira vez: `npx dotenv -e .env.vercel.tmp -- tsx prisma/seed.ts`
+4. Trocar a senha demo pós-seed: `npx dotenv -e .env.vercel.tmp -- tsx
+   scripts/set-demo-password.ts "<senha-forte>"`
+5. `vercel deploy --prod` (build e runtime não acessam o banco no build)
+6. `AUTH_SECRET` é Secret gerado no Vercel (não faz pull)
+7. CI no GitHub Actions (`.github/workflows/ci.yml`): lint → typecheck → test →
+   build; Cron de jobs (ADR-015) pendente de configurar no Vercel
+
+Deploy manual clássico (sem Neon/conta): criar conta Neon/Supabase, copiar a
+connection string e `vercel env add DATABASE_URL production`.
 
 ## Documentos
 
