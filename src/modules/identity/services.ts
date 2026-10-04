@@ -41,7 +41,10 @@ export async function createOrganization(input: CreateOrganizationInput) {
   }
 
   try {
-    return await prisma.$transaction(async (tx) => {
+    // Bootstrap pesado (catálogo + 18 papéis + grants + gates): o default de 5s
+    // estoura em bancos com latência de rede (Neon).
+    return await prisma.$transaction(
+      async (tx) => {
       const organization = await tx.organization.create({
         data: { name: input.name, slug },
       });
@@ -134,7 +137,9 @@ export async function createOrganization(input: CreateOrganizationInput) {
         slug: organization.slug,
         membershipId: membership.id,
       };
-    });
+      },
+      { timeout: 60_000, maxWait: 10_000 }
+    );
   } catch (error) {
     if (
       error instanceof Error &&
