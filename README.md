@@ -1,5 +1,7 @@
 # MICI — Plataforma de Gestão de Implantação
 
+> Metodologia de Implantação de Cozinhas Industriais
+
 SaaS multiempresa (multi-tenant), multiprojeto e multiusuário para gestão de
 implantação com **baseline imutável**, **port gates obrigatórios** e **auditoria
 append-only**. Especificação de verdade: `MICI_SaaS_Technical_Architecture_Specification.md`
