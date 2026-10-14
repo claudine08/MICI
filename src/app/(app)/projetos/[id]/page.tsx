@@ -36,6 +36,17 @@ export default async function ProjetoDetalhePage({
         <p className="text-sm text-muted-foreground">
           Fase e status são distintos (§14.2); o avanço de fase obedece ao BR-001.
         </p>
+        <div className="mt-2 flex gap-3 text-sm">
+          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/requisitos`}>
+            Requisitos e DRP (E04)
+          </a>
+          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/wbs`}>
+            WBS (E05)
+          </a>
+          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/cronograma`}>
+            Cronograma (E07)
+          </a>
+        </div>
       </div>
       <ProjectDetailView
         project={project}
