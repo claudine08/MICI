@@ -1,7 +1,73 @@
+
 # ROADMAP — MICI SaaS
 
 Fonte: spec §§99–101 (Releases, Backlog de Implementação, Critérios de Aceite do MVP).
 Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
+
+## Gate de verificação entre fases
+
+Antes de iniciar uma fase, a fase anterior deve passar na suíte completa:
+`npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `npm run build`.
+
+Última execução (14/10/2026) — **Fase 4 (E07 + orçamento de cozinha) verificada**:
+
+| Checagem | Resultado |
+|---|---|
+| `npm run lint` | ✅ sem erros |
+| `npm run typecheck` | ✅ sem erros |
+| `npm test` (unit) | ✅ 120 testes / 10 arquivos |
+| `npm run test:integration` | ✅ 118 testes / 8 arquivos (tenant, gates, requisitos, WBS, schedule, baseline, calendários, import) |
+| `npm run build` | ✅ build de produção (71 rotas; 52 endpoints `/api/v1`) |
+| Migrations no banco local | ✅ 6 migrations (`init_foundation_identity` … `phase5_schedule_import`) |
+| Smoke autenticado | ✅ login · `/orcamento` 200 · `POST /api/v1/budget/estimate` 200 (20 quantitativos) |
+
+### Correção de ambiente e sessão (07/10/2026)
+
+Bug reportado em `/selecionar-organizacao`: aviso **"Sessão expirada ou
+ausente."** junto de "Olá, Paulo" e "Você ainda não participa de nenhuma
+organização".
+
+Causa raiz: split-brain de banco — o cookie JWT foi emitido contra o Postgres
+local (`seed` de 03/10), mas o `next dev` passou a ler o `DATABASE_URL` do
+`.env.local` (Neon, `vercel env pull` de 03/10 21:29). `userId` huérfano no
+banco ativo ⇒ `POST /api/v1/organizations` respondia 401 e a lista de orgs
+vinha vazia; a sessão *parecia* válida porque o JWT é stateless.
+
+- [x] `.env.development.local` novo — fixa `DATABASE_URL` local para `next dev`
+      (precedência confirmada sobre `.env.local` via `@next/env`
+      `loadEnvConfig`); scripts npm já usavam `dotenv -e .env`, agora alinhados.
+      Neon continua valendo para `next build`/`next start`.
+- [x] `src/lib/auth.ts` — callback `session` revalida `token.userId` no banco;
+      id inativo/huérfano remove `session.user.id` ⇒ `redirect("/entrar")` ou
+      401 nos handlers, em vez de tela "logada" com backend rejeitando.
+- [x] `src/modules/identity/services.ts` — checagem do ator em `createOrganization`
+      dividida: usuário inexistente ⇒ novo código `SESSION_USER_NOT_FOUND` (401)
+      com mensagem verdadeira; usuário desativado ⇒ `FORBIDDEN`.
+- [x] Ambiente local recriado: Docker Desktop + `docker compose up -d`,
+      `prisma migrate reset --force` (consentido) + 3 migrations + seed idempotente
+      (5 usuários demo, org `demo`, todos os memberships `ACTIVE`).
+- [x] Verificação: `npm run typecheck` ✅ · `eslint` nos arquivos alterados ✅ ·
+      `loadEnvConfig` resolve `localhost:5432/mici` ✅ · linhas do seed conferidas
+      no banco local ✅.
+- [x] Smoke manual (14/10): `npm run dev` + Postgres portátil
+      (`pg_ctl start`) + login `admin@mici.demo` ✅.
+- [x] Suíte completa reexecutada (14/10) — ver tabela acima: todos os
+      gates verdes (lint · typecheck · 120 unit · 118 integração · build).
+
+## Status do sistema (14/10/2026)
+
+| Área | Situação |
+|---|---|
+| Fases concluídas | 0–3 completas (Fase 4 em andamento: E07 ✅, E08 🟦, E09 ⬜) |
+| Épicos | E01–E07 ✅ · E08 🟦 (orçamento de cozinha stateless; Cost/EVM pendente) · E09–E18 ⬜ |
+| Testes | 120 unit (10 arquivos) + 118 integração (8 arquivos) — todos verdes |
+| Migrations locais | 6 aplicadas (`init_foundation_identity` → `phase5_schedule_import`) |
+| Rotas | 71 no build (52 endpoints `/api/v1` + 19 páginas); `/orcamento` e `/api/v1/budget/estimate` novos |
+| RBAC | módulo `COST` operante (`VIEW` na tela, `CREATE` na API de estimativa) |
+| Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`) |
+| Produção | Vercel `mici-theta.vercel.app` + Neon (envs via integração; `AUTH_SECRET` é Secret) |
+| Pendências imediatas | Deploy desta atualização (E07 + orçamento) · E08 Cost/EVM · E09 Documents |
+| Riscos/notas | Prisma Client precisa de `prisma generate` (postinstall); smoke local exigiu subir o Postgres portátil; testes de integração resetam o banco `mici_test` (consentimento registrado nesta sessão) |
 
 ## Releases (produto)
 
@@ -16,14 +82,14 @@ Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 
 | Épico | Escopo resumido | Status |
 |---|---|---|
-| **E01 Platform Foundation** | Base do sistema, CI, observabilidade | 🟦 Fase 0 (ver abaixo) |
-| **E02 Identity** | Usuário↔organização, roles, permissions, tenant isolation | 🟦 Fase 0/1 ✅ (OIDC/Keycloak no backlog) |
+| **E01 Platform Foundation** | Base do sistema, CI, observabilidade | ✅ Fase 0 |
+| **E02 Identity** | Usuário↔organização, roles, permissions, tenant isolation | ✅ Fase 0/1 (OIDC/Keycloak no backlog) |
 | **E03 Project** | Organization, Client, Project, ProjectTemplate, clonagem | ✅ Fase 2 (clonagem plena em Fase 3+) |
-| **E04 Requirements** | Requisito, versionamento, vínculo WBS/evidência, DRP | ⬜ |
-| **E05 WBS** | Árvore, reordenar, importar/exportar, versionar | ⬜ |
+| **E04 Requirements** | Requisito, versionamento, vínculo WBS/evidência, DRP | ✅ Fase 3 |
+| **E05 WBS** | Árvore, reordenar, importar/exportar, versionar | ✅ Fase 3 |
 | **E06 Gates** | GateDefinition/Instance, critérios, aprovação, bloqueio (BR-001/002), auditoria | ✅ Fase 2 |
-| **E07 Schedule** | Atividades, dependências, calendário, baseline, forecast, caminho crítico | ⬜ |
-| **E08 Cost** | Budget, CostItem, Commitment, Actual, Forecast, EVM | ⬜ |
+| **E07 Schedule** | Atividades, dependências, calendário, baseline, forecast, caminho crítico | ✅ Fase 4 |
+| **E08 Cost** | Budget, CostItem, Commitment, Actual, Forecast, EVM | 🟦 Fase 4 — orçamento de implantação de cozinha pronto (stateless, `/orcamento`); commitments/actuals/EVM pendentes |
 | **E09 Documents** | Upload, revisão, aprovação, release, link de objetos | ⬜ |
 | **E10 Risk** | Risk register, matriz, resposta, risco residual | ⬜ |
 | **E11 Change** | Request, impacto, aprovação, baseline revision, implementation | ⬜ |
@@ -41,7 +107,7 @@ Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 
 ## Plano de execução por fases
 
-### Fase 0 — Foundation ✅ (esta entrega)
+### Fase 0 — Foundation ✅
 
 - [x] Scaffold Next 16 + TypeScript + Tailwind 4 + configs (lint/typecheck/format/CI)
 - [x] Prisma 7 + schema base: tenancy, usuários, memberships, papéis,
@@ -89,19 +155,66 @@ Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 - [x] Testes: 15 unitários do motor de gates + 16 de integração
       (`project-gates.test.ts`, inclui isolamento cross-tenant)
 
-### Fase 3 — Requirements/DRP (E04) + WBS (E05)
+### Fase 3 — Requirements/DRP (E04) + WBS (E05) ✅
 
-- [ ] Requisitos versionados, vínculos com WBS e evidências
-- [ ] Geração de DRP
-- [ ] Árvore de WBS com importação/exportação
+- [x] Modelos Prisma + migration `phase3_requirements_wbs`
+      (`Requirement`, `RequirementRevision`, `RequirementEvidence`, `WBSNode`,
+      `WBSVersion`)
+- [x] Requisitos versionados (toda edição gera revisão), transição de status
+      com máquina de estados, vínculo com WBS, evidências (BR-008) e regra
+      BR-015 para categoria COMPLIANCE
+- [x] Geração de DRP (§20) em `/api/v1/projects/[id]/drp` + página
+      `/projetos/[id]/requisitos` e visão global `/requisitos`
+- [x] Árvore de WBS com numeração automática, reordenação, mover, duplicar,
+      importação (merge por código, preserva payload original) e exportação
+      JSON/CSV (`/projetos/[id]/wbs`)
+- [x] Versionamento da árvore (`WBSVersion`) com snapshots
+- [x] Gate G1 passa a exigir DRP completo (§18-G1): todos os requisitos vivos
+      com critérios de aceite + responsável e ≥1 evidência, com
+      `REQUIREMENTS_INCOMPLETE` listando os bloqueios
+- [x] 16 endpoints `/api/v1` (requisitos, evidências, revisões, DRP, WBS,
+      reorder, import/export, versões, duplicar nó)
+- [x] Testes: 38 unit (motor de requisitos + motor WBS) + 29 de integração
+      (BR-008/BR-015, versionamento, G1, CRUD WBS, importação/exportação)
 
-### Fase 4 — Planejamento e Custos (E07, E08), Documentos (E09)
+### Fase 4 — Planejamento e Custos (E07, E08), Documentos (E09) 🟦
 
-- [ ] Cronograma + baseline + forecast
-- [ ] Orçamento, commitments, actuals
+**E07 Schedule ✅** (ver DIARIO 08/10 — commits locais `phase4_schedule*`):
+
+- [x] Modelos + migrations `phase4_schedule`, `phase4_schedule_baseline`,
+      `phase5_schedule_import` (Activity, Dependency, Baseline,
+      ScheduleTemplate, calendários)
+- [x] Motor de CPM com ciclo/sindependência, marcos, resumos, críticas;
+      aplicação de calendário (semana útil + feriados) e recálculo de datas
+- [x] Baseline com snapshot imutável + comparativo (pendente/atrasado/
+      adiantado); `forecastFinish` persistido
+- [x] Telas `/projetos/[id]/cronograma` (árvore, dependências, críticas,
+      baseline) e visão única `/cronograma` (item de menu habilitado)
+- [x] Importação MS Project (CSV/XML) com validação de grafo + replace-all,
+      templates de cronograma reutilizáveis (`/templates`) e aplicação de
+      calendário ao cronograma (recalcula e audita)
+- [x] Testes: 120 unit + 118 integração totais do repositório (schedule,
+      baseline, calendários, import com fixtures MS Project)
+
+**E08 Cost 🟦** — orçamento preliminar de cozinha industrial (14/10):
+
+- [x] Módulo stateless `src/modules/budget` (premissas → dimensionamento →
+      quantitativos grupos 1–15 → indiretos/reserva/BDI), memória de cálculo
+      de `memoria_calculo.txt`, tabela de preços editável com defaults
+      ilustrativos (fonte/data-base por PU)
+- [x] `POST /api/v1/budget/estimate` (`COST:CREATE`, sem persistência) +
+      tela `/orcamento` (assistente de 6 passos) + item "Orçamento de
+      cozinha" na sidebar; exportação JSON/CSV como entrada da fase de
+      orçamentação
+- [x] Testes: +24 unit (`budget-engine`, `budget-export`)
+- [ ] Commitments, actuals, forecasts, EVM (CostItem/Commitment/Actual) e
+      gate G4 — integração do `estimate` como custo estimado
+
+**E09 Documents ⬜**:
+
 - [ ] Documentos com revisão e aprovação
 
-### Fase 5+ — Releases 1→4
+### Fase 5+ — Releases 1→4 ⬜
 
 Executar épicos E10–E18 conforme prioridade de Release 1, depois Releases 2–4.
 
