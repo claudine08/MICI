@@ -9,6 +9,7 @@ import {
   type GateAction,
   type GateStatusValue,
 } from "./engine";
+import { getG1ApprovalBlocks } from "@/modules/requirements/selectors";
 
 // GateInstance (§17): por projeto, com snapshot da configuração (§15.1).
 // Transições seguem a máquina de estados (§16.3); aprovação exige critérios e
@@ -271,6 +272,20 @@ export async function transitionGate(input: TransitionGateInput) {
     );
     if (alreadyApproved) {
       throw new AppError("CONFLICT", "Você já aprovou este gate.");
+    }
+
+    // §18-G1 — aprovar "Requisitos suficientes" exige DRP completo (E04):
+    // requisitos com critério de aceite + responsável e ao menos uma evidência.
+    if (instance.definition.code === "G1") {
+      const requirementBlocks = await getG1ApprovalBlocks(
+        input.organizationId,
+        instance.projectId
+      );
+      if (requirementBlocks.length > 0) {
+        throw new AppError("REQUIREMENTS_INCOMPLETE", requirementBlocks[0].message, {
+          details: { blocks: requirementBlocks },
+        });
+      }
     }
   }
 

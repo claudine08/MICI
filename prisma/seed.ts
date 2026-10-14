@@ -4,6 +4,11 @@ import { allPermissionCodes } from "../src/core/rbac";
 import { createOrganization } from "../src/modules/identity/services";
 import { ensureDefaultGateDefinitions } from "../src/modules/gates/definitions";
 import { createProject } from "../src/modules/portfolio/projects";
+import { createWbsNode, createWbsVersion } from "../src/modules/wbs/wbs";
+import {
+  addRequirementEvidence,
+  createRequirement,
+} from "../src/modules/requirements/requirements";
 
 // Seed idempotente (§72): catálogo de permissões + organização demo + papéis +
 // usuários de demonstração + gates G0–G8 + portfólio demo (Fase 2).
@@ -163,6 +168,115 @@ async function main() {
       plannedEndDate: "2026-11-30",
     });
     console.log("[seed] projeto DEMO-001 criado (com snapshot de gates)");
+  }
+
+  // WBS + requisitos demo (Fase 3, E04/E05) — idempotente.
+  const demoProject = await prisma.project.findFirst({
+    where: { organizationId, code: "DEMO-001", deletedAt: null },
+    select: { id: true },
+  });
+  if (demoProject) {
+    const actor = {
+      organizationId,
+      actorId: founderId,
+      actorLabel: "admin@mici.demo",
+    };
+
+    const nodeCount = await prisma.wBSNode.count({
+      where: { organizationId, projectId: demoProject.id, deletedAt: null },
+    });
+    if (nodeCount === 0) {
+      const raiz = await createWbsNode({
+        ...actor,
+        projectId: demoProject.id,
+        name: "Reforma e expansão da cozinha",
+        nodeType: "SUMMARY",
+      });
+      const levantamento = await createWbsNode({
+        ...actor,
+        projectId: demoProject.id,
+        name: "Levantamento e diagnóstico",
+        parentId: raiz.id,
+        nodeType: "DELIVERABLE",
+      });
+      await createWbsNode({
+        ...actor,
+        projectId: demoProject.id,
+        name: "Medição do existente",
+        parentId: levantamento.id,
+      });
+      const projetoExecutivo = await createWbsNode({
+        ...actor,
+        projectId: demoProject.id,
+        name: "Projeto executivo",
+        parentId: raiz.id,
+        nodeType: "DELIVERABLE",
+      });
+      await createWbsNode({
+        ...actor,
+        projectId: demoProject.id,
+        name: "Projeto elétrico e HVAC",
+        parentId: projetoExecutivo.id,
+      });
+      await createWbsVersion({
+        ...actor,
+        projectId: demoProject.id,
+        note: "WBS inicial do projeto demo",
+      });
+      console.log("[seed] WBS demo criado (5 nós + versão 1)");
+    }
+
+    const requirementCount = await prisma.requirement.count({
+      where: { organizationId, projectId: demoProject.id, deletedAt: null },
+    });
+    if (requirementCount === 0) {
+      const owner = users["gerente@mici.demo"];
+      const first = await createRequirement({
+        ...actor,
+        projectId: demoProject.id,
+        description: "Capacidade de produção de 1.200 refeições/dia no pico",
+        category: "OPERATION",
+        priority: "CRITICAL",
+        acceptanceCriteria: "Teste de produção no pico aprovado pela gestão.",
+        ownerId: owner,
+        status: "ACTIVE",
+      });
+      await addRequirementEvidence({
+        ...actor,
+        requirementId: first.id,
+        label: "Relatório de teste de produção",
+      });
+
+      const compliance = await createRequirement({
+        ...actor,
+        projectId: demoProject.id,
+        description: "Adequação da instalação elétrica à NBR 5410",
+        category: "COMPLIANCE",
+        source: "NBR 5410",
+        sourceValidUntil: "2031-12-31",
+        priority: "HIGH",
+        acceptanceCriteria: "Laudo de conformidade emitido por responsável técnico.",
+        ownerId: owner,
+        status: "ACTIVE",
+      });
+      await addRequirementEvidence({
+        ...actor,
+        requirementId: compliance.id,
+        label: "Laudo de conformidade elétrica",
+      });
+
+      await createRequirement({
+        ...actor,
+        projectId: demoProject.id,
+        description: "Ventilação e conforto térmico na área de produção",
+        category: "BUILDING",
+        priority: "MEDIUM",
+        acceptanceCriteria: "Medições de temperatura e vazão dentro do projeto.",
+        ownerId: owner,
+        status: "DRAFT",
+      });
+      console.log("[seed] requisitos demo criados (3 + evidências)");
+    }
   }
 
   console.log("[seed] concluído.");

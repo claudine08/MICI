@@ -1,9 +1,10 @@
 // MICI SaaS — Prisma schema
 // Fase 0: Foundation + Identity/Tenancy
 // Fase 2: Portfólio (Client/Project/Template) + Gates (E03, E06, BR-001/002)
+// Fase 3: Requisitos/DRP (E04) + WBS (E05) — BR-008, BR-015, §20, §74
 // Referências: §10 (tenancy), §13 (identidade das entidades), §14 (projeto),
-// §15.1 (snapshot de clonagem), §17 (gates), §54 (auditoria), §58 (tabelas),
-// §59 (integridade de dados), ADR-009 (outbox), Anexo F.
+// §15.1 (snapshot de clonagem), §17 (gates), §20 (DRP), §54 (auditoria),
+// §58 (tabelas), §59 (integridade de dados), §74 (WBS), ADR-009 (outbox), Anexo F.
 
 generator client {
   provider = "prisma-client"
@@ -84,6 +85,106 @@ enum GateStatus {
   @@map("gate_status")
 }
 
+// Blocos A–F do levantamento de F1 (§20).
+enum RequirementCategory {
+  OPERATION
+  EQUIPMENT
+  BUILDING
+  ENGINEERING
+  COMPLIANCE
+  SUSTAINABILITY
+
+  @@map("requirement_category")
+}
+
+enum RequirementPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("requirement_priority")
+}
+
+enum RequirementStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+
+  @@map("requirement_status")
+}
+
+enum WbsNodeType {
+  SUMMARY
+  DELIVERABLE
+  WORK_PACKAGE
+
+  @@map("wbs_node_type")
+}
+
+enum WbsVersionSource {
+  MANUAL
+  IMPORT
+
+  @@map("wbs_version_source")
+}
+
+// Cronograma (E07, §27).
+enum ActivityType {
+  TASK
+  MILESTONE
+  SUMMARY
+
+  @@map("activity_type")
+}
+
+enum ActivityStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+
+  @@map("activity_status")
+}
+
+enum DependencyType {
+  FS
+  SS
+  FF
+  SF
+
+  @@map("dependency_type")
+}
+
+enum ProgressMethod {
+  PERCENT_COMPLETE
+  PHYSICAL
+  UNITS
+
+  @@map("progress_method")
+}
+
+// Baselines (E07-US04, §28).
+enum BaselineType {
+  SCOPE
+  SCHEDULE
+  COST
+  SUSTAINABILITY
+
+  @@map("baseline_type")
+}
+
+enum BaselineStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  SUPERSEDED
+
+  @@map("baseline_status")
+}
+
 // ---------------------------------------------------------------------------
 // Identity / Tenancy
 // ---------------------------------------------------------------------------
@@ -111,6 +212,8 @@ model Organization {
   projectTemplates ProjectTemplate[]
   projects    Project[]
   gateDefinitions  GateDefinition[]
+  projectCalendars ProjectCalendar[]
+  scheduleTemplates ScheduleTemplate[]
 
   @@index([status])
   @@map("organizations")
@@ -403,6 +506,13 @@ model Project {
   client         Client?         @relation(fields: [clientId], references: [id])
   template       ProjectTemplate? @relation(fields: [projectTemplateId], references: [id])
   gateInstances  GateInstance[]
+  requirements   Requirement[]
+  wbsNodes       WBSNode[]
+  wbsVersions    WBSVersion[]
+  projectCalendars ProjectCalendar[]
+  scheduleActivities ScheduleActivity[]
+  scheduleDependencies ScheduleDependency[]
+  baselines       Baseline[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -542,4 +652,306 @@ model GateApproval {
 
   @@index([gateInstanceId])
   @@map("gate_approvals")
+}
+
+// ---------------------------------------------------------------------------
+// Requisitos / DRP (E04, §20, BR-008, BR-015)
+// Campos do DRP (§20): code, description, category, source, priority, owner,
+// acceptance_criteria, required_evidence, status, wbs_node_id, document_links,
+// last_reviewed_at, revision. Toda edição cria uma RequirementRevision.
+// ---------------------------------------------------------------------------
+
+model Requirement {
+  id                String              @id @default(uuid()) @db.Uuid
+  organizationId    String              @map("organization_id") @db.Uuid
+  projectId         String              @map("project_id") @db.Uuid
+  code              String              @db.VarChar(32)
+  description       String
+  category          RequirementCategory @default(OPERATION)
+  source            String?             @db.VarChar(300)
+  sourceValidUntil  DateTime?           @map("source_valid_until") @db.Date
+  priority          RequirementPriority @default(MEDIUM)
+  ownerId           String?             @map("owner_id") @db.Uuid
+  acceptanceCriteria String?            @map("acceptance_criteria")
+  requiredEvidence  String?             @map("required_evidence")
+  status            RequirementStatus   @default(DRAFT)
+  wbsNodeId         String?             @map("wbs_node_id") @db.Uuid
+  documentLinks     Json                @default("[]") @map("document_links")
+  lastReviewedAt    DateTime?           @map("last_reviewed_at")
+  revision          Int                 @default(1)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project   Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode   WBSNode?             @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  revisions RequirementRevision[]
+  evidences RequirementEvidence[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, status])
+  @@index([organizationId, wbsNodeId])
+  @@map("requirements")
+}
+
+// Histórico imutável (append-only) — uma linha por revisão do requisito.
+model RequirementRevision {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  requirementId  String  @map("requirement_id") @db.Uuid
+  revision       Int
+  snapshot       Json
+  changeSummary  String? @map("change_summary") @db.VarChar(300)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by") @db.Uuid
+
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@unique([requirementId, revision])
+  @@index([organizationId, createdAt])
+  @@map("requirement_revisions")
+}
+
+model RequirementEvidence {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  requirementId  String  @map("requirement_id") @db.Uuid
+  label          String  @db.VarChar(200)
+  url            String? @db.VarChar(500)
+  createdBy      String? @map("created_by") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@index([requirementId])
+  @@map("requirement_evidences")
+}
+
+// ---------------------------------------------------------------------------
+// WBS (E05, §74): árvore por projeto com ordenação entre irmãos, operações de
+// mover/reordenar/duplicar/importar/exportar e versionamento da estrutura.
+// ---------------------------------------------------------------------------
+
+model WBSNode {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  projectId      String      @map("project_id") @db.Uuid
+  parentId       String?     @map("parent_id") @db.Uuid
+  code           String      @db.VarChar(32)
+  name           String      @db.VarChar(200)
+  description    String?
+  nodeType       WbsNodeType @default(WORK_PACKAGE) @map("node_type")
+  orderIndex     Int         @default(0) @map("order_index")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent       WBSNode?      @relation("WbsTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     WBSNode[]     @relation("WbsTree")
+  requirements Requirement[]
+  scheduleActivities ScheduleActivity[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId, parentId])
+  @@index([organizationId, projectId, orderIndex])
+  @@map("wbs_nodes")
+}
+
+// Snapshot da árvore (E05-US05). Em importações preserva o payload original
+// (§0.1 regra 18) em rawPayload — permite auditar e restaurar o arquivo enviado.
+model WBSVersion {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  projectId      String           @map("project_id") @db.Uuid
+  version        Int
+  source         WbsVersionSource @default(MANUAL)
+  note           String?
+  snapshot       Json
+  rawPayload     Json?            @map("raw_payload")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by") @db.Uuid
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, version])
+  @@index([organizationId, projectId])
+  @@map("wbs_versions")
+}
+
+// ---------------------------------------------------------------------------
+// Cronograma (E07, §27): atividades, dependências FS/SS/FF/SF com lag/lead,
+// calendário de trabalho e caminho crítico. `critical`/`total_float` são
+// DERIVADOS: sempre recalculados pelo motor CPM antes de persistidos (§27).
+// Baseline (E07-US04) e forecast (E07-US05) ficam na fatia seguinte.
+// ---------------------------------------------------------------------------
+
+model ProjectCalendar {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String?  @map("project_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  name           String   @db.VarChar(120)
+  // Dias úteis da semana (0=domingo…6=sábado) e feriados em AAAA-MM-DD.
+  workingWeek    Json     @default("[1,2,3,4,5]") @map("working_week")
+  holidays       Json     @default("[]")
+  isDefault      Boolean  @default(false) @map("is_default")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  activities   ScheduleActivity[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, projectId])
+  @@map("project_calendars")
+}
+
+model ScheduleActivity {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  projectId      String         @map("project_id") @db.Uuid
+  wbsNodeId      String?        @map("wbs_node_id") @db.Uuid
+  calendarId     String?        @map("calendar_id") @db.Uuid
+  code           String         @db.VarChar(32)
+  name           String         @db.VarChar(200)
+  description    String?
+  activityType   ActivityType   @default(TASK) @map("activity_type")
+  duration       Int            @default(1)
+  plannedStart   DateTime?      @map("planned_start") @db.Date
+  plannedFinish  DateTime?      @map("planned_finish") @db.Date
+  actualStart    DateTime?      @map("actual_start") @db.Date
+  actualFinish   DateTime?      @map("actual_finish") @db.Date
+  forecastStart  DateTime?      @map("forecast_start") @db.Date
+  forecastFinish DateTime?      @map("forecast_finish") @db.Date
+  progressMethod ProgressMethod @default(PERCENT_COMPLETE) @map("progress_method")
+  physicalProgress Int          @default(0) @map("physical_progress")
+  critical       Boolean        @default(false)
+  totalFloat     Int?
+  status         ActivityStatus @default(NOT_STARTED)
+  orderIndex     Int            @default(0) @map("order_index")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode    WBSNode?        @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  calendar   ProjectCalendar? @relation(fields: [calendarId], references: [id], onDelete: SetNull)
+  predecessorOf ScheduleDependency[] @relation("DependencyPredecessor")
+  successorOf   ScheduleDependency[] @relation("DependencySuccessor")
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, orderIndex])
+  @@map("schedule_activities")
+}
+
+model ScheduleDependency {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  projectId      String         @map("project_id") @db.Uuid
+  predecessorId  String         @map("predecessor_id") @db.Uuid
+  successorId    String         @map("successor_id") @db.Uuid
+  type           DependencyType @default(FS)
+  lag            Int            @default(0)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  predecessor ScheduleActivity @relation("DependencyPredecessor", fields: [predecessorId], references: [id], onDelete: Cascade)
+  successor   ScheduleActivity @relation("DependencySuccessor", fields: [successorId], references: [id], onDelete: Cascade)
+
+  @@unique([predecessorId, successorId])
+  @@index([organizationId, projectId])
+  @@index([successorId])
+  @@map("schedule_dependencies")
+}
+
+// E07-US04 (§28): snapshot imutável do projeto em um momento.
+// APROVED é imutável — exclusão/alteração exige fluxo de mudança (E11).
+model Baseline {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  projectId      String         @map("project_id") @db.Uuid
+  type           BaselineType   @default(SCHEDULE)
+  version        Int
+  status         BaselineStatus @default(DRAFT)
+
+  // Snapshot do dado no momento da captura (atividades + dependências,
+  // versão completa e desacoplada do estado atual do projeto).
+  snapshot Json
+
+  reason String? @db.Text
+
+  approvedAt DateTime? @map("approved_at")
+  approvedBy String?   @map("approved_by") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, type, version])
+  @@index([organizationId, projectId, type])
+  @@map("baselines")
+}
+
+// Cronogramas reutilizáveis (E07 import): arquivo MS Project (CSV/XML)
+// salvo como template. `snapshot` guarda o ParsedSchedule normalizado —
+// atividades + dependências prontas para aplicar em qualquer projeto.
+model ScheduleTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  name           String   @db.VarChar(200)
+  description    String?
+  sourceFormat   String   @map("source_format") @db.VarChar(8)
+  sourceFilename String?  @map("source_filename") @db.VarChar(200)
+  activityCount  Int      @default(0) @map("activity_count")
+  dependencyCount Int      @default(0) @map("dependency_count")
+  snapshot       Json
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, code])
+  @@index([organizationId, name])
+  @@map("schedule_templates")
 }
