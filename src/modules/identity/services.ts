@@ -35,6 +35,25 @@ export async function createOrganization(input: CreateOrganizationInput) {
     throw new AppError("VALIDATION_ERROR", "Nome não gera um slug válido. Informe um slug.");
   }
 
+  // O JWT continua válido mesmo após o usuário ser removido/desativado ou o
+  // banco ser trocado/resetado. Sem esta checagem, o bootstrap inteiro roda e o
+  // FK organization_memberships_user_id estoura como 500 depois de ~9s.
+  const actor = await prisma.user.findUnique({
+    where: { id: input.actorId },
+    select: { id: true, status: true, deletedAt: true },
+  });
+  if (!actor) {
+    // O id do token não existe neste banco: sessão emitida contra outro
+    // banco/reset. Não é "sessão expirada" — o usuário só precisa logar de novo.
+    throw new AppError(
+      "SESSION_USER_NOT_FOUND",
+      "Sua sessão não corresponde a este banco de dados. Saia e entre novamente."
+    );
+  }
+  if (actor.deletedAt || actor.status !== "ACTIVE") {
+    throw new AppError("FORBIDDEN", "Usuário desativado. Contate o administrador.");
+  }
+
   const existing = await prisma.organization.findUnique({ where: { slug } });
   if (existing) {
     throw new AppError("CONFLICT", `Slug "${slug}" já está em uso.`);
@@ -72,25 +91,39 @@ export async function createOrganization(input: CreateOrganizationInput) {
       }
 
       // 18 papéis do sistema por organização, com grants da matriz RBAC.
-      const roleIdByCode = new Map<string, string>();
-      for (const roleCode of ROLE_CODES) {
-        const codes = expandRolePermissions(roleCode);
-        const role = await tx.role.create({
-          data: {
-            organizationId: organization.id,
-            code: roleCode,
-            name: roleCode,
-            isSystem: true,
-            permissions: {
-              create: codes.map((code) => ({
-                permissionId: permissionIds.get(code)!,
-              })),
-            },
-          },
-          select: { id: true },
-        });
-        roleIdByCode.set(roleCode, role.id);
-      }
+      // Em lote: o create um-a-um (18 inserts + nested) dominava os ~50 round
+      // trips de rede que deixavam este endpoint com ~14s no Neon.
+      await tx.role.createMany({
+        data: ROLE_CODES.map((roleCode) => ({
+          organizationId: organization.id,
+          code: roleCode,
+          name: roleCode,
+          isSystem: true,
+        })),
+        skipDuplicates: true,
+      });
+      const roleRows = await tx.role.findMany({
+        where: { organizationId: organization.id },
+        select: { id: true, code: true },
+      });
+      const roleIdByCode = new Map(roleRows.map((role) => [role.code, role.id]));
+
+      await tx.rolePermission.createMany({
+        data: ROLE_CODES.flatMap((roleCode) => {
+          const roleId = roleIdByCode.get(roleCode);
+          if (!roleId) {
+            throw new Error(`Papel do sistema "${roleCode}" ausente após criação em lote.`);
+          }
+          return expandRolePermissions(roleCode).map((code) => {
+            const permissionId = permissionIds.get(code);
+            if (!permissionId) {
+              throw new Error(`Permissão "${code}" ausente do catálogo.`);
+            }
+            return { roleId, permissionId };
+          });
+        }),
+        skipDuplicates: true,
+      });
 
       // Fundador vira ADMIN.
       const membership = await tx.organizationMembership.create({

@@ -46,9 +46,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user?.id) token.userId = user.id;
       return token;
     },
-    session: ({ session, token }) => {
+    session: async ({ session, token }) => {
       if (token.userId && typeof token.userId === "string") {
-        session.user.id = token.userId;
+        // Revalida o id do JWT contra o banco: a sessão é stateless (7 dias) e
+        // sobrevive a reset/troca de banco, deixando um userId huérfano. Sem
+        // isto, a página de seleção de organização mostra "Olá, {nome}" com uma
+        // sessão que o backend rejeita. Id inválido => sem session.user.id =>
+        // redirect("/entrar") ou 401 nos handlers de API.
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: token.userId },
+            select: { status: true, deletedAt: true },
+          });
+          if (user && !user.deletedAt && user.status === "ACTIVE") {
+            session.user.id = token.userId;
+          }
+        } catch (error) {
+          // O Auth.js embrulha QUALQUER erro lançado neste callback como
+          // JWTSessionError opaco (ex.: Postgres fora do ar, userId não-UUID),
+          // mascarando a causa real. Degrada para "sem sessão" e registra o
+          // motivo verdadeiro.
+          console.warn(
+            "[auth] Falha ao validar a sessão no banco; tratando como não autenticado:",
+            error instanceof Error ? error.message : error
+          );
+        }
       }
       return session;
     },

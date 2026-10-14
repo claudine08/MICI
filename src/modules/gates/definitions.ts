@@ -184,42 +184,60 @@ export const DEFAULT_GATE_DEFINITIONS: DefaultGateDefinition[] = [
 ];
 
 // Idempotente: cria os gates oficiais da organização se ainda não existirem.
+// Tudo em lote (4 consultas; antes eram ~27): cada round trip de rede é
+// multiplicado pela transação de bootstrap da organização.
 export async function ensureDefaultGateDefinitions(
   db: Db,
   organizationId: string,
   actorId: string
 ): Promise<void> {
-  for (const definition of DEFAULT_GATE_DEFINITIONS) {
-    const existing = await db.gateDefinition.findFirst({
-      where: { organizationId, code: definition.code, deletedAt: null },
-      select: { id: true },
-    });
-    if (existing) continue;
-    await db.gateDefinition.create({
-      data: {
-        organizationId,
-        code: definition.code,
-        name: definition.name,
-        description: definition.description,
-        phase: definition.phase,
-        required: true,
-        requiresEvidence: true,
-        minimumApprovals: 1,
-        orderIndex: Number(definition.code.slice(1)),
-        isSystem: true,
-        createdBy: actorId,
-        updatedBy: actorId,
-        criteria: {
-          create: definition.criteria.map((text, index) => ({
-            code: `C${index + 1}`,
-            description: text,
-            required: true,
-            orderIndex: index,
-          })),
-        },
-      },
-    });
+  const existing = await db.gateDefinition.findMany({
+    where: { organizationId, deletedAt: null },
+    select: { code: true },
+  });
+  const existingCodes = new Set(existing.map((definition) => definition.code));
+  const missing = DEFAULT_GATE_DEFINITIONS.filter(
+    (definition) => !existingCodes.has(definition.code)
+  );
+  if (missing.length === 0) return;
+
+  await db.gateDefinition.createMany({
+    data: missing.map((definition) => ({
+      organizationId,
+      code: definition.code,
+      name: definition.name,
+      description: definition.description,
+      phase: definition.phase,
+      required: true,
+      requiresEvidence: true,
+      minimumApprovals: 1,
+      orderIndex: Number(definition.code.slice(1)),
+      isSystem: true,
+      createdBy: actorId,
+      updatedBy: actorId,
+    })),
+  });
+
+  const created = await db.gateDefinition.findMany({
+    where: { organizationId, code: { in: missing.map((definition) => definition.code) } },
+    select: { id: true, code: true },
+  });
+  const idByCode = new Map(created.map((definition) => [definition.code, definition.id]));
+  if (idByCode.size !== missing.length) {
+    throw new Error("Gate definitions ausentes após criação em lote.");
   }
+
+  await db.gateCriterion.createMany({
+    data: missing.flatMap((definition) =>
+      definition.criteria.map((text, index) => ({
+        gateDefinitionId: idByCode.get(definition.code)!,
+        code: `C${index + 1}`,
+        description: text,
+        required: true,
+        orderIndex: index,
+      }))
+    ),
+  });
 }
 
 export interface GateDefinitionRow {

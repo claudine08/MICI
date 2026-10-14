@@ -50,3 +50,16 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# artefatos locais de debug/sessao (nao versionar)
+/*.log
+/_check_db*.ts
+/jar.txt
+/aderencia.txt
+/Descritivo_vaga.docx
+/org.html
+/org_error.png
+/req.html
+/projreq.html
+/template_cronograma_cozinha_industrial.csv
+/template_cronograma_cozinha_industrial.xml
