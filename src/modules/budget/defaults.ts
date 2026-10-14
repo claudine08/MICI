@@ -1,0 +1,422 @@
+// defaults.ts — valores de partida da calculadora de cozinha industrial.
+// Todos os preços e índices marcados como "ilustrativos" são premissas de
+// referência para o estudo preliminar: devem ser substituídos por cotação
+// local, SINAPI ou composição própria antes da aprovação (memoria_calculo §6/§9).
+
+import {
+  premissasSchema,
+  type Ambiente,
+  type Equipamento,
+  type Preco,
+  type Preparacao,
+  type Premissas,
+  type UsoAgua,
+} from "./schemas";
+
+export const BUDGET_SCHEMA_VERSION = "1.0.0";
+
+// §5/§6 — índices de projeto usados para quantitativos preliminares.
+// Ficam explícitos no output para rastreabilidade (camada 4 da metodologia).
+export const FATORES = {
+  fatorSimultaneidadeEletrica: 0.7,
+  fatorSimultaneidadeGas: 0.6,
+  vazaoEspecificaExaustaoM3hPorM2: 40,
+  cargaTermicaWPorM2: { PADRAO: 180, ALTO: 220 } as Record<string, number>,
+  fatorParedeSobrePiso: 1.6,
+  percentualAreaUmida: 0.25,
+  fatorDemolicaoPorIntervencao: { CONSTRUCAO_NOVA: 0, ADAPTACAO: 0.6, REFORMA: 1 } as Record<
+    string,
+    number
+  >,
+  diasEstoqueRefrigerados: 2,
+  fatorVolumetricoLPorKg: 1.3,
+  fatorUtensiliosPorRefeicao: 0.15,
+  rotasInternasPorDia: 3,
+  comprimentoRedeGasMPorM2: 0.15,
+  pontosHidraulicosPorM2: 1 / 25,
+  fatorEsgotoSobreAgua: 0.9,
+} as const;
+
+export const GRUPOS_ORCAMENTO: Record<number, string> = {
+  1: "Projetos e serviços técnicos",
+  2: "Preparação do local",
+  3: "Obras civis",
+  4: "Instalação elétrica",
+  5: "Instalações hidráulicas",
+  6: "Gás e segurança",
+  7: "Exaustão e ventilação",
+  8: "Refrigeração",
+  9: "Equipamentos de cozinha",
+  10: "Mobiliário e acessórios",
+  11: "Sistemas complementares",
+  12: "Comissionamento",
+  13: "Custos indiretos",
+  14: "Reservas e riscos",
+  15: "Tributos e BDI",
+};
+
+export function defaultPremissas(): Premissas {
+  return premissasSchema.parse({});
+}
+
+// Cardápio de partida para 2.000 refeições/dia (editável na tela).
+export function defaultCardapio(): Preparacao[] {
+  return [
+    {
+      codigo: "PREP-01",
+      nome: "Arroz",
+      porcaoProntaG: 150,
+      quantidadeRefeicoes: 2000,
+      fatorRendimento: 1.15,
+      grupo: "PRAATO_FUNDAMENTO",
+    },
+    {
+      codigo: "PREP-02",
+      nome: "Feijão",
+      porcaoProntaG: 100,
+      quantidadeRefeicoes: 2000,
+      fatorRendimento: 1.2,
+      grupo: "PRAATO_FUNDAMENTO",
+    },
+    {
+      codigo: "PREP-03",
+      nome: "Carne / proteína",
+      porcaoProntaG: 90,
+      quantidadeRefeicoes: 2000,
+      fatorRendimento: 1.25,
+      grupo: "CARNE_OU_PROTEINA",
+    },
+    {
+      codigo: "PREP-04",
+      nome: "Guarnição",
+      porcaoProntaG: 80,
+      quantidadeRefeicoes: 2000,
+      fatorRendimento: 1.15,
+      grupo: "GUARNICAO",
+    },
+    {
+      codigo: "PREP-05",
+      nome: "Salada",
+      porcaoProntaG: 60,
+      quantidadeRefeicoes: 2000,
+      fatorRendimento: 1.1,
+      grupo: "SALADA",
+    },
+    {
+      codigo: "PREP-06",
+      nome: "Sobremesa",
+      porcaoProntaG: 100,
+      quantidadeRefeicoes: 1000,
+      fatorRendimento: 1,
+      grupo: "SOBREMESA",
+    },
+  ];
+}
+
+// Catálogo de equipamentos por família — capacidades nominais ilustrativas.
+export function defaultEquipamentos(): Equipamento[] {
+  return [
+    {
+      codigo: "COC-01",
+      familia: "COCCAO",
+      descricao: "Fogão industrial 6 bocas com caldeirão 110 L",
+      capacidadeUtil: 40,
+      unidadeCapacidade: "KG",
+      cicloMin: 60,
+      potenciaKW: 21,
+      consumoGasKW: 21,
+      demandaDia: null,
+      precoUnitario: 12000,
+      percentualFrete: 4,
+      percentualInstalacao: 6,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "COC-02",
+      familia: "COCCAO",
+      descricao: "Fritadeira basculante 2 × 20 L",
+      capacidadeUtil: 12,
+      unidadeCapacidade: "KG",
+      cicloMin: 30,
+      potenciaKW: 12,
+      consumoGasKW: 12,
+      demandaDia: null,
+      precoUnitario: 9000,
+      percentualFrete: 4,
+      percentualInstalacao: 6,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "FRN-01",
+      familia: "FORNO",
+      descricao: "Forno combinado 10 bandejas GN 1/1",
+      capacidadeUtil: 30,
+      unidadeCapacidade: "KG",
+      cicloMin: 45,
+      potenciaKW: 18,
+      consumoGasKW: 18,
+      demandaDia: null,
+      precoUnitario: 35000,
+      percentualFrete: 4,
+      percentualInstalacao: 6,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "PRP-01",
+      familia: "PREPARO",
+      descricao: "Descascador de raízes 20 kg/ciclo",
+      capacidadeUtil: 20,
+      unidadeCapacidade: "KG",
+      cicloMin: 15,
+      potenciaKW: 0.75,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 4500,
+      percentualFrete: 4,
+      percentualInstalacao: 4,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "PRP-02",
+      familia: "PREPARO",
+      descricao: "Processador de alimentos 30 kg/h",
+      capacidadeUtil: 30,
+      unidadeCapacidade: "KG",
+      cicloMin: null,
+      potenciaKW: 1.5,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 8000,
+      percentualFrete: 4,
+      percentualInstalacao: 4,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "LAV-01",
+      familia: "LAVAGEM",
+      descricao: "Lavadora de louças 2 cestos (3 min/ciclo)",
+      capacidadeUtil: 2,
+      unidadeCapacidade: "REFEICAO",
+      cicloMin: 3,
+      potenciaKW: 9,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 25000,
+      percentualFrete: 4,
+      percentualInstalacao: 8,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "REF-01",
+      familia: "REFRIGERACAO",
+      descricao: "Câmara frigorífica 12 m³ (positiva)",
+      capacidadeUtil: 12000,
+      unidadeCapacidade: "LITRO",
+      cicloMin: null,
+      potenciaKW: 2.2,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 45000,
+      percentualFrete: 4,
+      percentualInstalacao: 10,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "REF-02",
+      familia: "REFRIGERACAO",
+      descricao: "Geladeira vertical 600 L",
+      capacidadeUtil: 600,
+      unidadeCapacidade: "LITRO",
+      cicloMin: null,
+      potenciaKW: 0.5,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 6000,
+      percentualFrete: 4,
+      percentualInstalacao: 4,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "DIS-01",
+      familia: "DISTRIBUICAO",
+      descricao: "Balcão térmico 200 refeições",
+      capacidadeUtil: 200,
+      unidadeCapacidade: "REFEICAO",
+      cicloMin: null,
+      potenciaKW: 3,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 18000,
+      percentualFrete: 4,
+      percentualInstalacao: 4,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "EXA-01",
+      familia: "EXAUSTAO",
+      descricao: "Coifa de exaustão 2,4 × 1,4 m",
+      capacidadeUtil: 3.36,
+      unidadeCapacidade: "M2",
+      cicloMin: null,
+      potenciaKW: 0,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 7500,
+      percentualFrete: 4,
+      percentualInstalacao: 8,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "EXA-02",
+      familia: "EXAUSTAO",
+      descricao: "Ventilador exaustor 6.000 m³/h",
+      capacidadeUtil: 6000,
+      unidadeCapacidade: "M3H",
+      cicloMin: null,
+      potenciaKW: 3,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 9000,
+      percentualFrete: 4,
+      percentualInstalacao: 10,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "BAN-01",
+      familia: "BANCADA",
+      descricao: "Mesa de preparo inox 1,8 m (atende 0,6 m²)",
+      capacidadeUtil: 0.6,
+      unidadeCapacidade: "M2",
+      cicloMin: null,
+      potenciaKW: 0,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 2200,
+      percentualFrete: 4,
+      percentualInstalacao: 0,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "TRA-01",
+      familia: "TRANSPORTE",
+      descricao: "Carro de transporte 4 níveis (150 refeições)",
+      capacidadeUtil: 150,
+      unidadeCapacidade: "REFEICAO",
+      cicloMin: null,
+      potenciaKW: 0,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 2500,
+      percentualFrete: 4,
+      percentualInstalacao: 0,
+      quantidadeManual: null,
+    },
+    {
+      codigo: "TRA-02",
+      familia: "TRANSPORTE",
+      descricao: "Estante inox 5 prateleiras (300 L)",
+      capacidadeUtil: 300,
+      unidadeCapacidade: "LITRO",
+      cicloMin: null,
+      potenciaKW: 0,
+      consumoGasKW: 0,
+      demandaDia: null,
+      precoUnitario: 1800,
+      percentualFrete: 4,
+      percentualInstalacao: 0,
+      quantidadeManual: null,
+    },
+  ];
+}
+
+// Programa de necessidades (§3.1) para cozinha de 2.000 refeições/dia.
+export function defaultAmbientes(): Ambiente[] {
+  return [
+    { codigo: "AMB-REC", nome: "Recebimento e armazenamento", areaM2: 45 },
+    { codigo: "AMB-CAM", nome: "Câmaras frias", areaM2: 20 },
+    { codigo: "AMB-PRE", nome: "Pré-preparo", areaM2: 40 },
+    { codigo: "AMB-COC", nome: "Cocção e finalização", areaM2: 60 },
+    { codigo: "AMB-DIS", nome: "Distribuição e montagem", areaM2: 30 },
+    { codigo: "AMB-LAV", nome: "Lavagem de louças e utensílios", areaM2: 25 },
+    { codigo: "AMB-APO", nome: "Vestiários, sanitários e apoio", areaM2: 35 },
+    { codigo: "AMB-CIR", nome: "Circulações", areaM2: 45 },
+  ];
+}
+
+// Consumos de água por processo (§5.3) — vazões ilustrativas.
+export function defaultUsosAgua(): UsoAgua[] {
+  return [
+    {
+      codigo: "AG-01",
+      descricao: "Higienização de alimentos",
+      vazaoLmin: 20,
+      minutosPorOcorrencia: 40,
+      ocorrenciasDia: 4,
+    },
+    {
+      codigo: "AG-02",
+      descricao: "Cocção (caldeirões e fornos)",
+      vazaoLmin: 15,
+      minutosPorOcorrencia: 60,
+      ocorrenciasDia: 3,
+    },
+    {
+      codigo: "AG-03",
+      descricao: "Lavagem de louças e utensílios",
+      vazaoLmin: 25,
+      minutosPorOcorrencia: 90,
+      ocorrenciasDia: 3,
+    },
+    {
+      codigo: "AG-04",
+      descricao: "Limpeza de piso e áreas",
+      vazaoLmin: 18,
+      minutosPorOcorrencia: 45,
+      ocorrenciasDia: 3,
+    },
+    {
+      codigo: "AG-05",
+      descricao: "Sanitários e vestiários",
+      vazaoLmin: 12,
+      minutosPorOcorrencia: 60,
+      ocorrenciasDia: 3,
+    },
+  ];
+}
+
+// PU de referência ilustrativa por código de quantitativo (§6).
+// Origem declarada em `fonte`; substituir por cotação local/SINAPI.
+const FONTE_ILUSTRATIVA = "Referência ilustrativa — substituir por cotação local/SINAPI";
+
+export function defaultTabelaPrecos(): Preco[] {
+  const base = "2026-10";
+  const linhas: Array<Omit<Preco, "fonte" | "dataBase">> = [
+    { codigo: "G1-PROJ-CIVIL", descricao: "Projeto de arquitetura e obras civis", unidade: "m²", pu: 120 },
+    { codigo: "G1-PROJ-ELET", descricao: "Projeto elétrico", unidade: "kW", pu: 350 },
+    { codigo: "G1-PROJ-HIDR", descricao: "Projeto hidrossanitário", unidade: "m²", pu: 45 },
+    { codigo: "G1-PROJ-GAS", descricao: "Projeto de gás", unidade: "kW", pu: 280 },
+    { codigo: "G1-PROJ-EXA", descricao: "Projeto de exaustão (ABNT NBR 14518)", unidade: "m³/h", pu: 45 },
+    { codigo: "G1-PROJ-CLIM", descricao: "Projeto de climatização", unidade: "kW", pu: 900 },
+    { codigo: "G2-DEM-LOCAL", descricao: "Demolições e remoções", unidade: "m²", pu: 95 },
+    { codigo: "G2-MOB", descricao: "Mobilização e proteções", unidade: "un", pu: 4500 },
+    { codigo: "G3-PISO", descricao: "Piso vinílico antiderrapante para cozinha", unidade: "m²", pu: 210 },
+    { codigo: "G3-PAREDE", descricao: "Revestimento de parede (aplicação a partir do layout)", unidade: "m²", pu: 180 },
+    { codigo: "G3-TETO", descricao: "Teto em PVC/ACM lavável", unidade: "m²", pu: 160 },
+    { codigo: "G3-IMPERM", descricao: "Impermeabilização de áreas úmidas", unidade: "m²", pu: 95 },
+    { codigo: "G3-PORTA", descricao: "Portas inox/bruto-higiênico", unidade: "un", pu: 3200 },
+    { codigo: "G4-ELET-FORCA", descricao: "Instalação elétrica de força", unidade: "kW", pu: 850 },
+    { codigo: "G4-ELET-ILUM", descricao: "Iluminação e pontos auxiliares", unidade: "m²", pu: 120 },
+    { codigo: "G5-HID-AGUA", descricao: "Rede de água fria e quente", unidade: "m³/dia", pu: 1800 },
+    { codigo: "G5-HID-ESGOTO", descricao: "Rede de esgoto e drenagem", unidade: "m³/dia", pu: 1500 },
+    { codigo: "G5-HID-PONTOS", descricao: "Pontos de descarga, ralos e caixas", unidade: "un", pu: 850 },
+    { codigo: "G6-GAS-REDE", descricao: "Tubulação e conexões de gás", unidade: "m", pu: 320 },
+    { codigo: "G6-GAS-SEG", descricao: "Reguladores, válvulas, ensaios e liberação", unidade: "un", pu: 4800 },
+    { codigo: "G7-EXA-INST", descricao: "Dutos, suportes, filtros e balanceamento", unidade: "m³/h", pu: 420 },
+    { codigo: "G7-EXA-ARBAL", descricao: "Ar de reposição", unidade: "m²", pu: 85 },
+    { codigo: "G8-REF-INST", descricao: "Instalação de câmara fria (isolamento e máquina)", unidade: "un", pu: 12500 },
+    { codigo: "G11-AUT", descricao: "Automação/monitoramento de processo", unidade: "un", pu: 18000 },
+    { codigo: "G12-COM-TEST", descricao: "Testes, regulagens e comissionamento", unidade: "un", pu: 9500 },
+    { codigo: "G12-COM-TREIN", descricao: "Treinamento e documentação de entrega", unidade: "un", pu: 6500 },
+  ];
+  return linhas.map((linha) => ({ ...linha, fonte: FONTE_ILUSTRATIVA, dataBase: base }));
+}

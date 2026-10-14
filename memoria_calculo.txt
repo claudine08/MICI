@@ -1,0 +1,390 @@
+Como um arquiteto e engenheiro calculam o custo de implantação de uma cozinha industrial para 2.000 refeições por dia
+O orçamento profissional de uma cozinha industrial não começa pela metragem quadrada nem por um valor genérico de custo por refeição. Ele começa pelo programa de necessidades, pela capacidade de produção, pelo processo operacional e pelos projetos das instalações.
+A RDC Anvisa nº 216/2004 determina que as instalações sejam dimensionadas de acordo com as operações e organizadas para permitir fluxos adequados de preparação dos alimentos. Portanto, duas cozinhas que produzem 2.000 refeições por dia podem ter custos bastante diferentes, dependendo do cardápio, do sistema de distribuição, dos horários de pico, do imóvel e das condições existentes. 
+
+RDC nº 216, de 15/09/2004
+
+
+
+Vou detalhar como esse cálculo é estruturado na prática, usando uma cozinha hipotética de 2.000 refeições/dia como exemplo. Os números de capacidade que dependem das decisões operacionais serão identificados como premissas ilustrativas, e não como exigências normativas.
+1. Primeiro: definir exatamente o que será construído
+Antes de calcular custos, a equipe de arquitetura, engenharia e operações precisa levantar os dados que definem o projeto.
+Informação	Por que é necessária
+2.000 refeições/dia	Define a capacidade diária de produção
+Refeições por turno	Define o ritmo necessário de produção e distribuição
+Cardápio e fichas técnicas	Define equipamentos, processos e consumo de utilidades
+Tipo de serviço	Refeitório, marmitas, hospital, escola, restaurante corporativo etc.
+Produção	Alimentos preparados no local ou parcialmente recebidos prontos
+Imóvel	Construção nova, reforma ou adaptação
+Equipamentos	Tipos, capacidades, combustíveis e requisitos de instalação
+Condições locais	Água, esgoto, energia, gás, exaustão e exigências de aprovação
+Nível de acabamento	Define os materiais, revestimentos e sistemas construtivos
+Localização da obra	Influencia mão de obra, frete, fornecedores e custos de referência
+Distinção importante: produzir 2.000 refeições por dia não significa necessariamente preparar e servir 2.000 refeições em um único horário. Essa diferença influencia o dimensionamento de equipamentos, linhas de distribuição, câmaras frias e instalações.
+2. Cálculo da capacidade de produção
+O primeiro cálculo é transformar a demanda diária em uma demanda de produção por período.
+A fórmula básica é:
+\[
+Q_h=\frac{Q_d}{T_p}
+\]
+
+Onde:
+- \(Q_h\) = refeições por hora;
+- \(Q_d\) = refeições por dia;
+- \(T_p\) = horas efetivas disponíveis para produzir ou distribuir, conforme a etapa analisada.
+Para o exemplo, vamos supor que a operação precise distribuir todas as refeições em uma janela de duas horas. Essa é uma premissa de exemplo, não um padrão obrigatório.
+\[
+Q_h=\frac{2.000}{2}=1.000
+\]
+
+Resultado: 1.000 refeições por hora na distribuição.
+Se a janela fosse de três horas, seriam aproximadamente 667 refeições por hora. Isso muda o dimensionamento da linha de distribuição, dos balcões térmicos, dos equipamentos de manutenção de temperatura e da equipe necessária nesse período.
+Atenção: esse cálculo não significa que todos os alimentos serão cozidos em duas horas. A produção pode começar muito antes, em lotes, e diferentes preparações podem ter tempos de processo distintos.
+2.1. Dimensionamento por preparação
+O responsável técnico deve analisar o cardápio e as fichas técnicas para identificar:
+- Quantidade de arroz, feijão, carnes, guarnições e demais preparações;
+- Peso de cada porção;
+- Rendimento da receita e perdas de processamento;
+- Quantidade de lotes;
+- Tempo de preparação de cada lote;
+- Capacidade nominal e útil dos equipamentos;
+- Tempo disponível para preparar, cozinhar, resfriar ou manter os alimentos, conforme o processo adotado.
+A quantidade de cada ingrediente parte da ficha técnica. Por exemplo, se uma preparação tiver uma porção de 150 g por refeição, o cálculo teórico para 2.000 porções será:
+\[
+2.000\times150\text{ g}=300\text{ kg}
+\]
+
+Isso representa 300 kg da preparação na condição em que os 150 g foram definidos. Não se deve confundir peso pronto, peso cru, peso comprado e peso após limpeza e cocção. Para converter entre eles, são necessários os rendimentos reais da receita.
+A legislação sanitária também exige que a quantidade de funcionários, equipamentos, móveis e utensílios seja compatível com o volume, a diversidade e a complexidade das preparações. 
+
+RDC nº 216, de 15/09/2004
+
+
+
+3. Como calcular a área física da cozinha
+Não existe uma única fórmula universal, aplicável a qualquer cozinha industrial, que converta 2.000 refeições/dia diretamente em uma metragem correta.
+O arquiteto desenvolve o programa de necessidades e o layout, dimensionando os ambientes a partir do processo operacional, dos equipamentos, dos fluxos, das circulações e das exigências sanitárias e construtivas.
+3.1. Ambientes que entram no levantamento
+
+
+
+
+
+
+
+
+
+Recebimento e armazenamento
+Docas ou acesso de recebimento, conferência, depósitos secos, câmaras frigoríficas e áreas de embalagens.
+
+
+
+
+
+
+
+
+
+
+
+
+Pré-preparo
+Áreas de higienização e preparação de vegetais, carnes e outros grupos de alimentos, com separações definidas pelo processo.
+
+
+
+
+
+
+
+
+
+
+
+
+Cocção e finalização
+Linha quente, fornos, fogões, caldeirões, fritadeiras, bancadas, coifas e espaços de manutenção e limpeza.
+
+
+
+
+
+
+
+
+
+
+
+
+Distribuição e lavagem
+Balcões, montagem de bandejas ou marmitas, retorno de utensílios, lavagem de louças e utensílios, armazenamento limpo e resíduos.
+
+
+
+Além disso, entram vestiários, sanitários, áreas administrativas, depósitos de produtos de limpeza, espaços técnicos e circulação, conforme o modelo de operação.
+3.2. Método de cálculo da área
+Para cada ambiente, a equipe prepara um layout com equipamentos e mobiliário em escala e calcula:
+\[
+A_{\text{ambiente}}=\sum A_{\text{ocupada}}+
+A_{\text{circulação}}+
+A_{\text{operação}}
+\]
+
+Essa expressão é uma forma de organizar o levantamento de áreas, não uma fórmula normativa de dimensionamento. As áreas de circulação e operação devem ser verificadas no layout, considerando abertura de portas, retirada de equipamentos, manutenção, movimentação de cargas e segurança.
+Exemplo de planilha de levantamento:
+Ambiente	Como determinar a área
+Depósito seco	Estoque máximo, prateleiras, corredores e movimentação
+Câmaras frias	Volume de estoque, tipo de produto, giro e arranjo interno
+Pré-preparo	Equipamentos, bancadas, cubas e fluxo de trabalho
+Cocção	Dimensões dos equipamentos, afastamentos e acesso à manutenção
+Distribuição	Vazão de refeições no pico e configuração da linha
+Lavagem	Volume de louças e utensílios por período e capacidade de lavagem
+Vestiários e apoio	Efetivo, turnos e requisitos aplicáveis
+Circulações	Layout, fluxos separados e movimentação de pessoas e materiais
+O resultado é a soma das áreas desenhadas e verificadas no projeto, não a multiplicação automática do número de refeições por um índice genérico.
+4. Dimensionamento dos equipamentos
+O orçamento de equipamentos é elaborado a partir da lista de equipamentos necessária para executar o cardápio e atingir a capacidade operacional. A quantidade não deve ser escolhida apenas pelo número de refeições diárias: é preciso considerar capacidade por ciclo, duração do ciclo, tempo de carga e descarga e simultaneidade das preparações.
+4.1. Exemplo de cálculo de capacidade
+Imagine uma preparação que exija 300 kg de produto pronto em determinado período. Suponha, apenas para demonstrar o método, que o processo disponha de três horas e que o equipamento tenha capacidade útil validada de 50 kg por ciclo, com ciclo completo de 45 minutos.
+A capacidade teórica por equipamento seria:
+\[
+C=\frac{50\text{ kg}}{0,75\text{ h}}
+=66,7\text{ kg/h}
+\]
+
+Para produzir 300 kg em três horas:
+\[
+N=\left\lceil\frac{300}{66,7\times3}\right\rceil=2
+\]
+
+Nesse cenário simplificado, seriam necessários dois equipamentos equivalentes para atingir a capacidade teórica.
+Mas o resultado só é válido se a capacidade útil de 50 kg e o ciclo de 45 minutos forem adequados àquela preparação. Carga parcial, recuperação de temperatura, tempo de higienização, carregamento, descarregamento e variação entre receitas podem reduzir a capacidade efetiva. A especificação do fabricante e os testes de processo devem validar a seleção.
+4.2. Como cada família de equipamentos é dimensionada
+Família	Base real do cálculo
+Fogões, caldeirões e frigideiras basculantes	Quantidade por receita/lote, capacidade útil e duração do ciclo
+Fornos combinados	Capacidade por bandeja ou carga, tipo de alimento, ciclo e simultaneidade
+Refrigeradores e câmaras frias	Volume e massa dos produtos armazenados, temperaturas, giro, carga térmica e condições de operação
+Bancadas, cubas e mesas	Tarefas executadas, quantidade de operadores, utensílios e fluxo de produção
+Descascadores e processadores	Quilogramas por hora necessários na etapa de pré-preparo
+Lavadoras de louças	Cestos ou racks por hora, duração do ciclo, tipo de utensílio e pico de retorno
+Balcões térmicos e linhas de serviço	Refeições por hora, recipientes usados, comprimento da linha e tempo de reposição
+Carros, estantes e recipientes	Quantidade de lotes simultâneos, capacidade por unidade e rotas internas
+O custo do equipamento deve ser obtido por especificação técnica e cotação comparável, incluindo acessórios, frete, montagem, partida, treinamento e garantia, conforme o escopo de fornecimento.
+4.3. Planilha de equipamentos
+Para a futura plataforma MICI, recomendo registrar, para cada item:
+- Código e descrição técnica;
+- Ambiente e processo atendido;
+- Quantidade;
+- Capacidade nominal e capacidade de projeto;
+- Dimensões e peso;
+- Potência elétrica ou consumo de gás/vapor;
+- Requisitos de água, drenagem e exaustão;
+- Preço unitário cotado;
+- Frete, instalação e acessórios;
+- Fabricante, modelo, fornecedor e prazo de entrega;
+- Referência da cotação e data-base;
+- Custo total instalado.
+A quantidade é multiplicada pelo custo unitário cotado, mas o custo de instalação deve ficar explícito para evitar tanto omissões como dupla contagem.
+5. Cálculo da infraestrutura predial
+A infraestrutura é uma parte importante do orçamento, porque equipamentos de cocção, refrigeração, lavagem e exaustão podem exigir instalações significativas. Os projetos complementares são dimensionados a partir das cargas e condições reais de operação.
+5.1. Instalação elétrica
+O engenheiro elétrico levanta a potência de placa e os dados técnicos de cada equipamento, identifica quais podem operar simultaneamente e calcula as cargas por circuito, quadro e instalação.
+A soma inicial de potências é:
+\[
+P_{\text{instalada}}=\sum_{i=1}^{n}P_i
+\]
+
+Porém, potência instalada não é automaticamente demanda elétrica. A demanda deve considerar o regime de operação e os critérios técnicos aplicáveis.
+Para cada circuito, o projeto verifica corrente, tensão, fases, fator de potência quando aplicável, método de instalação, agrupamento de cabos, temperatura, queda de tensão, capacidade de condução, proteção contra sobrecorrente, aterramento e demais requisitos de segurança.
+O orçamento elétrico é então baseado nos quantitativos do projeto: metros de cabos por seção, eletrodutos, bandejas, quadros, disjuntores, tomadas, pontos de força, iluminação, mão de obra, testes e comissionamento.
+5.2. Gás combustível
+O projeto de gás começa com a relação dos equipamentos que utilizam o combustível e seus consumos nominais. O engenheiro define a demanda simultânea de projeto conforme o perfil operacional, verifica pressão disponível e dimensiona tubulações, reguladores, válvulas, medição, ventilação e dispositivos de segurança.
+Uma soma de consumos nominais pode servir como levantamento inicial, mas o dimensionamento final precisa observar as condições de simultaneidade, pressão, comprimento equivalente, material, perdas de carga e requisitos locais.
+A planilha orçamentária usa o projeto para quantificar tubulações por diâmetro e material, conexões, suportes, válvulas, reguladores, ensaios e serviços de instalação.
+5.3. Água fria, água quente e esgoto
+O consumo deve ser levantado por processo e equipamento: higienização, pré-preparo, cocção, lavagem de utensílios, limpeza, sanitários e demais usos.
+Para cada ponto de consumo, o projeto identifica vazão necessária, pressão, frequência e duração de uso. A partir disso, calcula a demanda por trecho, as tubulações, os registros e, quando necessário, o armazenamento e o aquecimento de água.
+O volume diário pode ser organizado como:
+\[
+V_{\text{dia}}=\sum_{i=1}^{n}q_i\,t_i\,f_i
+\]
+
+em que \(q_i\) é a vazão de cada uso, \(t_i\) sua duração por ocorrência e \(f_i\) o número de ocorrências diárias. É necessário usar unidades coerentes e dados operacionais confiáveis.
+Para esgoto e drenagem, são levantados os pontos de descarga, vazões, tubulações, ralos, caixas e demais componentes conforme o projeto. Caixas de gordura e sistemas de tratamento, quando necessários, são dimensionados com base nas condições de contribuição e nas exigências aplicáveis — não somente pela capacidade de refeições.
+5.4. Exaustão, ventilação e climatização
+O sistema de exaustão precisa ser calculado com base nos equipamentos de cocção, na geometria e no posicionamento das coifas, nos poluentes e no método de cálculo aplicável.
+A ABNT NBR 14518:2020 trata dos sistemas de ventilação para cozinhas profissionais e teve errata publicada em 2025. A norma inclui métodos de cálculo de vazão para coifas; portanto, não é tecnicamente correto escolher um exaustor apenas com base na metragem total da cozinha. 
+
+ABRAVA
++1
+
+
+
+O projeto identifica:
+- Coifas e suas dimensões;
+- Vazões de exaustão calculadas;
+- Dutos, curvas, transições e comprimentos;
+- Perdas de carga;
+- Ventiladores e filtros;
+- Ar de reposição e equilíbrio do ambiente;
+- Acessos para limpeza e manutenção;
+- Alimentação elétrica, suportação e descarga do ar.
+O orçamento contabiliza coifas, dutos por dimensão/material, acessórios, suportes, ventiladores, filtros, instalação elétrica, balanceamento, testes e comissionamento.
+5.5. Climatização e refrigeração
+A carga térmica deve considerar ocupação, iluminação, envoltória, equipamentos, calor de cocção, infiltração e renovação de ar, além das condições externas e internas de projeto. Não se deve calcular a climatização simplesmente por uma regra de watts por metro quadrado sem verificar as cargas reais.
+Para câmaras frias, a carga térmica e a capacidade de refrigeração dependem do produto, quantidade armazenada, temperatura de entrada e conservação, dimensões e isolamento da câmara, abertura de portas e condições de operação. O cálculo define a capacidade dos sistemas de refrigeração, que depois são cotados e orçados.
+6. Como transformar os projetos em um orçamento de implantação
+Quando os projetos e especificações estão suficientemente definidos, o orçamentista faz o levantamento de quantitativos, conhecido como quantity takeoff, e associa cada quantidade a um custo unitário.
+O SINAPI, mantido por CAIXA e IBGE, fornece referências de custos, insumos e composições de serviços de construção. Ele é uma fonte importante para os serviços de obra civil e instalações compatíveis com suas composições, mas não substitui as especificações, os quantitativos e as cotações específicas dos equipamentos de cozinha. 
+
+Caixa Econômica Federal
++1
+
+
+
+6.1. Exemplo de cálculo de orçamento por serviço
+Imagine que o projeto executivo tenha identificado 120 m² de revestimento de piso especificado para a cozinha.
+A planilha não deve simplesmente multiplicar a área por um preço genérico de piso. Deve identificar a composição correta, incluindo os insumos e serviços efetivamente necessários, como preparação da base, regularização quando prevista, assentamento, rejuntamento e acabamento.
+A estrutura básica é:
+\[
+C_{\text{serviço}}=Q\times PU
+\]
+
+Em que:
+- \(Q\) = quantidade levantada no projeto;
+- \(PU\) = preço unitário da composição ou serviço;
+- \(C_{\text{serviço}}\) = custo direto do serviço.
+O mesmo método é aplicado a revestimentos de parede, impermeabilização, demolições, tubulações, cabos, dutos e outros itens.
+6.2. Estrutura completa do orçamento
+Grupo	O que deve ser orçado
+1. Projetos e serviços técnicos	Arquitetura, layout, engenharia elétrica, hidráulica, gás, exaustão, climatização e demais projetos aplicáveis
+2. Preparação do local	Mobilização, proteções, demolições, remoções e descarte
+3. Obras civis	Bases, alvenaria, regularização, impermeabilização, pisos, paredes, tetos, portas e acabamentos
+4. Instalação elétrica	Quadros, circuitos, cabos, eletrodutos, tomadas, iluminação, proteções e testes
+5. Instalações hidráulicas	Água fria e quente, esgoto, drenagem, registros, ralos e caixas
+6. Gás e segurança	Rede, válvulas, reguladores, dispositivos de segurança, ensaios e liberações
+7. Exaustão e ventilação	Coifas, dutos, ventiladores, filtros, ar de reposição e balanceamento
+8. Refrigeração	Câmaras frias, isolamento, unidades condensadoras, evaporadores e instalação
+9. Equipamentos de cozinha	Equipamentos de cocção, preparação, lavagem, refrigeração e distribuição
+10. Mobiliário e acessórios	Bancadas, cubas, estantes, carros, prateleiras e acessórios
+11. Sistemas complementares	Automação ou monitoramento, quando previstos, e sistemas adicionais exigidos pelo projeto
+12. Comissionamento	Testes, regulagens, treinamento, documentação e entrega
+13. Custos indiretos	Administração local, mobilização indireta, seguros e demais custos não incluídos nas composições
+14. Reservas e riscos	Contingência estimada de acordo com a maturidade do projeto e os riscos identificados
+15. Tributos e BDI	Componentes aplicáveis ao modelo de contratação, calculados de forma transparente
+A equipe precisa evitar a dupla contagem. Por exemplo, se a instalação já estiver incluída no preço contratado de um equipamento, ela não deve ser somada novamente como um serviço independente, a menos que o escopo contratual estabeleça outra divisão.
+7. Como calcular o custo total
+Uma estrutura típica de consolidação é:
+\[
+C_{\text{direto}}=\sum_{i=1}^{n}Q_i\,PU_i
+\]
+
+Em que cada linha pode representar um serviço, material, equipamento ou fornecimento.
+Depois, o orçamento é consolidado conforme a estratégia de contratação:
+\[
+C_{\text{base}}=C_{\text{direto}}+C_{\text{indireto}}
+\]
+
+As reservas de risco devem ser apresentadas de forma identificável, sem ocultá-las dentro de preços unitários. O BDI — Benefícios e Despesas Indiretas — deve ser calculado conforme a estrutura contratual, incluindo somente os componentes pertinentes e evitando duplicidades com os custos já considerados.
+Não existe um percentual universal de BDI ou contingência aplicável a todas as cozinhas industriais. Esses valores dependem das condições do empreendimento, do regime de contratação, dos riscos, dos tributos e da estrutura da empresa executora.
+7.1. Exemplo ilustrativo de consolidação
+Os valores abaixo são apenas um exemplo matemático de como a planilha pode ser consolidada; não são uma estimativa de preço de mercado para uma cozinha de 2.000 refeições/dia.
+Grupo de custo	Valor ilustrativo
+Obras civis	R$ 500.000
+Instalações prediais	R$ 350.000
+Equipamentos e mobiliário	R$ 800.000
+Projetos e serviços técnicos	R$ 100.000
+Comissionamento e treinamento	R$ 50.000
+Subtotal direto	R$ 1.800.000
+Custos indiretos ilustrativos	R$ 180.000
+Custo antes das reservas e do BDI	R$ 1.980.000
+A tabela demonstra somente a estrutura de consolidação. Não representa uma faixa de preço recomendada nem permite inferir o custo real por refeição.
+8. Como um sistema como o MICI deveria calcular esse orçamento
+Para transformar o processo em uma funcionalidade confiável, eu dividiria o módulo em quatro camadas.
+
+Camada 1 — Premissas e requisitos
+Capacidade diária, refeições por turno, cardápio, imóvel, modelo operacional, nível de serviço e condições existentes.
+
+
+
+
+Camada 2 — Dimensionamento e quantitativos
+Ambientes, equipamentos, capacidades, instalações e quantidades extraídas dos projetos e especificações.
+
+
+
+
+Camada 3 — Custos
+Composições de serviços, insumos, cotações, mão de obra, frete, instalação, custos indiretos e reservas.
+
+
+
+
+Camada 4 — Validação e governança
+Revisão técnica, aprovação, versão do orçamento, data-base, premissas, exclusões e histórico de alterações.
+
+
+
+O sistema deve manter a rastreabilidade de cada custo até a origem: requisito, projeto, equipamento, composição, cotação ou quantitativo. Se o layout mudar, os itens afetados devem ser identificados e o orçamento revisado antes da aprovação de uma nova linha de base.
+9. Quais dados faltam para calcular uma cozinha real de 2.000 refeições/dia?
+Para avançar de uma metodologia de cálculo para um orçamento preliminar defensável, as variáveis mais importantes são o tipo de operação, o imóvel, o cardápio, a distribuição e as condições das instalações.
+Premissas do projeto
+Preencha o que já souber. As informações faltantes podem permanecer como “a definir”.
+Tipo de cozinha
+Refeitório corporativo / industrial
+
+Hospitalar
+
+Escolar
+
+Marmitaria / refeições transportadas
+
+Restaurante comercial
+
+
+
+Tipo de intervenção
+Construção nova
+
+Adaptação de imóvel existente
+
+Reforma de cozinha existente
+
+
+
+Distribuição
+Refeições servidas em refeitório
+
+Marmitas / refeições embaladas
+
+Misto
+
+
+Janela de pico para servir as 2.000 refeições
+1 hora
+
+2 horas
+
+3 horas
+
+Distribuição escalonada / vários turnos
+
+
+Município e estado da obra
+
+Área disponível, se conhecida
+
+Fonte de energia para cocção
+Gás
+
+Elétrica
+
+Vapor / sistema central
+
+Mista
+
+A definir
+
+
+Preparar estudo preliminar com essas premissas
+Com esses dados, o próximo passo será montar uma memória de cálculo por disciplina, com quantitativos preliminares, equipamentos dimensionados por processo, instalações, custos diretos e indiretos e uma lista explícita das informações que ainda precisam de levantamento ou cotação. Isso é muito mais útil para o MICI do que adotar um preço genérico por refeição ou por metro quadrado.
