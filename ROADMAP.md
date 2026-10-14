@@ -54,6 +54,35 @@ vinha vazia; a sessão *parecia* válida porque o JWT é stateless.
 - [x] Suíte completa reexecutada (14/10) — ver tabela acima: todos os
       gates verdes (lint · typecheck · 120 unit · 118 integração · build).
 
+### Produção: sync de dados + AUTH_URL (14/10/2026)
+
+Login no Vercel falhava (`CredentialsSignin`) e os 302 do Auth.js apontavam
+para `http://localhost:3000`. Duas causas independentes:
+
+- [x] **Senhas dos perfis demo** — `gerente/pmo/viewer/qualidade@mici.demo`
+      compartilhavam hash antigo que não correspondia a `Demo@1234`;
+      redefinidas no Neon via `scripts/reset-profile-passwords.ts` (admin
+      intocado). Verificado: login do gerente → sessão → `/painel` 200.
+- [x] **`AUTH_URL` ausente no Vercel** — sem ela o Auth.js v5 deriva a URL
+      base do request e, atrás do proxy do Vercel, caía no default
+      `localhost:3000`. Adicionada `AUTH_URL=https://mici-theta.vercel.app`
+      (Production) + redeploy; 302 agora sai para `/painel` no domínio
+      correto.
+- [x] **Dados dessincronizados (Neon ← local)** — o deploy de código estava
+      atualizado, mas o Neon tinha 0 requisitos/0 WBS/0 atividades (telas
+      vazias davam a impressão de funcionalidades ausentes). Sincronizado
+      com `pg_dump`/`pg_restore` 18.6 (Neon é PG 18.6): backup prévio em
+      `%TEMP%\mici-sync\neon-backup.dump`, depois restore do dump local —
+      paridade total (mesmos UUIDs, 3 requisitos, 5 nós WBS, 66 atividades
+      no EXAURA-001, 112 auditorias). Hash do admin preservado via
+      `scripts/preserve-admin-hash.ts`.
+- [x] Utilitários de diagnóstico commitados (`9c77e6c`): check-users,
+      check-ids, check-coverage, check-activities, reset-profile-passwords,
+      preserve-admin-hash.
+- [x] Smoke pós-sync: login 302 → `https://mici-theta.vercel.app/painel` ·
+      `/painel`/`/orcamento` 200 · WBS/requisitos/cronograma com dados ·
+      EXAURA-001 66 atividades via API.
+
 ## Status do sistema (14/10/2026)
 
 | Área | Situação |
@@ -65,9 +94,9 @@ vinha vazia; a sessão *parecia* válida porque o JWT é stateless.
 | Rotas | 71 no build (52 endpoints `/api/v1` + 19 páginas); `/orcamento` e `/api/v1/budget/estimate` novos |
 | RBAC | módulo `COST` operante (`VIEW` na tela, `CREATE` na API de estimativa) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`) |
-| Produção | Vercel `mici-theta.vercel.app` + Neon (envs via integração; `AUTH_SECRET` é Secret) |
-| Pendências imediatas | Deploy desta atualização (E07 + orçamento) · E08 Cost/EVM · E09 Documents |
-| Riscos/notas | Prisma Client precisa de `prisma generate` (postinstall); smoke local exigiu subir o Postgres portátil; testes de integração resetam o banco `mici_test` (consentimento registrado nesta sessão) |
+| Produção | Vercel `mici-theta.vercel.app` + Neon — código e dados sincronizados com o local (14/10); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
+| Pendências imediatas | E08 Cost/EVM (commitments/actuals/EVM + gate G4) · E09 Documents |
+| Riscos/notas | Prisma Client precisa de `prisma generate` (postinstall); smoke local exigiu subir o Postgres portátil; testes de integração resetam o banco `mici_test` (consentimento registrado nesta sessão); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump` |
 
 ## Releases (produto)
 

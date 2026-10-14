@@ -416,3 +416,65 @@ equipamentos, §5 infraestrutura, §6/§7 custos). Sem persistência: a saída �
 
 **E08 Cost/EVM** — o `estimate` deste módulo é a base de custo estimado;
 seguem commitments, actuals, EVM e o gate G4. Depois: E09 Documents.
+
+---
+
+## 14/10/2026 (tarde) — Produção: login, sync de dados e AUTH_URL
+
+Após o deploy da manhã (E07 + orçamento), o usuário reportou que **não
+conseguia logar no Vercel** e que **funcionalidades não apareciam em
+produção**. Diagnóstico e correção:
+
+### Login falhava (`CredentialsSignin`)
+
+- Logs do Vercel: `POST /api/auth/callback/credentials` →
+  `CredentialsSignin` + **302 para `http://localhost:3000`**.
+- **Senhas**: `admin@mici.demo` tinha hash próprio (`scrypt$f89c2…`,
+  trocado pós-seed), mas `gerente/pmo/viewer/qualidade` dividiam um hash
+  antigo que não batia com `Demo@1234` → `scripts/reset-profile-passwords.ts`
+  redefiniu os 4 no Neon (admin intocado). Login do gerente verificado
+  ponta a ponta (sessão + `/painel` 200).
+- **`AUTH_URL`**: ausente no Vercel; o Auth.js v5 sem ela deriva a URL base
+  do request e, atrás do proxy do Vercel, usava o default `localhost:3000`.
+  Adicionada `AUTH_URL=https://mici-theta.vercel.app` (Production,
+  `vercel env add`) + redeploy.
+
+### Código ok, dados desalinhados
+
+- Análise de ambiente: deploy de 10:26 saía da mesma árvore (todas as
+  páginas/APIs 200 em produção) — **código sincronizado**. Mas o Neon
+  estava com 0 requisitos, 0 WBS, 0 atividades (vs. 3/5/66 no local): as
+  telas novas abriam vazias e pareciam "funcionalidades ausentes".
+- **Sync Neon ← local** com `pg_dump`/`pg_restore` **18.6** (Neon roda PG
+  18.6; baixados os binários EDB para `%TEMP%\mici-sync\pg18` — o pg_dump 17
+  local recusa server mais novo). Sequência:
+  1. `preserve-admin-hash.ts save` (guarda o hash que o usuário conhece);
+  2. backup do Neon (`neon-backup.dump`, 162 KB);
+  3. dump do local (`local.dump` — removido `?schema=` da URL, que o
+     pg_dump rejeita);
+  4. `pg_restore --clean --if-exists --no-owner --no-privileges`;
+  5. `preserve-admin-hash.ts restore`.
+- **Paridade confirmada**: mesmos UUIDs (org, 6 usuários incl.
+  `novo.mici`, 2 projetos), 3 requisitos, 5 nós WBS, 66 atividades
+  (EXAURA-001), 112 auditorias.
+
+### Correções de build durante o deploy
+
+- `scripts/check-users.ts` usava `prisma.membership` (inexistente; o model
+  é `OrganizationMembership`) — o typecheck do `vercel deploy` falhou;
+  corrigido e redeploy OK.
+
+### Verificação final (produção)
+
+- Login gerente → **302 `https://mici-theta.vercel.app/painel`** (sem mais
+  localhost) → `/painel` 200, `/orcamento` 200.
+- `/projetos/[id]/{requisitos,wbs,cronograma}` 200 com dados; API do
+  EXAURA-001 devolve 66 atividades; WBS do DEMO-001 com raiz + 2 filhos;
+  REQ-001 visível.
+- Utilitários de diagnóstico criados na sessão commitados (`9c77e6c`) e
+  push para `origin/main`.
+
+### Próximo passo (definido nesta sessão)
+
+**E08 Cost/EVM** — commitments, actuals, EVM e gate G4 (o `estimate` de
+`/orcamento` é o custo estimado de entrada). Depois: E09 Documents.
