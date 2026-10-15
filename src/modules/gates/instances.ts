@@ -10,6 +10,7 @@ import {
   type GateStatusValue,
 } from "./engine";
 import { getG1ApprovalBlocks } from "@/modules/requirements/selectors";
+import { getG4CostApprovalBlocks } from "@/modules/cost/gate-checks";
 
 // GateInstance (§17): por projeto, com snapshot da configuração (§15.1).
 // Transições seguem a máquina de estados (§16.3); aprovação exige critérios e
@@ -284,6 +285,21 @@ export async function transitionGate(input: TransitionGateInput) {
       if (requirementBlocks.length > 0) {
         throw new AppError("REQUIREMENTS_INCOMPLETE", requirementBlocks[0].message, {
           details: { blocks: requirementBlocks },
+        });
+      }
+    }
+
+    // §18-G4 — aprovar "Contrato e plano" exige baseline de custo aprovada
+    // quando o projeto já tem orçamento (E08). Sem itens de custo, não há o
+    // que baselinear e o gate segue liberado.
+    if (instance.definition.code === "G4") {
+      const costBlocks = await getG4CostApprovalBlocks(
+        input.organizationId,
+        instance.projectId
+      );
+      if (costBlocks.length > 0) {
+        throw new AppError("COST_BASELINE_REQUIRED", costBlocks[0].message, {
+          details: { blocks: costBlocks },
         });
       }
     }

@@ -513,6 +513,9 @@ model Project {
   scheduleActivities ScheduleActivity[]
   scheduleDependencies ScheduleDependency[]
   baselines       Baseline[]
+  costItems       CostItem[]
+  costCommitments CostCommitment[]
+  costActuals     CostActual[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -764,6 +767,7 @@ model WBSNode {
   children     WBSNode[]     @relation("WbsTree")
   requirements Requirement[]
   scheduleActivities ScheduleActivity[]
+  costItems    CostItem[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId, parentId])
@@ -924,6 +928,112 @@ model Baseline {
   @@unique([projectId, type, version])
   @@index([organizationId, projectId, type])
   @@map("baselines")
+}
+
+// ---------------------------------------------------------------------------
+// Custos (E08, §29): itens do orçamento, compromissos (contratos/POs) e
+// custos realizados. `amount` é derivado (quantity × unitPrice) e gravado
+// para agregação; o EVM (PV/EV/AC) é calculado a partir destes dados +
+// progresso físico das atividades vinculadas ao WBS.
+// ---------------------------------------------------------------------------
+
+enum CommitmentStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+model CostItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  description    String   @db.VarChar(300)
+  category       String   @db.VarChar(64)
+  unit           String   @db.VarChar(16)
+  quantity       Decimal  @db.Decimal(18, 3)
+  unitPrice      Decimal  @map("unit_price") @db.Decimal(18, 2)
+  amount         Decimal  @db.Decimal(18, 2)
+  origin         String?  @db.VarChar(32)
+  fontePreco     String?  @map("fonte_preco") @db.VarChar(200)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode    WBSNode?         @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  commitments CostCommitment[]
+  actuals     CostActual[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, wbsNodeId])
+  @@map("cost_items")
+}
+
+model CostCommitment {
+  id           String           @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  projectId    String           @map("project_id") @db.Uuid
+  costItemId   String?          @map("cost_item_id") @db.Uuid
+  code         String           @db.VarChar(32)
+  description  String           @db.VarChar(300)
+  supplier     String?          @db.VarChar(200)
+  amount       Decimal          @db.Decimal(18, 2)
+  committedAt  DateTime         @map("committed_at") @db.Date
+  status       CommitmentStatus @default(OPEN)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  costItem  CostItem?    @relation(fields: [costItemId], references: [id], onDelete: SetNull)
+  actuals   CostActual[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@map("cost_commitments")
+}
+
+model CostActual {
+  id             String  @id @default(uuid()) @db.Uuid
+  organizationId String  @map("organization_id") @db.Uuid
+  projectId      String  @map("project_id") @db.Uuid
+  costItemId     String? @map("cost_item_id") @db.Uuid
+  commitmentId   String? @map("commitment_id") @db.Uuid
+  code           String  @db.VarChar(32)
+  description    String  @db.VarChar(300)
+  amount         Decimal @db.Decimal(18, 2)
+  incurredAt     DateTime @map("incurred_at") @db.Date
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  costItem   CostItem?       @relation(fields: [costItemId], references: [id], onDelete: SetNull)
+  commitment CostCommitment? @relation(fields: [commitmentId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, incurredAt])
+  @@map("cost_actuals")
 }
 
 // Cronogramas reutilizáveis (E07 import): arquivo MS Project (CSV/XML)

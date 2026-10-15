@@ -478,3 +478,88 @@ produção**. Diagnóstico e correção:
 
 **E08 Cost/EVM** — commitments, actuals, EVM e gate G4 (o `estimate` de
 `/orcamento` é o custo estimado de entrada). Depois: E09 Documents.
+
+---
+
+## 14/10/2026 (noite) — E08 Cost/EVM concluído
+
+Fechado o épico de custos previsto desde a calculadora de orçamento: itens
+do orçamento, compromissos, realizados, EVM e o gate G4 que exige baseline
+de custo aprovada.
+
+### Persistência
+
+- Migration `phase6_cost` (`prisma/migrations/20261014231808_phase6_cost/`)
+  aplicada: `CostItem`, `CostCommitment`, `CostActual` e enum
+  `CommitmentStatus`; relations em `Project` e `WBSNode`; índices por
+  organização/projeto e únicos `[projectId, code]`.
+- Códigos automáticos por projeto: `CI001`/`CC001`/`CA001` (incrementais a
+  partir do maior existente). `CostItem.amount` derivado
+  (quantity × unitPrice) e persistido para agregar.
+
+### Módulo `src/modules/cost/`
+
+- `schemas.ts` (zod), `engine.ts` (EVM puro), `selectors.ts` (leituras
+  escopadas por organização + `listCostSummaries`), `items.ts`,
+  `commitments.ts`, `actuals.ts`, `import-estimate.ts`, `evm.ts`,
+  `baselines.ts`, `gate-checks.ts`.
+- Motor EVM: BAC = Σ dos itens; EV = Σ amount × progresso físico médio das
+  atividades do nó WBS vinculado; PV = Σ amount × progresso planejado
+  (fração temporal das datas até a data de corte); AC = Σ dos actuals. Itens
+  sem WBS entram como 0. EAC = BAC/CPI (ou AC+(BAC−EV) se AC>0 sem CPI, ou
+  BAC sem AC); SPI nulo só quando PV = 0.
+
+### API (`src/app/api/v1/projects/[id]/cost/`)
+
+Itens (`route.ts` + `[itemId]`), compromissos (`commitments/` +
+`[commitmentId]`), realizados (`actuals/` + `[actualId]`), baselines
+(`baselines/` + `[baselineId]`, POST/DELETE), `evm/`, `import-estimate/` e
+`summary/`. Tudo via `apiHandler` + `requireTenantContext` +
+`assertPermission("COST", …)`; audit em `prisma.auditEvent` e domain events
+(`Cost.ItemCreated`, `Cost.Committed`, `Cost.ActualRecorded`,
+`Cost.EstimateImported`).
+
+### Gate G4 e baseline de custo
+
+- `errors.ts`: novo código `COST_BASELINE_REQUIRED` (409).
+- `gates/instances.ts`: no `action === "approve"` do G4, checagem via
+  `getG4CostApprovalBlocks` — bloqueia só quando o projeto tem itens de
+  custo vivos sem baseline `type=COST` APROVADA (projetos sem itens não são
+  bloqueados, preservando os testes existentes).
+- Baseline reutiliza o model `Snapshot`/`Baseline` com `type=COST` e
+  snapshot `{capturedAt, totalBudget, itemCount, items}`; approve
+  supersede as anteriores; baseline aprovada é imutável
+  (`BASELINE_IMMUTABLE`).
+
+### Integração com `/orcamento`
+
+- `POST /cost/import-estimate` recebe o JSON exportado por `/orcamento`
+  (campo `quantitativos`) e faz replace-all dos itens vivos, códigos
+  `ORC001…`.
+
+### UI
+
+- `/projetos/[id]/custos` — cards EVM, tabelas de itens/compromissos/
+  realizados/baselines, CRUD via dialogs, import de estimate, `load()`
+  refetch `/summary` + `router.refresh()`.
+- `/custos` — visão portfolio: uma linha por projeto (itens, orçamento,
+  comprometido, realizado), link para a tela por projeto.
+- `nav-items.ts`: item "Custos" habilitado apontando para `/custos`.
+
+### Testes e gate
+
+- +12 unit (`tests/unit/cost-engine.test.ts`) — BAC/PV/EV/AC, EAC/SPI/SV,
+  progresso planejado, itens sem WBS, SPI nulo com PV = 0.
+- `tests/integration/cost.test.ts` escrito (CRUD, EVM, import replace-all,
+  baseline COST, bloqueio G4, isolamento de tenant) mas **não executado**:
+  o harness de integração chama `prisma db push --force-reset` contra
+  `mici_test` e o Prisma exige consentimento humano explícito para ação
+  destrutiva. Deixado pendente de execução sob consentimento do usuário.
+- Gate ✅: lint · typecheck · **132 unit** · build **71 rotas** (+2:
+  `/custos` e API de cost) · migration `phase6_cost` aplicada.
+
+### Próximo passo (definido nesta sessão)
+
+**E09 Documents** — módulo de documentos do projeto. Antes, sob
+consentimento, rodar `npm run test:integration -- cost` para validar o
+teste de integração escrito.

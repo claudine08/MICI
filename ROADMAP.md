@@ -87,15 +87,15 @@ para `http://localhost:3000`. Duas causas independentes:
 
 | Área | Situação |
 |---|---|
-| Fases concluídas | 0–3 completas (Fase 4 em andamento: E07 ✅, E08 🟦, E09 ⬜) |
-| Épicos | E01–E07 ✅ · E08 🟦 (orçamento de cozinha stateless; Cost/EVM pendente) · E09–E18 ⬜ |
-| Testes | 120 unit (10 arquivos) + 118 integração (8 arquivos) — todos verdes |
-| Migrations locais | 6 aplicadas (`init_foundation_identity` → `phase5_schedule_import`) |
-| Rotas | 71 no build (52 endpoints `/api/v1` + 19 páginas); `/orcamento` e `/api/v1/budget/estimate` novos |
+| Fases concluídas | 0–3 completas (Fase 4 em andamento: E07 ✅, E08 ✅, E09 ⬜) |
+| Épicos | E01–E08 ✅ · E09–E18 ⬜ |
+| Testes | 132 unit (11 arquivos) + 118 integração (8 arquivos) — unit todos verdes; +1 teste de integração (`cost.test.ts`) escrito, não executado (consentimento pendente) |
+| Migrations locais | 7 aplicadas (`init_foundation_identity` → `phase6_cost`) |
+| Rotas | 83 no build (63 endpoints `/api/v1` + 20 páginas); `/custos`, `/projetos/[id]/custos` e API de cost novos |
 | RBAC | módulo `COST` operante (`VIEW` na tela, `CREATE` na API de estimativa) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`) |
 | Produção | Vercel `mici-theta.vercel.app` + Neon — código e dados sincronizados com o local (14/10); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | E08 Cost/EVM (commitments/actuals/EVM + gate G4) · E09 Documents |
+| Pendências imediatas | E09 Documents · rodar `npm run test:integration -- cost` sob consentimento (reseta `mici_test`) |
 | Riscos/notas | Prisma Client precisa de `prisma generate` (postinstall); smoke local exigiu subir o Postgres portátil; testes de integração resetam o banco `mici_test` (consentimento registrado nesta sessão); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump` |
 
 ## Releases (produto)
@@ -118,7 +118,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E05 WBS** | Árvore, reordenar, importar/exportar, versionar | ✅ Fase 3 |
 | **E06 Gates** | GateDefinition/Instance, critérios, aprovação, bloqueio (BR-001/002), auditoria | ✅ Fase 2 |
 | **E07 Schedule** | Atividades, dependências, calendário, baseline, forecast, caminho crítico | ✅ Fase 4 |
-| **E08 Cost** | Budget, CostItem, Commitment, Actual, Forecast, EVM | 🟦 Fase 4 — orçamento de implantação de cozinha pronto (stateless, `/orcamento`); commitments/actuals/EVM pendentes |
+| **E08 Cost** | Budget, CostItem, Commitment, Actual, Forecast, EVM | ✅ Fase 4 — itens/compromissos/realizados/EVM, baseline COST, gate G4, import do `estimate`, telas `/custos` e `/projetos/[id]/custos` |
 | **E09 Documents** | Upload, revisão, aprovação, release, link de objetos | ⬜ |
 | **E10 Risk** | Risk register, matriz, resposta, risco residual | ⬜ |
 | **E11 Change** | Request, impacto, aprovação, baseline revision, implementation | ⬜ |
@@ -225,7 +225,7 @@ para `http://localhost:3000`. Duas causas independentes:
 - [x] Testes: 120 unit + 118 integração totais do repositório (schedule,
       baseline, calendários, import com fixtures MS Project)
 
-**E08 Cost 🟦** — orçamento preliminar de cozinha industrial (14/10):
+**E08 Cost ✅** — orçamento de cozinha + Cost/EVM (14/10):
 
 - [x] Módulo stateless `src/modules/budget` (premissas → dimensionamento →
       quantitativos grupos 1–15 → indiretos/reserva/BDI), memória de cálculo
@@ -236,8 +236,18 @@ para `http://localhost:3000`. Duas causas independentes:
       cozinha" na sidebar; exportação JSON/CSV como entrada da fase de
       orçamentação
 - [x] Testes: +24 unit (`budget-engine`, `budget-export`)
-- [ ] Commitments, actuals, forecasts, EVM (CostItem/Commitment/Actual) e
-      gate G4 — integração do `estimate` como custo estimado
+- [x] Migration `phase6_cost` + módulo `src/modules/cost` (itens,
+      compromissos, realizados, EVM puro, baselines COST, import do
+      `estimate` de `/orcamento` com replace-all) — 14/10 (noite)
+- [x] API de cost sob `/projects/[id]/cost/` (itens/commitments/actuals/
+      baselines/evm/import-estimate/summary) com audit + domain events
+- [x] Gate G4: `COST_BASELINE_REQUIRED` (409) bloqueia aprovação quando há
+      itens de custo vivos sem baseline COST aprovada
+- [x] UI: `/projetos/[id]/custos` (EVM + CRUD + import) e `/custos`
+      (vis portfolio); item "Custos" na sidebar
+- [x] Testes: +12 unit (`cost-engine`); `tests/integration/cost.test.ts`
+      escrito (não executado — harness de integração usa
+      `prisma db push --force-reset`, exige consentimento humano)
 
 **E09 Documents ⬜**:
 
