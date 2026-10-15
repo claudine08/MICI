@@ -40,7 +40,10 @@ export async function importEstimateAsCostItems(
 
   const totalDirect = round2(lines.reduce((acc, line) => acc + line.custoTotal, 0));
 
-  // Substituição total: apaga os itens vivos e recria a partir do estimate.
+  // Substituição total: apaga os itens vivos (hard delete — o índice único
+  // (projectId, code) é global e as reimportações reutilizam os códigos ORC…)
+  // e recria a partir do estimate. Compromissos/realizados apontam com ON
+  // DELETE SET NULL.
   const existing = await prisma.costItem.findMany({
     where: { organizationId: input.organizationId, projectId: input.projectId, deletedAt: null },
     select: { id: true },
@@ -48,9 +51,8 @@ export async function importEstimateAsCostItems(
 
   await prisma.$transaction(async (tx) => {
     if (existing.length > 0) {
-      await tx.costItem.updateMany({
+      await tx.costItem.deleteMany({
         where: { id: { in: existing.map((row) => row.id) } },
-        data: { deletedAt: new Date(), deletedBy: input.actorId, updatedBy: input.actorId },
       });
     }
 

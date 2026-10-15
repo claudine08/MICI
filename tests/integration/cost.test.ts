@@ -209,6 +209,7 @@ describe("itens de custo", () => {
     await createCommitment({
       ...actorA(),
       projectId,
+      code: "CC-PROT",
       description: "Contrato do item",
       amount: 100,
       committedAt: "2026-01-05",

@@ -563,3 +563,87 @@ Itens (`route.ts` + `[itemId]`), compromissos (`commitments/` +
 **E09 Documents** — módulo de documentos do projeto. Antes, sob
 consentimento, rodar `npm run test:integration -- cost` para validar o
 teste de integração escrito.
+
+---
+
+## 15/10/2026 — E09 Documents concluído (Fase 4 fechada)
+
+Upload com revisões imutáveis, máquina de estados com aprovação auditada e
+links genéricos para qualquer objeto do projeto. Gate completo verde e
+suíte de custos finalmente executada sob consentimento.
+
+### Ambiente: Postgres local e Prisma CLI (dois problemas resolvidos)
+
+- **Backends morriam com `0xC0000142` (DLL_INIT_FAILED)** — exclusões do
+  Windows Defender (paths `Programs\PostgreSQL17`, `PostgreSQL17-data`,
+  processos `postgres.exe`/`psql.exe`, aplicadas via UAC) **não** resolveram:
+  a árvore de processos do shell do agent envenena backends iniciados por
+  ele. Solução: subir o Postgres pela **Agendador de Tarefas** — tarefa
+  `mici-postgres` → `%TEMP%\opencode\start-pg.cmd` (contexto limpo;
+  `psql -U mici -P mici` autentica normalmente). Start manual:
+  `& "$env:LOCALAPPDATA\Programs\PostgreSQL17\bin\pg_ctl.exe" -D
+  "$env:LOCALAPPDATA\PostgreSQL17-data" -l serverN.log start` (recuperação
+  ~35–45 s; "sharing violation" no log é normal).
+- **Prisma CLI dava `P1001` mesmo com o banco no ar** — o engine Rust não
+  conecta em `localhost` (IPv6/`::1`) nesta máquina, mas `pg` do Node e
+  `psql` conectam. `.env`, `.env.development.local` e `.env.test` migraram
+  `localhost:5432` → `127.0.0.1:5432`; desde então `migrate`/`db push`
+  funcionam.
+
+### Migration e schema
+
+- `phase7_documents` (`20261015225202`): enum `DocumentStatus` +
+  `Document` (código `DOC001` por projeto, status, data de vigência) +
+  `DocumentRevision` (append-only: revisão, hash SHA-256, `content` bytea,
+  motivo, aprovação da revisão, `@@unique([documentId, revision])`) +
+  `DocumentApproval` + `DocumentLink` (`@@unique` composto anti-duplicidade)
+  + relação `Project.documents`. **Pendente no Neon (aplicar antes do
+  deploy)**.
+
+### Módulo `src/modules/documents/`
+
+- `engine.ts` (puro): transições `SUBMIT` WIP→FOR_REVIEW ·
+  `APPROVE` FOR_REVIEW→APPROVED · `REJECT` FOR_REVIEW→WIP (motivo
+  obrigatório, agora também validado no módulo, não só no Zod) ·
+  `RELEASE` APPROVED→RELEASED_FOR_EXECUTION · `OBSOLETE` a partir de
+  FOR_REVIEW/APPROVED/RELEASED; `canCreateRevision` (BR-009: só
+  APPROVED/RELEASED/OBSOLETE), `canEditMetadata` (WIP/FOR_REVIEW),
+  `canDeleteDocument` (BR-010: aprovado/liberado nunca somem).
+- `storage.ts`: allowlist de MIME (PDF/Office/imagens/texto/CSV/ZIP),
+  limite **4 MB** (Postgres bytea — body do Vercel serverless ~4,5 MB),
+  SHA-256 do binário. `schemas.ts` (Zod), `selectors.ts` (DTOs com
+  `currentRevisionId`), `documents.ts`, `revisions.ts`, `links.ts`,
+  `downloads.ts` — commands com `ActorContext` + audit + domain events.
+- BR-011: `APPROVE`/`REJECT`/`RELEASE` gravam `AuditEvent` + linha em
+  `DocumentApproval`; `RELEASE` emite `Document.Released`.
+
+### API e UI
+
+- `POST|GET /projects/[id]/documents` (upload multipart), `[docId]`
+  (GET/PATCH/DELETE), `revisions` (POST nova revisão), `status`
+  (transições com permissão por ação: EDIT/APPROVE/REJECT), `links`
+  (+ DELETE), `revisions/[revisionId]/download` (audit `DOWNLOAD`) —
+  7 endpoints novos, módulo `DOCUMENT` no RBAC.
+- `/documentos` (visão global do tenant) e `/projetos/[id]/documentos`
+  (CRUD, transições, revisões com histórico, links); item "Documentos"
+  na sidebar.
+
+### Testes e gate (15/10)
+
+- `cost.test.ts` executado pela primeira vez (consentimento dado): 24
+  testes — **2 bugs reais achados e corrigidos**: (1) teste de código
+  `CC001` conflitava com compromisso criado antes (agora código explícito
+  `CC-PROT`); (2) `importEstimateAsCostItems` fazia *soft delete* e a
+  reimportação violava o índice único `(projectId, code)` — agora
+  **hard delete** (`deleteMany`), mesmo padrão do import de schedule, com
+  FKs `ON DELETE SET NULL`.
+- Gate ✅: lint · typecheck · **142 unit / 12 arquivos** ·
+  **162 integração / 10 arquivos** (documents: 21) · build **96 rotas**
+  (75 endpoints) · migrations locais 8.
+
+### Próximo passo (definido nesta sessão)
+
+**E10 Risk** — risk register, matriz de probabilidade×impacto, respostas
+e risco residual. Antes: aplicar `phase7_documents` no Neon
+(`npx prisma migrate deploy` com `DATABASE_URL` do `.env.local`), commit e
+deploy via `npx vercel --prod`.

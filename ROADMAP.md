@@ -9,16 +9,16 @@ Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 Antes de iniciar uma fase, a fase anterior deve passar na suíte completa:
 `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `npm run build`.
 
-Última execução (14/10/2026) — **Fase 4 (E07 + orçamento de cozinha) verificada**:
+Última execução (15/10/2026) — **Fase 4 completa (E07 + E08 + E09) verificada**:
 
 | Checagem | Resultado |
 |---|---|
 | `npm run lint` | ✅ sem erros |
 | `npm run typecheck` | ✅ sem erros |
-| `npm test` (unit) | ✅ 120 testes / 10 arquivos |
-| `npm run test:integration` | ✅ 118 testes / 8 arquivos (tenant, gates, requisitos, WBS, schedule, baseline, calendários, import) |
-| `npm run build` | ✅ build de produção (71 rotas; 52 endpoints `/api/v1`) |
-| Migrations no banco local | ✅ 6 migrations (`init_foundation_identity` … `phase5_schedule_import`) |
+| `npm test` (unit) | ✅ 142 testes / 12 arquivos |
+| `npm run test:integration` | ✅ 162 testes / 10 arquivos (tenant, gates, requisitos, WBS, schedule, baseline, calendários, import, **cost**, **documents**) |
+| `npm run build` | ✅ build de produção (96 rotas; 75 endpoints `/api/v1`) |
+| Migrations no banco local | ✅ 8 migrations (`init_foundation_identity` … `phase7_documents`) |
 | Smoke autenticado | ✅ login · `/orcamento` 200 · `POST /api/v1/budget/estimate` 200 (20 quantitativos) |
 
 ### Correção de ambiente e sessão (07/10/2026)
@@ -83,20 +83,20 @@ para `http://localhost:3000`. Duas causas independentes:
       `/painel`/`/orcamento` 200 · WBS/requisitos/cronograma com dados ·
       EXAURA-001 66 atividades via API.
 
-## Status do sistema (14/10/2026)
+## Status do sistema (15/10/2026)
 
 | Área | Situação |
 |---|---|
-| Fases concluídas | 0–3 completas (Fase 4 em andamento: E07 ✅, E08 ✅, E09 ⬜) |
-| Épicos | E01–E08 ✅ · E09–E18 ⬜ |
-| Testes | 132 unit (11 arquivos) + 118 integração (8 arquivos) — unit todos verdes; +1 teste de integração (`cost.test.ts`) escrito, não executado (consentimento pendente) |
-| Migrations locais | 7 aplicadas (`init_foundation_identity` → `phase6_cost`) |
-| Rotas | 83 no build (63 endpoints `/api/v1` + 20 páginas); `/custos`, `/projetos/[id]/custos` e API de cost novos |
-| RBAC | módulo `COST` operante (`VIEW` na tela, `CREATE` na API de estimativa) |
-| Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`) |
+| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅) |
+| Épicos | E01–E09 ✅ · E10–E18 ⬜ |
+| Testes | 142 unit (12 arquivos) + 162 integração (10 arquivos) — todos verdes (cost.test.ts executado sob consentimento em 15/10) |
+| Migrations locais | 8 aplicadas (`init_foundation_identity` → `phase7_documents`) |
+| Rotas | 96 no build (75 endpoints `/api/v1` + 21 páginas); `/documentos`, `/projetos/[id]/documentos` e API de documents novos |
+| RBAC | módulos `COST` e `DOCUMENT` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT` por ação na API) |
+| Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
 | Produção | Vercel `mici-theta.vercel.app` + Neon — código e dados sincronizados com o local (14/10); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | E09 Documents · rodar `npm run test:integration -- cost` sob consentimento (reseta `mici_test`) |
-| Riscos/notas | Prisma Client precisa de `prisma generate` (postinstall); smoke local exigiu subir o Postgres portátil; testes de integração resetam o banco `mici_test` (consentimento registrado nesta sessão); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump` |
+| Pendências imediatas | E10 Risk · aplicar migration `phase7_documents` no Neon antes do deploy |
+| Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` (consentimento registrado); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump` |
 
 ## Releases (produto)
 
@@ -119,7 +119,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E06 Gates** | GateDefinition/Instance, critérios, aprovação, bloqueio (BR-001/002), auditoria | ✅ Fase 2 |
 | **E07 Schedule** | Atividades, dependências, calendário, baseline, forecast, caminho crítico | ✅ Fase 4 |
 | **E08 Cost** | Budget, CostItem, Commitment, Actual, Forecast, EVM | ✅ Fase 4 — itens/compromissos/realizados/EVM, baseline COST, gate G4, import do `estimate`, telas `/custos` e `/projetos/[id]/custos` |
-| **E09 Documents** | Upload, revisão, aprovação, release, link de objetos | ⬜ |
+| **E09 Documents** | Upload, revisão, aprovação, release, link de objetos | ✅ Fase 4 |
 | **E10 Risk** | Risk register, matriz, resposta, risco residual | ⬜ |
 | **E11 Change** | Request, impacto, aprovação, baseline revision, implementation | ⬜ |
 | **E12 Field** | Diário, foto, tarefa, avanço, restrição, mobile/PWA | ⬜ |
@@ -206,7 +206,7 @@ para `http://localhost:3000`. Duas causas independentes:
 - [x] Testes: 38 unit (motor de requisitos + motor WBS) + 29 de integração
       (BR-008/BR-015, versionamento, G1, CRUD WBS, importação/exportação)
 
-### Fase 4 — Planejamento e Custos (E07, E08), Documentos (E09) 🟦
+### Fase 4 — Planejamento e Custos (E07, E08), Documentos (E09) ✅
 
 **E07 Schedule ✅** (ver DIARIO 08/10 — commits locais `phase4_schedule*`):
 
@@ -246,12 +246,29 @@ para `http://localhost:3000`. Duas causas independentes:
 - [x] UI: `/projetos/[id]/custos` (EVM + CRUD + import) e `/custos`
       (vis portfolio); item "Custos" na sidebar
 - [x] Testes: +12 unit (`cost-engine`); `tests/integration/cost.test.ts`
-      escrito (não executado — harness de integração usa
-      `prisma db push --force-reset`, exige consentimento humano)
+       executado em 15/10 sob consentimento (24 testes verdes — 2 bugs
+       corrigidos: código `CC001` consumido por teste anterior e
+       `import-estimate` fazia soft delete violando o índice único
+       `(projectId, code)`, agora hard delete igual ao import de schedule)
 
-**E09 Documents ⬜**:
+**E09 Documents ✅** — documentos do projeto (15/10):
 
-- [ ] Documentos com revisão e aprovação
+- [x] Migration `phase7_documents` + modelos `Document`, `DocumentRevision`
+      (conteúdo bytea + SHA-256, append-only), `DocumentApproval`,
+      `DocumentLink` + enum `DocumentStatus`
+- [x] Módulo `src/modules/documents`: máquina de estados pura
+      (SUBMIT/APPROVE/REJECT/RELEASE/OBSOLETE), BR-009 (revisões imutáveis
+      só a partir de APPROVED+, metadados editáveis só em WIP/FOR_REVIEW),
+      BR-010 (não apaga aprovado/liberado), BR-011 (audit + approval),
+      storage com allowlist MIME e limite 4 MB (bytea — limite de body do Vercel)
+- [x] API: upload multipart, CRUD de metadados, revisões, transições de
+      status por permissão (EDIT/APPROVE/REJECT), download por revisão com
+      audit DOWNLOAD, links genéricos (REQUIREMENT/WBS/SCHEDULE/COST/DOCUMENT)
+- [x] UI: `/documentos` (visão global), `/projetos/[id]/documentos`
+      (CRUD + transições + revisões + links), item "Documentos" na sidebar
+- [x] Testes: +10 unit (`documents-engine`) + 21 integração
+      (`documents.test.ts`: upload/código automático, máquina de estados,
+      BR-009/010/011, links, download, isolamento de tenant)
 
 ### Fase 5+ — Releases 1→4 ⬜
 

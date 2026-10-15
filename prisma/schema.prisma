@@ -516,6 +516,7 @@ model Project {
   costItems       CostItem[]
   costCommitments CostCommitment[]
   costActuals     CostActual[]
+  documents       Document[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -1064,4 +1065,124 @@ model ScheduleTemplate {
   @@unique([organizationId, code])
   @@index([organizationId, name])
   @@map("schedule_templates")
+}
+
+// ---------------------------------------------------------------------------
+// Documentos (E09, §36/§61, BR-009/BR-010/BR-011): documento com revisões
+// imutáveis (arquivo + hash SHA-256 + autor + data + motivo + status +
+// aprovação), máquina de estados WIP → FOR_REVIEW → APPROVED →
+// RELEASED_FOR_EXECUTION → OBSOLETE e links genéricos com outros objetos
+// (§92). Binário no Postgres (bytea) nesta fase — abstração de storage
+// permite migrar para S3/Blob sem mudar o módulo.
+// ---------------------------------------------------------------------------
+
+enum DocumentStatus {
+  WIP
+  FOR_REVIEW
+  APPROVED
+  RELEASED_FOR_EXECUTION
+  OBSOLETE
+  @@map("document_status")
+}
+
+model Document {
+  id              String         @id @default(uuid()) @db.Uuid
+  organizationId  String         @map("organization_id") @db.Uuid
+  projectId       String         @map("project_id") @db.Uuid
+  code            String         @db.VarChar(32)
+  title           String         @db.VarChar(300)
+  discipline      String?        @db.VarChar(64)
+  classification  String?        @db.VarChar(64)
+  status          DocumentStatus @default(WIP)
+  currentRevision Int            @default(1) @map("current_revision")
+  effectiveDate   DateTime?      @map("effective_date") @db.Date
+  expiryDate      DateTime?      @map("expiry_date") @db.Date
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  revisions DocumentRevision[]
+  approvals DocumentApproval[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@map("documents")
+}
+
+// Revisão imutável (BR-009): o arquivo nunca é sobrescrito — cada revisão
+// preserva conteúdo, hash SHA-256, autor, data, motivo, status e aprovação.
+// Append-only (sem updatedAt/soft-delete).
+model DocumentRevision {
+  id              String         @id @default(uuid()) @db.Uuid
+  organizationId  String         @map("organization_id") @db.Uuid
+  documentId      String         @map("document_id") @db.Uuid
+  revision        Int
+  fileName        String         @map("file_name") @db.VarChar(255)
+  mimeType        String         @map("mime_type") @db.VarChar(127)
+  sizeBytes       Int            @map("size_bytes")
+  hash            String         @db.VarChar(64)
+  content         Bytes
+  reason          String?        @db.VarChar(300)
+  status          DocumentStatus @default(WIP)
+  approvedBy      String?        @map("approved_by") @db.Uuid
+  approvedAt      DateTime?      @map("approved_at")
+  approvalComment String?        @map("approval_comment") @db.VarChar(500)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+
+  document   Document           @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  approvals  DocumentApproval[]
+
+  @@unique([documentId, revision])
+  @@index([organizationId, documentId])
+  @@map("document_revisions")
+}
+
+// Registro de aprovação/rejeição/liberação (BR-011 — sempre com AuditEvent).
+// Append-only.
+model DocumentApproval {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  documentId     String           @map("document_id") @db.Uuid
+  revisionId     String           @map("revision_id") @db.Uuid
+  action         String           @db.VarChar(16)
+  comment        String?          @db.VarChar(500)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by") @db.Uuid
+
+  document Document         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  revision DocumentRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, documentId])
+  @@map("document_approvals")
+}
+
+// Link genérico de objetos (E09-US05, §92): source/target polimórficos com
+// relationType. Entidades críticas preferem FK explícita — este model cobre
+// apenas os cruzamentos documentais (ex.: documento SATISFIES requisito).
+model DocumentLink {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  sourceType     String   @map("source_type") @db.VarChar(32)
+  sourceId       String   @map("source_id") @db.Uuid
+  targetType     String   @map("target_type") @db.VarChar(32)
+  targetId       String   @map("target_id") @db.Uuid
+  relationType   String   @map("relation_type") @db.VarChar(32)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by") @db.Uuid
+
+  @@unique([organizationId, sourceType, sourceId, targetType, targetId, relationType])
+  @@index([organizationId, sourceType, sourceId])
+  @@index([organizationId, targetType, targetId])
+  @@map("document_links")
 }
