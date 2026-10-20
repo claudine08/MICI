@@ -94,8 +94,8 @@ para `http://localhost:3000`. Duas causas independentes:
 | Rotas | 102 no build (81 endpoints `/api/v1` + 21 páginas); `/riscos`, `/projetos/[id]/riscos` e API de risks/risk-matrix novos |
 | RBAC | módulos `COST`, `DOCUMENT` e `RISK` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
-| Produção | Vercel `mici-theta.vercel.app` + Neon — código e dados sincronizados com o local (15/10); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | aplicar migration `phase8_risk` no Neon antes do deploy do E10 |
+| Produção | Vercel `mici-theta.vercel.app` + Neon — E10 em produção (20/10, commit `a070e54`); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
+| Pendências imediatas | nenhuma — E10 em produção (commit `a070e54`, Neon com 9 migrations, deploy 20/10); próximo épico: E11 Change |
 | Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`; use `MICI_TEST_NO_RESET=1` para preservar dados); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump` |
 
 ## Releases (produto)

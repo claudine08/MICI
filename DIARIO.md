@@ -667,8 +667,8 @@ deploy via `npx vercel --prod`.
   probability/impact 1–5, **exposure derivado** prob×impacto, residuais,
   vínculos WBS/atividade/custo sem FK obrigatória), `RiskResponse`
   (append-only, histórico de planos) e `RiskMatrixConfig` (1 por org).
-- `20261020215748_phase8_risk` aplicada localmente (9 no total); ainda
-  **não aplicada no Neon**.
+- `20261020215748_phase8_risk` aplicada localmente (9 no total) **e no
+  Neon** (20/10, `prisma migrate deploy` — todas as 9 confirmadas).
 
 ### Módulo e API
 
@@ -715,7 +715,16 @@ deploy via `npx vercel --prod`.
   **184 integração / 11 arquivos** · build **102 rotas** (81 endpoints) ·
   migrations locais 9.
 
+### Deploy (20/10)
+
+- Commit `a070e54` em `main` (25 arquivos, +4062 linhas) e push.
+- Migration `phase8_risk` aplicada no Neon; deploy `npx vercel --prod`
+  concluído — `mici-theta.vercel.app` com 102 rotas (rotas de risks e
+  risk-matrix no ar).
+- Smoke: `/api/v1/health` → 200; `/api/v1/projects/x/risks` → 401;
+  `/api/v1/risk-matrix` → 401 (protegidas, como esperado sem sessão).
+
 ### Próximo passo
 
-- Aplicar `phase8_risk` no Neon (`npx prisma migrate deploy` com
-  `DATABASE_URL` do `.env.local`), commit e deploy. Depois: **E11 Change**.
+- **E11 Change** — request, impacto, aprovação, baseline revision,
+  implementation.
