@@ -83,20 +83,20 @@ para `http://localhost:3000`. Duas causas independentes:
       `/painel`/`/orcamento` 200 · WBS/requisitos/cronograma com dados ·
       EXAURA-001 66 atividades via API.
 
-## Status do sistema (15/10/2026)
+## Status do sistema (20/10/2026)
 
 | Área | Situação |
 |---|---|
-| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅) |
-| Épicos | E01–E09 ✅ · E10–E18 ⬜ |
-| Testes | 142 unit (12 arquivos) + 162 integração (10 arquivos) — todos verdes (cost.test.ts executado sob consentimento em 15/10) |
-| Migrations locais | 8 aplicadas (`init_foundation_identity` → `phase7_documents`) |
-| Rotas | 96 no build (75 endpoints `/api/v1` + 21 páginas); `/documentos`, `/projetos/[id]/documentos` e API de documents novos |
-| RBAC | módulos `COST` e `DOCUMENT` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT` por ação na API) |
+| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) |
+| Épicos | E01–E10 ✅ · E11–E18 ⬜ |
+| Testes | 154 unit (13 arquivos) + 184 integração (11 arquivos) — todos verdes (risk.test.ts rodou com `MICI_TEST_NO_RESET=1`, sem reset do `mici_test`) |
+| Migrations locais | 9 aplicadas (`init_foundation_identity` → `phase8_risk`) |
+| Rotas | 102 no build (81 endpoints `/api/v1` + 21 páginas); `/riscos`, `/projetos/[id]/riscos` e API de risks/risk-matrix novos |
+| RBAC | módulos `COST`, `DOCUMENT` e `RISK` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
-| Produção | Vercel `mici-theta.vercel.app` + Neon — código e dados sincronizados com o local (14/10); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | E10 Risk · aplicar migration `phase7_documents` no Neon antes do deploy |
-| Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` (consentimento registrado); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump` |
+| Produção | Vercel `mici-theta.vercel.app` + Neon — código e dados sincronizados com o local (15/10); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
+| Pendências imediatas | aplicar migration `phase8_risk` no Neon antes do deploy do E10 |
+| Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`; use `MICI_TEST_NO_RESET=1` para preservar dados); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump` |
 
 ## Releases (produto)
 
@@ -120,7 +120,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E07 Schedule** | Atividades, dependências, calendário, baseline, forecast, caminho crítico | ✅ Fase 4 |
 | **E08 Cost** | Budget, CostItem, Commitment, Actual, Forecast, EVM | ✅ Fase 4 — itens/compromissos/realizados/EVM, baseline COST, gate G4, import do `estimate`, telas `/custos` e `/projetos/[id]/custos` |
 | **E09 Documents** | Upload, revisão, aprovação, release, link de objetos | ✅ Fase 4 |
-| **E10 Risk** | Risk register, matriz, resposta, risco residual | ⬜ |
+| **E10 Risk** | Risk register, matriz, resposta, risco residual | ✅ Fase 4 — risk register com ciclo Identify→…→Close, matriz 5×5 configurável por organização, respostas (RiskResponse histórico), risco residual no CLOSE, escalada CRITICAL (domain events), telas `/riscos` e `/projetos/[id]/riscos` |
 | **E11 Change** | Request, impacto, aprovação, baseline revision, implementation | ⬜ |
 | **E12 Field** | Diário, foto, tarefa, avanço, restrição, mobile/PWA | ⬜ |
 | **E13 Quality** | Checklist, inspeção, NCR, ação corretiva, punch list | ⬜ |

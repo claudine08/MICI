@@ -48,7 +48,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Orçamento de cozinha", href: "/orcamento", icon: ChefHat },
       { label: "Custos", href: "/custos", icon: Coins },
       { label: "Documentos", href: "/documentos", icon: FolderOpen },
-      { label: "Riscos", icon: TriangleAlert, soon: true },
+      { label: "Riscos", href: "/riscos", icon: TriangleAlert },
       { label: "Relatórios", icon: FileBarChart2, soon: true },
     ],
   },

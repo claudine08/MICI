@@ -647,3 +647,75 @@ suíte de custos finalmente executada sob consentimento.
 e risco residual. Antes: aplicar `phase7_documents` no Neon
 (`npx prisma migrate deploy` com `DATABASE_URL` do `.env.local`), commit e
 deploy via `npx vercel --prod`.
+
+---
+
+## 20/10/2026 — E10 Risk completo
+
+### Verificação de produção (pendência do 15/10)
+
+- Neon com as 8 migrations (`phase7_documents` incluída), git limpo e deploy
+  do E09 já vivo (`/api/v1/projects/.../documents` → 401 sem sessão;
+  health → 200). Nada a executar; pendência concluída.
+
+### Banco e schema (migration `phase8_risk`)
+
+- Enums `RiskCategory` (10 categorias da spec), `RiskStatus`
+  (IDENTIFIED→ANALYZED→PLANNED→TREATING→MONITORING→CLOSED/CANCELLED) e
+  `RiskResponseStrategy` (MITIGATE/TRANSFER/AVOID/ACCEPT/ESCALATE).
+- Models `Risk` (código `RI001` por projeto, causa/evento/efeito,
+  probability/impact 1–5, **exposure derivado** prob×impacto, residuais,
+  vínculos WBS/atividade/custo sem FK obrigatória), `RiskResponse`
+  (append-only, histórico de planos) e `RiskMatrixConfig` (1 por org).
+- `20261020215748_phase8_risk` aplicada localmente (9 no total); ainda
+  **não aplicada no Neon**.
+
+### Módulo e API
+
+- `src/modules/risk/`: motor puro (`engine.ts` — exposição, níveis,
+  matriz default 4/9/16, máquina de estados com CANCEL/REOPEN/TREAT,
+  `availableRiskActions`), `schemas.ts` (zod), `selectors.ts` (linhas com
+  nível derivado na leitura + `listRiskSummaries`), `risks.ts` (CRUD +
+  transições + respostas, audit + domain events `Risk.Identified` /
+  `Risk.Escalated` / `Risk.Closed`), `matrix.ts` (upsert configurável,
+  E10-US02).
+- Regras de negócio: exposure sempre recalculado antes de persistir; nível
+  nunca persistido; CANCEL exige motivo; PLAN exige estratégia+tratamento+
+  proprietário (grava `RiskResponse`); CLOSE exige residuais 1–5;
+  terminal (CLOSED/CANCELLED) imutável (UPDATE/DELETE bloqueados);
+  `RISK_INVALID_STATE` (409) novo em `errors.ts`.
+- Endpoints: `GET|POST /projects/[id]/risks`, `GET|PATCH|DELETE
+  /risks/[riskId]`, `POST /risks/[riskId]/status`,
+  `GET|POST /risks/[riskId]/responses`, `GET|PUT /risk-matrix`
+  (PUT exige `RISK:ADMIN`). Módulo `RISK` já existia no RBAC (seed
+  idempotente) — nenhuma migração de permissões.
+
+### UI
+
+- `/projetos/[id]/riscos` — registro com cards de resumo, tabela, CRUD,
+  transições e histórico de respostas (`risk-view.tsx`).
+- `/riscos` — visão global por projeto (abertos, críticos, altos,
+  atrasados) + diálogo de configuração da matriz (`matrix-config.tsx`).
+- Sidebar: item "Riscos" habilitado (`/riscos`); links Custos/Documentos/
+  Riscos adicionados no detalhe do projeto.
+- **Bug E08 corrigido**: `cost-view.tsx` chamava `${base}/items` (rota
+  inexistente) — agora `${base}` / `${base}/${id}` (3 call sites).
+
+### Testes e gate (20/10)
+
+- `tests/unit/risk-engine.test.ts` (13 testes) e
+  `tests/integration/risk.test.ts` (22 testes): CRUD, RI001, exposure
+  derivado, ciclo completo + residuais, CANCEL/PLAN obrigatórios,
+  terminal imutável, histórico de respostas, matriz configurável muda
+  níveis, resumos, escalada CRITICAL, isolamento de tenant.
+- `tests/integration/global-setup.ts`: suporta `MICI_TEST_NO_RESET=1`
+  (pula o `--force-reset` e preserva dados do `mici_test`; exigido pelo
+  Prisma 7 para agentes — integração rodou sem apagar dados anteriores).
+- Gate ✅: lint · typecheck · **154 unit / 13 arquivos** ·
+  **184 integração / 11 arquivos** · build **102 rotas** (81 endpoints) ·
+  migrations locais 9.
+
+### Próximo passo
+
+- Aplicar `phase8_risk` no Neon (`npx prisma migrate deploy` com
+  `DATABASE_URL` do `.env.local`), commit e deploy. Depois: **E11 Change**.

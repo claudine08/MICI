@@ -214,6 +214,7 @@ model Organization {
   gateDefinitions  GateDefinition[]
   projectCalendars ProjectCalendar[]
   scheduleTemplates ScheduleTemplate[]
+  riskMatrixConfig RiskMatrixConfig?
 
   @@index([status])
   @@map("organizations")
@@ -517,6 +518,8 @@ model Project {
   costCommitments CostCommitment[]
   costActuals     CostActual[]
   documents       Document[]
+  risks           Risk[]
+  riskResponses   RiskResponse[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -769,6 +772,7 @@ model WBSNode {
   requirements Requirement[]
   scheduleActivities ScheduleActivity[]
   costItems    CostItem[]
+  risks        Risk[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId, parentId])
@@ -870,6 +874,7 @@ model ScheduleActivity {
   calendar   ProjectCalendar? @relation(fields: [calendarId], references: [id], onDelete: SetNull)
   predecessorOf ScheduleDependency[] @relation("DependencyPredecessor")
   successorOf   ScheduleDependency[] @relation("DependencySuccessor")
+  risks         Risk[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -971,6 +976,7 @@ model CostItem {
   wbsNode    WBSNode?         @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
   commitments CostCommitment[]
   actuals     CostActual[]
+  risks       Risk[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -1075,6 +1081,45 @@ model ScheduleTemplate {
 // (§92). Binário no Postgres (bytea) nesta fase — abstração de storage
 // permite migrar para S3/Blob sem mudar o módulo.
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Riscos (E10, §32): registro, matriz configurável (probabilidade × impacto),
+// resposta e risco residual. `exposure`/`residualExposure` são DERIVADOS:
+// sempre recalculados pelo motor (probabilidade × impacto) antes de persistir.
+// ---------------------------------------------------------------------------
+
+enum RiskCategory {
+  SCOPE
+  SCHEDULE
+  COST
+  QUALITY
+  SAFETY
+  SUPPLY
+  CONTRACTUAL
+  REGULATORY
+  ENVIRONMENTAL
+  SUSTAINABILITY
+}
+
+// Ciclo §32: Identify → Analyze → Prioritize → Response → Implement →
+// Monitor → Close. CANCELLED descarta o risco (falso positivo).
+enum RiskStatus {
+  IDENTIFIED
+  ANALYZED
+  PLANNED
+  TREATING
+  MONITORING
+  CLOSED
+  CANCELLED
+}
+
+enum RiskResponseStrategy {
+  AVOID
+  MITIGATE
+  TRANSFER
+  ACCEPT
+  ESCALATE
+}
 
 enum DocumentStatus {
   WIP
@@ -1185,4 +1230,104 @@ model DocumentLink {
   @@index([organizationId, sourceType, sourceId])
   @@index([organizationId, targetType, targetId])
   @@map("document_links")
+}
+
+// Matriz de risco configurável por organização (E10-US02, §32): rótulos de
+// probabilidade/impacto (1–5) e limites de nível sobre o exposure (1–25).
+// Sem registro, vale a matriz default do motor.
+model RiskMatrixConfig {
+  id                String   @id @default(uuid()) @db.Uuid
+  organizationId    String   @unique @map("organization_id") @db.Uuid
+  probabilityLabels Json     @default("[\"Muito baixa\",\"Baixa\",\"Média\",\"Alta\",\"Muito alta\"]") @map("probability_labels")
+  impactLabels      Json     @default("[\"Irrelevante\",\"Menor\",\"Moderado\",\"Maior\",\"Crítico\"]") @map("impact_labels")
+  lowMax            Int      @default(4) @map("low_max")
+  mediumMax         Int      @default(9) @map("medium_max")
+  highMax           Int      @default(16) @map("high_max")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("risk_matrix_configs")
+}
+
+// Registro de riscos (E10-US01, §32): causa → evento → efeito, categoria,
+// probabilidade × impacto, proprietário, resposta, ação, prazo, status e
+// risco residual (E10-US04). Vínculos opcionais com WBS/atividade/custo.
+model Risk {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  title          String   @db.VarChar(200)
+  cause          String?  @db.Text
+  event          String?  @db.Text
+  effect         String?  @db.Text
+  category       RiskCategory
+  probability    Int      @default(1)
+  impact         Int      @default(1)
+  exposure       Int      @default(1)
+  ownerId        String?  @map("owner_id") @db.Uuid
+  response       RiskResponseStrategy?
+  action         String?  @db.Text
+  dueDate        DateTime? @map("due_date") @db.Date
+  status         RiskStatus @default(IDENTIFIED)
+  residualProbability Int? @map("residual_probability")
+  residualImpact Int?     @map("residual_impact")
+  residualExposure Int?   @map("residual_exposure")
+  residualNotes  String?  @map("residual_notes") @db.Text
+  wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
+  activityId     String?  @map("activity_id") @db.Uuid
+  costItemId     String?  @map("cost_item_id") @db.Uuid
+  analyzedAt     DateTime? @map("analyzed_at")
+  closedAt       DateTime? @map("closed_at")
+  closedBy       String?   @map("closed_by") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode    WBSNode?    @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity   ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  costItem   CostItem?   @relation(fields: [costItemId], references: [id], onDelete: SetNull)
+  responses  RiskResponse[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@index([organizationId, projectId, category])
+  @@map("risks")
+}
+
+// Histórico imutável (append-only) das respostas planejadas/revistas
+// (E10-US03): cada plano/ajuste de resposta vira uma linha auditável.
+model RiskResponse {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  riskId         String   @map("risk_id") @db.Uuid
+  strategy       RiskResponseStrategy
+  action         String?  @db.Text
+  ownerId        String?  @map("owner_id") @db.Uuid
+  dueDate        DateTime? @map("due_date") @db.Date
+  notes          String?  @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+
+  risk Risk @relation(fields: [riskId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, riskId])
+  @@index([organizationId, projectId])
+  @@map("risk_responses")
 }

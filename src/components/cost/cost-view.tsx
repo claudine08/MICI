@@ -340,12 +340,12 @@ export function CostView({
         wbsNodeId: itemForm.wbsNodeId || null,
       };
       if (editingItemId) {
-        await apiRequest(`${base}/items/${editingItemId}`, {
+        await apiRequest(`${base}/${editingItemId}`, {
           method: "PATCH",
           body: JSON.stringify(payload),
         });
       } else {
-        await apiRequest(`${base}/items`, {
+        await apiRequest(base, {
           method: "POST",
           body: JSON.stringify(payload),
         });
@@ -363,7 +363,7 @@ export function CostView({
     if (!window.confirm(`Remover o item ${item.code}?`)) return;
     setError(null);
     try {
-      await apiRequest(`${base}/items/${item.id}`, { method: "DELETE" });
+      await apiRequest(`${base}/${item.id}`, { method: "DELETE" });
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Falha ao remover item.");
