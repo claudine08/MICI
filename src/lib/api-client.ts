@@ -13,13 +13,26 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    ...init,
-    headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...init?.headers,
-    },
-  });
+  const headers = new Headers(init?.headers);
+  // Força JSON apenas para body string serializado. FormData/Blob precisam
+  // do Content-Type automático do browser (multipart com boundary) — forçar
+  // application/json aqui quebra o upload (servidor não consegue ler o form).
+  if (typeof init?.body === "string" && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...init,
+      headers,
+    });
+  } catch {
+    // fetch rejeitado = falha de rede/cors/conexão interrompida (ex.: upload
+    // acima do limite do serverless). Devolve contrato de erro em vez do
+    // TypeError cru "Failed to fetch".
+    throw new ApiError(0, "Falha de conexão com o servidor. Verifique sua rede e tente novamente.", "NETWORK_ERROR");
+  }
 
   const data = (await response.json().catch(() => null)) as
     | { error?: { message?: string; code?: string } }

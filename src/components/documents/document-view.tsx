@@ -136,6 +136,17 @@ function fileSize(size: number | null): string {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// Mesmo limite do servidor (storage.ts): acima disso a Vercel corta a
+// conexão do upload e o fetch falha com "Failed to fetch" sem resposta.
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+
+function fileValidationError(file: File): string | null {
+  if (file.size > MAX_FILE_BYTES) {
+    return `Arquivo excede o limite de 4 MB (selecionado: ${fileSize(file.size)}).`;
+  }
+  return null;
+}
+
 function ErrorBox({ message }: { message: string | null }) {
   if (!message) return null;
   return (
@@ -254,6 +265,11 @@ export function DocumentView({
       setError("Selecione o arquivo da revisão 1.");
       return;
     }
+    const validationError = fileValidationError(createForm.file);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setError(null);
     setBusy(true);
     try {
@@ -320,6 +336,11 @@ export function DocumentView({
     if (!revisionDoc) return;
     if (!revisionForm.file) {
       setError("Selecione o arquivo da nova revisão.");
+      return;
+    }
+    const validationError = fileValidationError(revisionForm.file);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setError(null);
