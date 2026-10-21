@@ -406,6 +406,145 @@ describe("análise de impacto (§31 ChangeImpact)", () => {
   });
 });
 
+describe("revisão de baseline automática na implementação (§31)", () => {
+  it("cria baseline COST vinculada quando IMPLEMENT tem costDelta e sem baselineIds", async () => {
+    const change = await createChange({
+      ...actorA(),
+      projectId,
+      title: "Aumento de custo equipamento",
+      category: "COST",
+      costDelta: 5000,
+    });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "SUBMIT" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "START_ANALYSIS" });
+    await upsertChangeImpact({
+      ...actorA(),
+      changeId: change.id,
+      dimension: "COST",
+      severity: "MEDIUM",
+      notes: "Acréscimo no fornecedor",
+    });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "REQUEST_APPROVAL" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "APPROVE" });
+
+    const implemented = await transitionChange({
+      ...actorA(),
+      changeId: change.id,
+      action: "IMPLEMENT",
+      implementationNotes: "Custo incorporado ao baseline",
+    });
+    expect(implemented.status).toBe("IMPLEMENTED");
+
+    const baselines = await prisma.baseline.findMany({
+      where: { changeRequestId: change.id },
+    });
+    expect(baselines).toHaveLength(1);
+    expect(baselines[0].type).toBe("COST");
+    expect(baselines[0].status).toBe("DRAFT");
+    expect(baselines[0].reason).toContain(change.code);
+
+    const snap = baselines[0].snapshot as {
+      changeId: string;
+      changeCode: string;
+      costDelta: number;
+      totalBudget: number;
+      baseTotalBudget: number;
+    };
+    expect(snap.changeId).toBe(change.id);
+    expect(snap.changeCode).toBe(change.code);
+    expect(snap.costDelta).toBe(5000);
+    expect(snap.totalBudget).toBe(snap.baseTotalBudget + 5000);
+
+    const row = await getChangeRow(orgA.id, change.id);
+    expect(row.baselineCount).toBe(1);
+  });
+
+  it("cria baselines COST e SCHEDULE quando a mudança tem ambos os deltas", async () => {
+    const change = await createChange({
+      ...actorA(),
+      projectId,
+      title: "Custo e prazo",
+      category: "SCOPE",
+      costDelta: 10000,
+      scheduleDays: 15,
+    });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "SUBMIT" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "START_ANALYSIS" });
+    await upsertChangeImpact({
+      ...actorA(),
+      changeId: change.id,
+      dimension: "SCOPE",
+      severity: "HIGH",
+    });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "REQUEST_APPROVAL" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "APPROVE" });
+    await transitionChange({
+      ...actorA(),
+      changeId: change.id,
+      action: "IMPLEMENT",
+      implementationNotes: "Implementado com revisão dupla",
+    });
+
+    const baselines = await prisma.baseline.findMany({
+      where: { changeRequestId: change.id },
+    });
+    const types = baselines.map((b) => b.type).sort();
+    expect(types).toEqual(["COST", "SCHEDULE"]);
+
+    const costBaseline = baselines.find((b) => b.type === "COST")!;
+    const schedBaseline = baselines.find((b) => b.type === "SCHEDULE")!;
+    const costSnap = costBaseline.snapshot as { costDelta: number };
+    const schedSnap = schedBaseline.snapshot as { scheduleDays: number };
+    expect(costSnap.costDelta).toBe(10000);
+    expect(schedSnap.scheduleDays).toBe(15);
+  });
+
+  it("baselineIds explícitos têm precedência (não cria automática)", async () => {
+    const change = await createChange({
+      ...actorA(),
+      projectId,
+      title: "Com baseline explícita",
+      costDelta: 2000,
+    });
+    const baseline = await createBaseline({ ...actorA(), projectId, reason: "Manual" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "SUBMIT" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "START_ANALYSIS" });
+    await upsertChangeImpact({ ...actorA(), changeId: change.id, dimension: "COST", severity: "LOW" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "REQUEST_APPROVAL" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "APPROVE" });
+
+    await transitionChange({
+      ...actorA(),
+      changeId: change.id,
+      action: "IMPLEMENT",
+      implementationNotes: "Usando baseline existente",
+      baselineIds: [baseline.id],
+    });
+
+    const linked = await prisma.baseline.findMany({ where: { changeRequestId: change.id } });
+    expect(linked).toHaveLength(1);
+    expect(linked[0].id).toBe(baseline.id);
+  });
+
+  it("não cria baseline automática quando não há delta de custo nem prazo", async () => {
+    const change = await createChange({ ...actorA(), projectId, title: "Sem delta" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "SUBMIT" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "START_ANALYSIS" });
+    await upsertChangeImpact({ ...actorA(), changeId: change.id, dimension: "SCOPE", severity: "LOW" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "REQUEST_APPROVAL" });
+    await transitionChange({ ...actorA(), changeId: change.id, action: "APPROVE" });
+    await transitionChange({
+      ...actorA(),
+      changeId: change.id,
+      action: "IMPLEMENT",
+      implementationNotes: "Sem impacto financeiro",
+    });
+
+    const linked = await prisma.baseline.findMany({ where: { changeRequestId: change.id } });
+    expect(linked).toHaveLength(0);
+  });
+});
+
 describe("resumo por projeto e isolamento de tenant", () => {
   it("agrega total, abertas, aguardando aprovação, aprovadas, rejeitadas e alto impacto", async () => {
     const summaries = await listChangeSummaries(orgA.id);

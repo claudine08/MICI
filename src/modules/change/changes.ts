@@ -8,6 +8,8 @@ import {
   type ImpactSeverity,
 } from "@/modules/change/engine";
 import { assertChangeProject } from "@/modules/change/selectors";
+import { listCostItems } from "@/modules/cost/selectors";
+import { listActivities, listDependencies } from "@/modules/schedule/selectors";
 
 // Mudanças (E11, §31): pedido com workflow obrigatório, análise de impacto
 // por dimensão, aprovação auditada e implementação com vínculo de baselines
@@ -247,6 +249,104 @@ export async function deleteChange(input: ActorContext & { changeId: string }) {
   return { changeId: change.id };
 }
 
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+// Cria automaticamente uma revisão de baseline (§31) quando a mudança é
+// implementada e o pedido tem delta de custo/prazo sem baseline explícita.
+// A baseline nasce vinculada à mudança (changeRequestId) e registra o delta
+// e a mudança no snapshot para rastreabilidade — totalBudget já embute o
+// costDelta aprovado (BAC revisado).
+async function createChangeBaselineRevision(
+  input: ActorContext & {
+    changeId: string;
+    projectId: string;
+    changeCode: string;
+    type: "COST" | "SCHEDULE";
+    costDelta?: number | null;
+    scheduleDays?: number | null;
+  }
+) {
+  const last = await prisma.baseline.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      projectId: input.projectId,
+      type: input.type,
+    },
+    orderBy: { version: "desc" },
+    select: { version: true },
+  });
+
+  let snapshot: Record<string, unknown>;
+  if (input.type === "COST") {
+    const items = await listCostItems(input.organizationId, input.projectId);
+    const baseTotal = round2(items.reduce((acc, item) => acc + item.amount, 0));
+    const delta = round2(input.costDelta ?? 0);
+    snapshot = {
+      capturedAt: new Date().toISOString(),
+      totalBudget: round2(baseTotal + delta),
+      baseTotalBudget: baseTotal,
+      itemCount: items.length,
+      items,
+      changeId: input.changeId,
+      changeCode: input.changeCode,
+      costDelta: delta,
+    };
+  } else {
+    const [activities, dependencies] = await Promise.all([
+      listActivities(input.organizationId, input.projectId),
+      listDependencies(input.organizationId, input.projectId),
+    ]);
+    snapshot = {
+      capturedAt: new Date().toISOString(),
+      activityCount: activities.length,
+      dependencyCount: dependencies.length,
+      activities,
+      dependencies,
+      changeId: input.changeId,
+      changeCode: input.changeCode,
+      scheduleDays: input.scheduleDays ?? 0,
+    };
+  }
+
+  const baseline = await prisma.baseline.create({
+    data: {
+      organizationId: input.organizationId,
+      projectId: input.projectId,
+      type: input.type,
+      version: (last?.version ?? 0) + 1,
+      status: "DRAFT",
+      snapshot: snapshot as never,
+      reason: `Revisão automática pela mudança ${input.changeCode}`,
+      changeRequestId: input.changeId,
+      createdBy: input.actorId,
+    },
+  });
+
+  await prisma.auditEvent.create({
+    data: {
+      organizationId: input.organizationId,
+      actorId: input.actorId,
+      actorLabel: input.actorLabel,
+      projectId: input.projectId,
+      objectType: "Baseline",
+      objectId: baseline.id,
+      action: "CREATE",
+      newValue: {
+        type: input.type,
+        version: baseline.version,
+        changeCode: input.changeCode,
+      },
+      reason: baseline.reason,
+      correlationId: input.correlationId ?? null,
+      ipAddress: input.ipAddress ?? null,
+    },
+  });
+
+  return baseline;
+}
+
 export interface ChangeTransitionInput {
   changeId: string;
   action: ChangeAction;
@@ -322,6 +422,41 @@ export async function transitionChange(input: ActorContext & ChangeTransitionInp
   }
 
   const now = new Date();
+  // Na IMPLEMENTação: revisão de baseline automática (§31) quando a mudança
+  // tem delta de custo/prazo e não recebeu baseline explícita via baselineIds.
+  // baselineIds explícitos têm precedência (o usuário gerencia manualmente).
+  let autoBaselines: { id: string; type: string; version: number }[] = [];
+  if (input.action === "IMPLEMENT") {
+    const hasCostDelta = change.costDelta != null && Number(change.costDelta) !== 0;
+    const hasScheduleDelta = change.scheduleDays != null && change.scheduleDays !== 0;
+    if ((hasCostDelta || hasScheduleDelta) && !input.baselineIds?.length) {
+      const created: { id: string; type: string; version: number }[] = [];
+      if (hasCostDelta) {
+        const b = await createChangeBaselineRevision({
+          ...input,
+          changeId: change.id,
+          projectId: change.projectId,
+          changeCode: change.code,
+          type: "COST",
+          costDelta: Number(change.costDelta),
+        });
+        created.push({ id: b.id, type: b.type, version: b.version });
+      }
+      if (hasScheduleDelta) {
+        const b = await createChangeBaselineRevision({
+          ...input,
+          changeId: change.id,
+          projectId: change.projectId,
+          changeCode: change.code,
+          type: "SCHEDULE",
+          scheduleDays: change.scheduleDays,
+        });
+        created.push({ id: b.id, type: b.type, version: b.version });
+      }
+      autoBaselines = created;
+    }
+  }
+
   const updated = await prisma.$transaction(async (tx) => {
     if (input.action === "APPROVE" || input.action === "REJECT") {
       await tx.changeApproval.create({
@@ -372,6 +507,11 @@ export async function transitionChange(input: ActorContext & ChangeTransitionInp
     newValue: {
       status: updated.status,
       ...(input.baselineIds?.length ? { baselineIds: input.baselineIds } : {}),
+      ...(autoBaselines.length
+        ? {
+            autoBaselines: autoBaselines.map((b) => `${b.type} v${b.version}`),
+          }
+        : {}),
     },
     reason: input.reason?.trim() ?? null,
   });
