@@ -17,7 +17,7 @@ import {
   Link2,
   Unlink,
 } from "lucide-react";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, apiUpload } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -217,6 +217,7 @@ export function DocumentView({
 
   const [documents, setDocuments] = useState<DocumentRow[]>(initialDocuments);
   const [error, setError] = useState<string | null>(null);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [createDialog, setCreateDialog] = useState(false);
@@ -257,6 +258,7 @@ export function DocumentView({
   const openCreate = () => {
     setCreateForm(emptyCreateForm);
     setError(null);
+    setUploadPct(null);
     setCreateDialog(true);
   };
 
@@ -280,12 +282,13 @@ export function DocumentView({
       if (createForm.classification) formData.set("classification", createForm.classification);
       if (createForm.expiryDate) formData.set("expiryDate", createForm.expiryDate);
       formData.set("file", createForm.file);
-      await apiRequest(base, { method: "POST", body: formData });
+      await apiUpload(base, formData, setUploadPct);
       setCreateDialog(false);
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Falha ao criar documento.");
     } finally {
+      setUploadPct(null);
       setBusy(false);
     }
   };
@@ -329,6 +332,7 @@ export function DocumentView({
     setRevisionDoc(doc);
     setRevisionForm({ reason: "", file: null });
     setError(null);
+    setUploadPct(null);
     setRevisionDialog(true);
   };
 
@@ -349,12 +353,13 @@ export function DocumentView({
       const formData = new FormData();
       formData.set("reason", revisionForm.reason);
       formData.set("file", revisionForm.file);
-      await apiRequest(`${base}/${revisionDoc.id}/revisions`, { method: "POST", body: formData });
+      await apiUpload(`${base}/${revisionDoc.id}/revisions`, formData, setUploadPct);
       setRevisionDialog(false);
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Falha ao criar revisão.");
     } finally {
+      setUploadPct(null);
       setBusy(false);
     }
   };
@@ -661,12 +666,13 @@ export function DocumentView({
               </p>
             )}
           </div>
+          <ErrorBox message={error} />
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setCreateDialog(false)}>
               Cancelar
             </Button>
             <Button disabled={busy || !createForm.title || !createForm.file} onClick={() => void submitCreate()}>
-              Criar documento
+              {uploadPct !== null ? `Enviando ${uploadPct}%…` : "Criar documento"}
             </Button>
           </div>
         </div>
@@ -724,12 +730,13 @@ export function DocumentView({
               </p>
             )}
           </div>
+          <ErrorBox message={error} />
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setRevisionDialog(false)}>
               Cancelar
             </Button>
             <Button disabled={busy || !revisionForm.reason || !revisionForm.file} onClick={() => void submitRevision()}>
-              Criar revisão
+              {uploadPct !== null ? `Enviando ${uploadPct}%…` : "Criar revisão"}
             </Button>
           </div>
         </div>
