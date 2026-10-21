@@ -69,6 +69,7 @@ export interface CostBaselineRow {
   reason: string | null;
   totalBudget: number;
   itemCount: number;
+  changeCode: string | null;
   createdAt: string;
 }
 
@@ -842,6 +843,7 @@ export function CostView({
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                 <th className="px-4 py-2.5">Versão</th>
                 <th className="px-4 py-2.5">Status</th>
+                <th className="px-4 py-2.5">Mudança</th>
                 <th className="px-4 py-2.5">Itens</th>
                 <th className="px-4 py-2.5 text-right">Orçamento</th>
                 <th className="px-4 py-2.5">Criada em</th>
@@ -864,6 +866,18 @@ export function CostView({
                     >
                       {BASELINE_BADGE[baseline.status]}
                     </Badge>
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {baseline.changeCode ? (
+                      <span
+                        className="font-mono text-xs text-primary"
+                        title={`Revisão originada pela mudança ${baseline.changeCode}`}
+                      >
+                        {baseline.changeCode}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground">{baseline.itemCount}</td>
                   <td className="px-4 py-2.5 text-right font-medium">

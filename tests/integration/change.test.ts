@@ -19,6 +19,7 @@ import {
   listChangeSummaries,
 } from "@/modules/change/selectors";
 import { createBaseline } from "@/modules/schedule/baselines";
+import { listCostBaselines } from "@/modules/cost/baselines";
 
 const suffix = `${Date.now().toString(36)}${randomBytes(3).toString("hex")}`;
 
@@ -457,6 +458,13 @@ describe("revisão de baseline automática na implementação (§31)", () => {
 
     const row = await getChangeRow(orgA.id, change.id);
     expect(row.baselineCount).toBe(1);
+
+    // Rastreio na listagem de custos: a baseline expõe o código da mudança.
+    const costRows = await listCostBaselines(orgA.id, projectId);
+    const costRow = costRows.find((r) => r.id === baselines[0].id)!;
+    expect(costRow.changeCode).toBe(change.code);
+    expect(costRow.changeRequestId).toBe(change.id);
+    expect(costRow.totalBudget).toBe(snap.totalBudget);
   });
 
   it("cria baselines COST e SCHEDULE quando a mudança tem ambos os deltas", async () => {

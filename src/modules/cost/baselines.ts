@@ -28,6 +28,8 @@ export interface CostBaselineRow {
   reason: string | null;
   totalBudget: number;
   itemCount: number;
+  changeRequestId: string | null;
+  changeCode: string | null;
   approvedAt: string | null;
   approvedBy: string | null;
   createdAt: string;
@@ -47,17 +49,35 @@ async function loadBaseline(organizationId: string, baselineId: string) {
   return baseline;
 }
 
-function toRow(record: {
-  id: string;
-  projectId: string;
-  version: number;
-  status: "DRAFT" | "SUBMITTED" | "APPROVED" | "SUPERSEDED";
-  reason: string | null;
-  snapshot: unknown;
-  approvedAt: Date | null;
-  approvedBy: string | null;
-  createdAt: Date;
-}): CostBaselineRow {
+// resolveChangeCodes: mapeia changeRequestId → código (CR001) para expor o
+// vínculo baseline↔mudança (BR-005) na listagem.
+async function resolveChangeCodes(
+  rows: { changeRequestId: string | null }[]
+): Promise<Map<string, string>> {
+  const ids = [...new Set(rows.map((r) => r.changeRequestId).filter((v): v is string => !!v))];
+  if (ids.length === 0) return new Map();
+  const changes = await prisma.changeRequest.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, code: true },
+  });
+  return new Map(changes.map((c) => [c.id, c.code]));
+}
+
+function toRow(
+  record: {
+    id: string;
+    projectId: string;
+    version: number;
+    status: "DRAFT" | "SUBMITTED" | "APPROVED" | "SUPERSEDED";
+    reason: string | null;
+    snapshot: unknown;
+    changeRequestId: string | null;
+    approvedAt: Date | null;
+    approvedBy: string | null;
+    createdAt: Date;
+  },
+  changeCodes: Map<string, string>
+): CostBaselineRow {
   const snap = (record.snapshot ?? {}) as { totalBudget?: number; itemCount?: number };
   return {
     id: record.id,
@@ -67,6 +87,9 @@ function toRow(record: {
     reason: record.reason,
     totalBudget: snap.totalBudget ?? 0,
     itemCount: snap.itemCount ?? 0,
+    changeRequestId: record.changeRequestId,
+    changeCode:
+      record.changeRequestId ? (changeCodes.get(record.changeRequestId) ?? null) : null,
     approvedAt: iso(record.approvedAt),
     approvedBy: record.approvedBy,
     createdAt: record.createdAt.toISOString(),
@@ -82,7 +105,8 @@ export async function listCostBaselines(
     where: { organizationId, projectId, type: "COST" },
     orderBy: { version: "desc" },
   });
-  return rows.map(toRow);
+  const changeCodes = await resolveChangeCodes(rows);
+  return rows.map((row) => toRow(row, changeCodes));
 }
 
 export async function createCostBaseline(
@@ -133,7 +157,7 @@ export async function createCostBaseline(
     },
   });
 
-  return toRow(baseline);
+  return toRow(baseline, await resolveChangeCodes([baseline]));
 }
 
 const TRANSITIONS: Record<string, { from: string[]; to: string }> = {
@@ -201,7 +225,7 @@ export async function transitionCostBaseline(
     },
   });
 
-  return toRow(updated);
+  return toRow(updated, await resolveChangeCodes([updated]));
 }
 
 export async function deleteCostBaseline(input: ActorContext & { baselineId: string }) {
