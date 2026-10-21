@@ -763,6 +763,17 @@ deploy via `npx vercel --prod`.
 - Mensagem de "nenhum byte enviado" agora orienta a copiar o arquivo do
   OneDrive para o computador antes de enviar.
 
+### Encerramento (21/10)
+
+- Gate ✅ após correções: lint · typecheck · 154 unit · 184 integração
+  (com `MICI_TEST_NO_RESET=1`) · build.
+- Commits em `main` e deploys Vercel: `66c628e` (console.error), `e245549`
+  (XHR + progresso + erro no diálogo + sonda), `ed299f5` (orientação
+  OneDrive + este registro). Produção em `mici-theta.vercel.app`.
+- Dados de teste removidos do Neon (documents LT-*, usuário de teste
+  `upload.test@mici.demo` — se recriar para diagnóstico, remover depois).
+- Status salvo no ROADMAP (seção 21/10). Retomada: **E11 Change**.
+
 ### Lição
 
 - "Falha de conexão" no fetch não é sempre rede: 0 bytes enviados +

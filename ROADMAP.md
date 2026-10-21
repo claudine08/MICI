@@ -83,20 +83,32 @@ para `http://localhost:3000`. Duas causas independentes:
       `/painel`/`/orcamento` 200 · WBS/requisitos/cronograma com dados ·
       EXAURA-001 66 atividades via API.
 
-## Status do sistema (20/10/2026)
+## Status do sistema (21/10/2026)
 
 | Área | Situação |
 |---|---|
 | Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) |
 | Épicos | E01–E10 ✅ · E11–E18 ⬜ |
-| Testes | 154 unit (13 arquivos) + 184 integração (11 arquivos) — todos verdes (risk.test.ts rodou com `MICI_TEST_NO_RESET=1`, sem reset do `mici_test`) |
+| Testes | 154 unit (13 arquivos) + 184 integração (11 arquivos) — todos verdes (integração com `MICI_TEST_NO_RESET=1`, sem reset do `mici_test`) |
 | Migrations locais | 9 aplicadas (`init_foundation_identity` → `phase8_risk`) |
 | Rotas | 102 no build (81 endpoints `/api/v1` + 21 páginas); `/riscos`, `/projetos/[id]/riscos` e API de risks/risk-matrix novos |
 | RBAC | módulos `COST`, `DOCUMENT` e `RISK` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
-| Produção | Vercel `mici-theta.vercel.app` + Neon — E10 em produção (20/10, commit `a070e54`); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | nenhuma — E10 em produção (commit `a070e54`, Neon com 9 migrations, deploy 20/10); próximo épico: E11 Change |
-| Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`; use `MICI_TEST_NO_RESET=1` para preservar dados); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump` |
+| Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 21/10 (commit `ed299f5`, correções de upload); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
+| Pendências imediatas | nenhuma — incidente de upload (21/10) resolvido e documentado (ver DIARIO 21/10); próximo épico: **E11 Change** |
+| Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`; use `MICI_TEST_NO_RESET=1` para preservar dados); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump`; upload direto de arquivo **OneDrive online-only** falha no browser (copiar local antes de enviar — a mensagem de erro do MICI já orienta) |
+
+### Incidente de upload (21/10/2026) — resolvido
+
+- Relato: "Falha de conexão" ao enviar documentos em produção. Diagnóstico
+  via XHR com progresso: arquivo de 15 KB com **0 bytes enviados** e
+  servidor OK — o browser não conseguia ler arquivos do OneDrive em modo
+  online (nuvem). Não é bug do MICI.
+- Correções que ficaram no produto (commits `6401472`, `66c628e`,
+  `e245549`, `ed299f5`): `Content-Type` multipart correto, validação 4 MB
+  no cliente, upload via XHR com progresso, erro visível dentro do
+  diálogo, sonda `/api/v1/health` após falha e orientação sobre OneDrive
+  na mensagem. Detalhes no DIARIO 21/10.
 
 ## Releases (produto)
 
