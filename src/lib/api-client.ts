@@ -119,7 +119,7 @@ export function apiUpload<T>(
       const progress =
         total > 0
           ? ` Foram enviados ${sent} de ${total} bytes (${Math.round((sent / total) * 100)}%).`
-          : " Nenhum byte foi enviado.";
+          : " Nenhum byte foi enviado. Arquivos do OneDrive em modo online (nuvem) costumam falhar aqui: copie o arquivo para o computador e envie a cópia local.";
       const detail = await probeServer();
       reject(
         new ApiError(

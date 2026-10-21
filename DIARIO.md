@@ -728,3 +728,44 @@ deploy via `npx vercel --prod`.
 
 - **E11 Change** — request, impacto, aprovação, baseline revision,
   implementation.
+
+## 21/10/2026 — Incidente: upload falhava direto do OneDrive
+
+### Relato
+
+- Usuário relatou "Falha de conexão com o servidor" ao enviar documento em
+  produção (`mici-theta.vercel.app`), repetidamente.
+
+### Diagnóstico (evidências)
+
+- API saudável em todas as variações testadas via CLI na mesma máquina:
+  uploads de 0.1–4 MB, HTTP/1.1 e HTTP/2, upload lento (70 s a 60 KB/s) —
+  todos 201; 4.1 MB → 422 de validação; 4.4 MB → 413 da borda Vercel.
+- Logs Vercel: nenhum POST `/documents` do usuário chegava à function.
+- Instrumentação no cliente (XHR com progresso) revelou o diagnóstico
+  decisivo: **arquivo de 15 KB, "nenhum byte enviado", servidor OK** na
+  sonda posterior — a falha era na **leitura do arquivo no navegador**,
+  antes de qualquer requisição.
+- Causa raiz confirmada pelo usuário: **upload direto de arquivo do
+  OneDrive em modo online (nuvem)** — o browser falha ao hidratar/ler o
+  placeholder (ERR_UPLOAD_FILE_CHANGED) e o XHR morre com 0 bytes.
+
+### Correções aplicadas
+
+- `api-client.ts` (commit `6401472`): `Content-Type` não é mais forçado a
+  JSON em `FormData`; erro de rede vira `ApiError` `NETWORK_ERROR`.
+- `api-client.ts` (commit `66c628e`): `console.error` com causa real do
+  fetch rejeitado.
+- `api-client.ts` + `document-view.tsx` (commit `e245549`): upload via
+  **XHR** com progresso no botão, erro renderizado **dentro** do diálogo
+  (antes ficava atrás do overlay) e sonda `/api/v1/health` após falha
+  para separar "rede fora" de "envio interrompido".
+- Mensagem de "nenhum byte enviado" agora orienta a copiar o arquivo do
+  OneDrive para o computador antes de enviar.
+
+### Lição
+
+- "Falha de conexão" no fetch não é sempre rede: 0 bytes enviados +
+  servidor respondendo = o arquivo não pôde ser lido do disco (OneDrive
+  online-only, arquivo sincronizando ou bloqueado). Workaround: copiar o
+  arquivo localmente e enviar a cópia.
