@@ -9,6 +9,7 @@ import {
 } from "@/modules/change/engine";
 import { assertChangeProject } from "@/modules/change/selectors";
 import { listCostItems } from "@/modules/cost/selectors";
+import { createCostItem } from "@/modules/cost/items";
 import { listActivities, listDependencies } from "@/modules/schedule/selectors";
 
 // Mudanças (E11, §31): pedido com workflow obrigatório, análise de impacto
@@ -253,6 +254,49 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+// Aplica o costDelta aprovado ao orçamento VIVO (E11 §31 — a mudança
+// incorporada tem que aparecer no módulo de custos, não só na baseline).
+// Cria um CostItem de ajuste rastreável (origin=MUDANCA + changeRequestId);
+// idempotente: só cria se esta mudança ainda não tiver item de ajuste.
+// A baseline (snapshot) é gerada DEPOIS, então totalBudget = Σ itens já
+// embutindo o delta — vivo = baseline = BAC/EVM.
+async function applyChangeCostDelta(
+  input: ActorContext & {
+    changeId: string;
+    projectId: string;
+    changeCode: string;
+    costDelta: number;
+    category: string;
+    title: string;
+  }
+) {
+  if (input.costDelta === 0) return null;
+
+  const existing = await prisma.costItem.findFirst({
+    where: { projectId: input.projectId, changeRequestId: input.changeId },
+    select: { id: true },
+  });
+  if (existing) return null;
+
+  const delta = round2(input.costDelta);
+  return createCostItem({
+    organizationId: input.organizationId,
+    actorId: input.actorId,
+    actorLabel: input.actorLabel,
+    correlationId: input.correlationId,
+    ipAddress: input.ipAddress,
+    projectId: input.projectId,
+    description: `Ajuste mudança ${input.changeCode} — ${input.title}`.slice(0, 300),
+    category: input.category,
+    unit: "un",
+    quantity: 1,
+    unitPrice: delta,
+    origin: "MUDANCA",
+    fontePreco: `ChangeRequest ${input.changeCode}`,
+    changeRequestId: input.changeId,
+  });
+}
+
 // Cria automaticamente uma revisão de baseline (§31) quando a mudança é
 // implementada e o pedido tem delta de custo/prazo sem baseline explícita.
 // A baseline nasce vinculada à mudança (changeRequestId) e registra o delta
@@ -280,13 +324,17 @@ export async function createChangeBaselineRevision(
 
   let snapshot: Record<string, unknown>;
   if (input.type === "COST") {
+    // O ajuste de custo (item de ajuste da mudança) já foi aplicado ao
+    // orçamento vivo ANTES deste snapshot — logo Σ itens já embute o delta:
+    // totalBudget = Σ itens = baseTotalBudget + costDelta (invariante vivo =
+    // baseline = BAC/EVM, §31).
     const items = await listCostItems(input.organizationId, input.projectId);
-    const baseTotal = round2(items.reduce((acc, item) => acc + item.amount, 0));
     const delta = round2(input.costDelta ?? 0);
+    const total = round2(items.reduce((acc, item) => acc + item.amount, 0));
     snapshot = {
       capturedAt: new Date().toISOString(),
-      totalBudget: round2(baseTotal + delta),
-      baseTotalBudget: baseTotal,
+      totalBudget: total,
+      baseTotalBudget: round2(total - delta),
       itemCount: items.length,
       items,
       changeId: input.changeId,
@@ -422,13 +470,25 @@ export async function transitionChange(input: ActorContext & ChangeTransitionInp
   }
 
   const now = new Date();
-  // Na IMPLEMENTação: revisão de baseline automática (§31) quando a mudança
-  // tem delta de custo/prazo e não recebeu baseline explícita via baselineIds.
-  // baselineIds explícitos têm precedência (o usuário gerencia manualmente).
+  // Na IMPLEMENTação: o costDelta aprovado é incorporado ao orçamento VIVO
+  // (item de ajuste rastreável) ANTES do snapshot da baseline, para que
+  // vivo = baseline = BAC/EVM. Aplica-se mesmo com baselineIds explícitos —
+  // a mudança aprovada mudou o orçamento; a baseline manual só registra.
   let autoBaselines: { id: string; type: string; version: number }[] = [];
   if (input.action === "IMPLEMENT") {
     const hasCostDelta = change.costDelta != null && Number(change.costDelta) !== 0;
     const hasScheduleDelta = change.scheduleDays != null && change.scheduleDays !== 0;
+    if (hasCostDelta) {
+      await applyChangeCostDelta({
+        ...input,
+        changeId: change.id,
+        projectId: change.projectId,
+        changeCode: change.code,
+        costDelta: Number(change.costDelta),
+        category: change.category,
+        title: change.title,
+      });
+    }
     if ((hasCostDelta || hasScheduleDelta) && !input.baselineIds?.length) {
       const created: { id: string; type: string; version: number }[] = [];
       if (hasCostDelta) {

@@ -20,8 +20,13 @@ import {
 } from "@/modules/change/selectors";
 import { createBaseline } from "@/modules/schedule/baselines";
 import { listCostBaselines } from "@/modules/cost/baselines";
+import { listCostItems } from "@/modules/cost/selectors";
 
 const suffix = `${Date.now().toString(36)}${randomBytes(3).toString("hex")}`;
+
+function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
 
 let orgA: { id: string };
 let orgB: { id: string };
@@ -456,6 +461,19 @@ describe("revisão de baseline automática na implementação (§31)", () => {
     expect(snap.costDelta).toBe(5000);
     expect(snap.totalBudget).toBe(snap.baseTotalBudget + 5000);
 
+    // O delta foi incorporado ao orçamento VIVO como item de ajuste
+    // rastreável (E11 §31): vivo = baseline = BAC/EVM.
+    const adjustments = await prisma.costItem.findMany({
+      where: { projectId, changeRequestId: change.id },
+    });
+    expect(adjustments).toHaveLength(1);
+    expect(adjustments[0].origin).toBe("MUDANCA");
+    expect(adjustments[0].description).toContain(change.code);
+    expect(Number(adjustments[0].amount)).toBe(5000);
+
+    const items = await listCostItems(orgA.id, projectId);
+    expect(round2(items.reduce((acc, i) => acc + i.amount, 0))).toBe(snap.totalBudget);
+
     const row = await getChangeRow(orgA.id, change.id);
     expect(row.baselineCount).toBe(1);
 
@@ -532,6 +550,14 @@ describe("revisão de baseline automática na implementação (§31)", () => {
     const linked = await prisma.baseline.findMany({ where: { changeRequestId: change.id } });
     expect(linked).toHaveLength(1);
     expect(linked[0].id).toBe(baseline.id);
+
+    // Mesmo com baseline explícita, o costDelta aprovado é incorporado ao
+    // orçamento vivo — a mudança aprovada mudou o orçamento de verdade.
+    const adjustments = await prisma.costItem.findMany({
+      where: { projectId, changeRequestId: change.id },
+    });
+    expect(adjustments).toHaveLength(1);
+    expect(Number(adjustments[0].amount)).toBe(2000);
   });
 
   it("não cria baseline automática quando não há delta de custo nem prazo", async () => {

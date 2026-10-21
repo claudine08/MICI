@@ -968,8 +968,8 @@ model CostItem {
   quantity       Decimal  @db.Decimal(18, 3)
   unitPrice      Decimal  @map("unit_price") @db.Decimal(18, 2)
   amount         Decimal  @db.Decimal(18, 2)
-  origin         String?  @db.VarChar(32)
-  fontePreco     String?  @map("fonte_preco") @db.VarChar(200)
+  origin         String?   @db.VarChar(32)
+  fontePreco     String?   @map("fonte_preco") @db.VarChar(200)
 
   createdAt DateTime  @default(now()) @map("created_at")
   createdBy String?   @map("created_by") @db.Uuid
@@ -981,13 +981,19 @@ model CostItem {
 
   project    Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wbsNode    WBSNode?         @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  // Item de ajuste gerado pela implementação de uma mudança (E11 §31) —
+  // rastreia qual mudança aplicou este delta no orçamento vivo.
+  changeRequest ChangeRequest? @relation(fields: [changeRequestId], references: [id], onDelete: SetNull)
   commitments CostCommitment[]
   actuals     CostActual[]
   risks       Risk[]
 
+  changeRequestId String? @map("change_request_id") @db.Uuid
+
   @@unique([projectId, code])
   @@index([organizationId, projectId])
   @@index([organizationId, wbsNodeId])
+  @@index([projectId, changeRequestId])
   @@map("cost_items")
 }
 
@@ -1447,6 +1453,7 @@ model ChangeRequest {
   impacts    ChangeImpact[]
   approvals  ChangeApproval[]
   baselines  Baseline[]
+  costItems  CostItem[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])

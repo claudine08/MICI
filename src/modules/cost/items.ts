@@ -87,6 +87,9 @@ export interface CreateCostItemInput {
   wbsNodeId?: string | null;
   origin?: string;
   fontePreco?: string;
+  // Vincula o item à mudança que o originou (ajuste automático de custo no
+  // IMPLEMENT — E11 §31), permitindo rastrear o delta até o ChangeRequest.
+  changeRequestId?: string | null;
 }
 
 export async function createCostItem(input: ActorContext & CreateCostItemInput) {
@@ -122,6 +125,7 @@ export async function createCostItem(input: ActorContext & CreateCostItemInput) 
       wbsNodeId: input.wbsNodeId ?? null,
       origin: input.origin?.trim() || null,
       fontePreco: input.fontePreco?.trim() || null,
+      changeRequestId: input.changeRequestId ?? null,
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },
