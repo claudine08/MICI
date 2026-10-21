@@ -258,7 +258,7 @@ function round2(value: number): number {
 // A baseline nasce vinculada à mudança (changeRequestId) e registra o delta
 // e a mudança no snapshot para rastreabilidade — totalBudget já embute o
 // costDelta aprovado (BAC revisado).
-async function createChangeBaselineRevision(
+export async function createChangeBaselineRevision(
   input: ActorContext & {
     changeId: string;
     projectId: string;
