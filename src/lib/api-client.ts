@@ -27,10 +27,14 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
       ...init,
       headers,
     });
-  } catch {
+  } catch (error) {
     // fetch rejeitado = falha de rede/cors/conexão interrompida (ex.: upload
     // acima do limite do serverless). Devolve contrato de erro em vez do
-    // TypeError cru "Failed to fetch".
+    // TypeError cru "Failed to fetch" e registra a causa real (net::ERR_*)
+    // no console para diagnóstico.
+    console.error("[api] fetch rejeitado:", path, error, {
+      cause: (error as { cause?: unknown })?.cause,
+    });
     throw new ApiError(0, "Falha de conexão com o servidor. Verifique sua rede e tente novamente.", "NETWORK_ERROR");
   }
 
