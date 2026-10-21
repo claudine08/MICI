@@ -520,6 +520,8 @@ model Project {
   documents       Document[]
   risks           Risk[]
   riskResponses   RiskResponse[]
+  changes         ChangeRequest[]
+  changeApprovals ChangeApproval[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -923,6 +925,10 @@ model Baseline {
 
   reason String? @db.Text
 
+  // Rastreabilidade de baseline revision por mudança aprovada (E11, BR-005):
+  // vinculada na implementação do ChangeRequest quando aplicável.
+  changeRequestId String? @map("change_request_id") @db.Uuid
+
   approvedAt DateTime? @map("approved_at")
   approvedBy String?   @map("approved_by") @db.Uuid
 
@@ -930,6 +936,7 @@ model Baseline {
   createdBy String?   @map("created_by") @db.Uuid
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  changeRequest ChangeRequest? @relation(fields: [changeRequestId], references: [id], onDelete: SetNull)
 
   @@unique([projectId, type, version])
   @@index([organizationId, projectId, type])
@@ -1330,4 +1337,164 @@ model RiskResponse {
   @@index([organizationId, riskId])
   @@index([organizationId, projectId])
   @@map("risk_responses")
+}
+
+// ---------------------------------------------------------------------------
+// Mudanças (E11, §31): ChangeRequest com workflow obrigatório
+// DRAFT → SUBMITTED → IMPACT_ANALYSIS → WAITING_APPROVAL → APPROVED/REJECTED
+// → IMPLEMENTED → VERIFIED → CLOSED (+ CANCELLED pré-aprovação), análise de
+// impacto por dimensão (ChangeImpact) e aprovações auditadas (ChangeApproval,
+// append-only). Mudança aprovada pode gerar baseline revision (BR-005).
+// ---------------------------------------------------------------------------
+
+enum ChangeStatus {
+  DRAFT
+  SUBMITTED
+  IMPACT_ANALYSIS
+  WAITING_APPROVAL
+  APPROVED
+  REJECTED
+  IMPLEMENTED
+  VERIFIED
+  CLOSED
+  CANCELLED
+}
+
+enum ChangeCategory {
+  SCOPE
+  SCHEDULE
+  COST
+  QUALITY
+  RISK
+  CONTRACT
+  DOCUMENT
+  OPERATION
+  REGULATORY
+  ENVIRONMENTAL
+  SUSTAINABILITY
+}
+
+enum ImpactDimension {
+  SCOPE
+  COST
+  SCHEDULE
+  QUALITY
+  RISK
+  CONTRACT
+  DOCUMENT
+  OPERATION
+  REGULATORY
+  ENVIRONMENTAL
+  SUSTAINABILITY
+}
+
+enum ImpactSeverity {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ChangeApprovalAction {
+  APPROVE
+  REJECT
+}
+
+model ChangeRequest {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  projectId      String       @map("project_id") @db.Uuid
+  code           String       @db.VarChar(32)
+  title          String       @db.VarChar(200)
+  description    String?      @db.Text
+  justification  String?      @db.Text
+  category       ChangeCategory @default(SCOPE)
+  status         ChangeStatus @default(DRAFT)
+  ownerId        String?      @map("owner_id") @db.Uuid
+  requestedById  String       @map("requested_by_id") @db.Uuid
+  dueDate        DateTime?    @map("due_date") @db.Date
+
+  // Impactos consolidados do change control (§31): delta de custo (BRL,
+  // positivo = acréscimo) e delta de prazo em dias (positivo = atraso).
+  costDelta    Decimal? @map("cost_delta") @db.Decimal(18, 2)
+  scheduleDays Int?     @map("schedule_days")
+
+  implementationNotes String? @map("implementation_notes") @db.Text
+  rejectReason        String? @map("reject_reason") @db.Text
+  cancelReason        String? @map("cancel_reason") @db.Text
+
+  approvedAt   DateTime? @map("approved_at")
+  approvedBy   String?   @map("approved_by") @db.Uuid
+  implementedAt DateTime? @map("implemented_at")
+  implementedBy String?   @map("implemented_by") @db.Uuid
+  verifiedAt   DateTime? @map("verified_at")
+  verifiedBy   String?   @map("verified_by") @db.Uuid
+  closedAt     DateTime? @map("closed_at")
+  closedBy     String?   @map("closed_by") @db.Uuid
+  cancelledAt  DateTime? @map("cancelled_at")
+  cancelledBy  String?   @map("cancelled_by") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  impacts    ChangeImpact[]
+  approvals  ChangeApproval[]
+  baselines  Baseline[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@map("change_requests")
+}
+
+// Avaliação de impacto por dimensão (§31 ChangeImpact): uma linha por
+// dimensão avaliada (upsert); severidade + notas + avaliador.
+model ChangeImpact {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  projectId      String          @map("project_id") @db.Uuid
+  changeId       String          @map("change_id") @db.Uuid
+  dimension      ImpactDimension
+  severity       ImpactSeverity  @default(NONE)
+  notes          String?         @db.Text
+  assessedById   String?         @map("assessed_by_id") @db.Uuid
+  assessedAt     DateTime?       @map("assessed_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+
+  change ChangeRequest @relation(fields: [changeId], references: [id], onDelete: Cascade)
+
+  @@unique([changeId, dimension])
+  @@index([organizationId, projectId])
+  @@map("change_impacts")
+}
+
+// Histórico imutável (append-only) das decisões de aprovação (BR-004/005).
+model ChangeApproval {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  projectId      String              @map("project_id") @db.Uuid
+  changeId       String              @map("change_id") @db.Uuid
+  action         ChangeApprovalAction
+  comment        String?             @db.Text
+  approverId     String              @map("approver_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  change ChangeRequest @relation(fields: [changeId], references: [id], onDelete: Cascade)
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, changeId])
+  @@index([organizationId, projectId])
+  @@map("change_approvals")
 }

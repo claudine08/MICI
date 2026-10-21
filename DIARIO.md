@@ -780,3 +780,50 @@ deploy via `npx vercel --prod`.
   servidor respondendo = o arquivo não pôde ser lido do disco (OneDrive
   online-only, arquivo sincronizando ou bloqueado). Workaround: copiar o
   arquivo localmente e enviar a cópia.
+
+---
+
+## 21/10/2026 — Fase 4: Épico E11 Change (controle de mudanças)
+
+### Escopo implementado (spec §31)
+
+- **Modelo** (`prisma/schema.prisma`, migration `phase9_change`):
+  `ChangeRequest` (código `CR001` automático por projeto, `costDelta`
+  Decimal, `scheduleDays`), `ChangeImpact` (dimensão + severidade,
+  upsert única por mudança+dimensão), `ChangeApproval` (append-only) e
+  `Baseline.changeRequestId` nullable para rastreabilidade BR-005.
+  Enums: `ChangeStatus` (DRAFT→…→CLOSED + CANCELLED),
+  `ChangeCategory`, `ImpactDimension` (11 domínios da spec: escopo,
+  custo, prazo, qualidade, riscos, contratos, documentos, operação,
+  regulatório, ambiental, sustentabilidade), `ImpactSeverity`,
+  `ChangeApprovalAction` (APPROVE/REJECT).
+- **Domain** (`src/modules/change/`): máquina de estados pura
+  (`engine.ts`) — `CANCEL/REJECT/VERIFY` exigem `reason`;
+  `IMPLEMENT` exige `implementationNotes` e aceita `baselineIds`
+  (valida pertencência ao projeto); `REQUEST_APPROVAL` exige ≥1
+  impacto; edição só em DRAFT/IMPACT_ANALYSIS; exclusão lógica só em
+  DRAFT/CANCELLED/REJECTED. Erro novo `CHANGE_INVALID_STATE` (409).
+  Permissões do módulo `CHANGE` (já no catálogo seed) por ação:
+  APPROVE/REJECT exigem `CHANGE:APPROVE`/`CHANGE:REJECT`, demais
+  `CHANGE:EDIT`. Domain events: `Change.Requested/Approved/Rejected/
+  Implemented/Closed`.
+- **API** (`/api/v1/projects/[id]/changes`): coleção GET/POST, item
+  GET/PATCH/DELETE, `/status`, `/impacts` (upsert) e `/approvals`.
+- **UI**: `/mudancas` (portfólio) e `/projetos/[id]/mudancas`
+  (`change-view.tsx`: lista, criação, painel de detalhe com impacts e
+  approvals, transições conforme permissão); item "Mudanças" na nav.
+
+### Verificação
+
+- Gate ✅: lint · typecheck · 169 unit (+15 em `tests/unit/
+  change-engine.test.ts`) · 200 integração (+16 em
+  `tests/integration/change.test.ts`) · build (108 rotas).
+- Smoke autenticado via HTTP contra dev server (login Auth.js por
+  `/api/auth/csrf` + callback): criação CR001 e ciclo completo
+  SUBMIT→START_ANALYSIS→(impact HIGH)→REQUEST_APPROVAL→APPROVE→
+  IMPLEMENT→VERIFY→CLOSE, detalhe com severity=HIGH/impacts=1/
+  approvals=1, aprovação registrada por "Alice Admin"; dados de smoke
+  removidos do banco dev.
+- Nota: testes de integração rodaram com `MICI_TEST_NO_RESET=1`
+  (sem `--force-reset` no `mici_test`).
+- Status salvo no ROADMAP (seção 21/10). Retomada: **E12 Field**.

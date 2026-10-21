@@ -87,15 +87,15 @@ para `http://localhost:3000`. Duas causas independentes:
 
 | Área | Situação |
 |---|---|
-| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) |
-| Épicos | E01–E10 ✅ · E11–E18 ⬜ |
-| Testes | 154 unit (13 arquivos) + 184 integração (11 arquivos) — todos verdes (integração com `MICI_TEST_NO_RESET=1`, sem reset do `mici_test`) |
-| Migrations locais | 9 aplicadas (`init_foundation_identity` → `phase8_risk`) |
-| Rotas | 102 no build (81 endpoints `/api/v1` + 21 páginas); `/riscos`, `/projetos/[id]/riscos` e API de risks/risk-matrix novos |
-| RBAC | módulos `COST`, `DOCUMENT` e `RISK` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
+| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) · E11 ✅ |
+| Épicos | E01–E11 ✅ · E12–E18 ⬜ |
+| Testes | 169 unit (14 arquivos) + 200 integração (12 arquivos) — todos verdes (integração com `MICI_TEST_NO_RESET=1`, sem reset do `mici_test`) |
+| Migrations locais | 10 aplicadas (`init_foundation_identity` → `phase9_change`) |
+| Rotas | 108 no build (86 endpoints `/api/v1` + 22 páginas); `/mudancas`, `/projetos/[id]/mudancas` e API de changes/impacts/approvals novos |
+| RBAC | módulos `COST`, `DOCUMENT`, `RISK` e `CHANGE` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
 | Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 21/10 (commit `ed299f5`, correções de upload); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | nenhuma — incidente de upload (21/10) resolvido e documentado (ver DIARIO 21/10); próximo épico: **E11 Change** |
+| Pendências imediatas | nenhuma — próximo épico: **E12 Field** |
 | Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`; use `MICI_TEST_NO_RESET=1` para preservar dados); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump`; upload direto de arquivo **OneDrive online-only** falha no browser (copiar local antes de enviar — a mensagem de erro do MICI já orienta) |
 
 ### Incidente de upload (21/10/2026) — resolvido
@@ -133,7 +133,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E08 Cost** | Budget, CostItem, Commitment, Actual, Forecast, EVM | ✅ Fase 4 — itens/compromissos/realizados/EVM, baseline COST, gate G4, import do `estimate`, telas `/custos` e `/projetos/[id]/custos` |
 | **E09 Documents** | Upload, revisão, aprovação, release, link de objetos | ✅ Fase 4 |
 | **E10 Risk** | Risk register, matriz, resposta, risco residual | ✅ Fase 4 — risk register com ciclo Identify→…→Close, matriz 5×5 configurável por organização, respostas (RiskResponse histórico), risco residual no CLOSE, escalada CRITICAL (domain events), telas `/riscos` e `/projetos/[id]/riscos` |
-| **E11 Change** | Request, impacto, aprovação, baseline revision, implementation | ⬜ |
+| **E11 Change** | Request, impacto, aprovação, baseline revision, implementation | ✅ Fase 4 — ChangeRequest (CR001 automático, ciclo DRAFT→…→CLOSED), análise de impacto 11 dimensões (ChangeImpact upsert, severidade agregada), aprovação append-only (ChangeApproval), implementação vincula Baseline via `Baseline.changeRequestId` (BR-005), telas `/mudancas` e `/projetos/[id]/mudancas` |
 | **E12 Field** | Diário, foto, tarefa, avanço, restrição, mobile/PWA | ⬜ |
 | **E13 Quality** | Checklist, inspeção, NCR, ação corretiva, punch list | ⬜ |
 | **E14 Procurement** | Purchase request, cotação, comparação, aprovação, PO, recebimento | ⬜ |
