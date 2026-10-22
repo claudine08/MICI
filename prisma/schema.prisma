@@ -522,6 +522,10 @@ model Project {
   riskResponses   RiskResponse[]
   changes         ChangeRequest[]
   changeApprovals ChangeApproval[]
+  fieldDiaries    FieldDiary[]
+  fieldTasks      FieldTask[]
+  constraints     Constraint[]
+  photos          PhotoEvidence[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -775,6 +779,9 @@ model WBSNode {
   scheduleActivities ScheduleActivity[]
   costItems    CostItem[]
   risks        Risk[]
+  fieldTasks   FieldTask[]
+  constraints  Constraint[]
+  photos       PhotoEvidence[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId, parentId])
@@ -877,6 +884,9 @@ model ScheduleActivity {
   predecessorOf ScheduleDependency[] @relation("DependencyPredecessor")
   successorOf   ScheduleDependency[] @relation("DependencySuccessor")
   risks         Risk[]
+  fieldTasks    FieldTask[]
+  constraints   Constraint[]
+  photos        PhotoEvidence[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -1504,4 +1514,236 @@ model ChangeApproval {
   @@index([organizationId, changeId])
   @@index([organizationId, projectId])
   @@map("change_approvals")
+}
+
+
+// ---------------------------------------------------------------------------
+// Campo / mobile (E12, §38/§26): diário de obra, tarefas de campo, restrições
+// e fotos de evidência. Experiência mobile-first — poucos campos, upload
+// assíncrono, poucos estados por entidade.
+// ---------------------------------------------------------------------------
+
+// Diário de obra (§26 — data, equipe, horas, atividades, avanço, equipamentos,
+// materiais, ocorrências, condições, segurança, visitantes, decisões, água,
+// energia, resíduos). Workflow: DRAFT → SUBMITTED → APPROVED / REJECTED.
+enum FieldDiaryStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  CANCELLED
+
+  @@map("field_diary_status")
+}
+
+model FieldDiary {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  projectId      String          @map("project_id") @db.Uuid
+  code           String          @db.VarChar(32)
+  entryDate      DateTime        @map("entry_date") @db.Date
+  status         FieldDiaryStatus @default(DRAFT)
+
+  team           String?  @db.VarChar(300)
+  workHours      Decimal? @map("work_hours") @db.Decimal(8, 2)
+  activities     String?  @db.Text
+  progressNotes  String?  @map("progress_notes") @db.Text
+  equipment      String?  @db.Text
+  materials      String?  @db.Text
+  occurrences    String?  @db.Text
+  constraintNotes String? @map("constraint_notes") @db.Text
+  conditions     String?  @db.Text
+  inspections    String?  @db.Text
+  safety         String?  @db.Text
+  visitors       String?  @db.Text
+  decisions      String?  @db.Text
+  water          Decimal? @db.Decimal(12, 3)
+  energy         Decimal? @db.Decimal(12, 3)
+  wasteNotes     String?  @map("waste_notes") @db.Text
+
+  submittedAt DateTime? @map("submitted_at")
+  submittedBy String?   @map("submitted_by") @db.Uuid
+  approvedAt  DateTime? @map("approved_at")
+  approvedBy  String?   @map("approved_by") @db.Uuid
+  rejectReason String?  @map("reject_reason") @db.VarChar(1000)
+  cancelReason String?  @map("cancel_reason") @db.VarChar(1000)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  photos  PhotoEvidence[]
+  tasks   FieldTask[]
+
+  @@unique([projectId, code])
+  @@unique([projectId, entryDate])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, entryDate])
+  @@map("field_diaries")
+}
+
+// Tarefa de campo (E12-US03): atribuída a um membro, com prazo e vínculo
+// opcional ao diário/atividade/WBS. mobile-first: poucos campos.
+enum FieldTaskStatus {
+  OPEN
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+
+  @@map("field_task_status")
+}
+
+enum FieldPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("field_priority")
+}
+
+model FieldTask {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  projectId      String          @map("project_id") @db.Uuid
+  diaryId        String?         @map("diary_id") @db.Uuid
+  code           String          @db.VarChar(32)
+  title          String          @db.VarChar(200)
+  description    String?         @db.Text
+  status         FieldTaskStatus @default(OPEN)
+  priority       FieldPriority   @default(MEDIUM)
+
+  assigneeId     String?  @map("assignee_id") @db.Uuid
+  dueDate        DateTime? @map("due_date") @db.Date
+  wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
+  activityId     String?  @map("activity_id") @db.Uuid
+  startedAt      DateTime? @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+  cancelReason   String?  @map("cancel_reason") @db.VarChar(1000)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  diary      FieldDiary?       @relation(fields: [diaryId], references: [id], onDelete: SetNull)
+  wbsNode    WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity   ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@index([organizationId, diaryId])
+  @@map("field_tasks")
+}
+
+// Restrição (E12-US05, §39): Constraint Identification → Constraint Removal.
+// Bloqueio identificado em campo com responsável, prazo e vínculo ao que
+// restringe (atividade/WBS).
+enum ConstraintStatus {
+  OPEN
+  ADDRESSED
+  REMOVED
+  CANCELLED
+
+  @@map("constraint_status")
+}
+
+enum ConstraintType {
+  SCOPE
+  SCHEDULE
+  COST
+  RESOURCE
+  TECHNICAL
+  EXTERNAL
+  REGULATORY
+  SAFETY
+
+  @@map("constraint_type")
+}
+
+model Constraint {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  projectId      String          @map("project_id") @db.Uuid
+  code           String          @db.VarChar(32)
+  title          String          @db.VarChar(200)
+  description    String?         @db.Text
+  type           ConstraintType  @default(EXTERNAL)
+  priority       FieldPriority   @default(MEDIUM)
+  status         ConstraintStatus @default(OPEN)
+
+  ownerId        String?  @map("owner_id") @db.Uuid
+  dueDate        DateTime? @map("due_date") @db.Date
+  wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
+  activityId     String?  @map("activity_id") @db.Uuid
+  identifiedAt   DateTime? @map("identified_at")
+  removedAt      DateTime? @map("removed_at")
+  resolution     String?  @db.Text
+  cancelReason   String?  @map("cancel_reason") @db.VarChar(1000)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode  WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@map("constraints")
+}
+
+// Foto de evidência (E12-US02, §33/§61): binário no Postgres (bytea), hash
+// SHA-256 e MIME validado — mesmo storage de documentos. Vinculada ao diário
+// e/ou a atividade/WBS/inspeção.
+model PhotoEvidence {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  diaryId        String?  @map("diary_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  caption        String?  @db.VarChar(300)
+  fileName       String   @map("file_name") @db.VarChar(255)
+  mimeType       String   @map("mime_type") @db.VarChar(127)
+  sizeBytes      Int      @map("size_bytes")
+  hash           String   @db.VarChar(64)
+  content        Bytes
+  takenAt        DateTime? @map("taken_at")
+  wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
+  activityId     String?  @map("activity_id") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  diary    FieldDiary?       @relation(fields: [diaryId], references: [id], onDelete: SetNull)
+  wbsNode  WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, diaryId])
+  @@map("photo_evidence")
 }

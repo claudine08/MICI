@@ -16,6 +16,7 @@ import {
   ScrollText,
   Milestone,
   Settings,
+  HardHat,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +52,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Documentos", href: "/documentos", icon: FolderOpen },
       { label: "Riscos", href: "/riscos", icon: TriangleAlert },
       { label: "Mudanças", href: "/mudancas", icon: GitPullRequestArrow },
+      { label: "Campo", href: "/campo", icon: HardHat },
       { label: "Relatórios", icon: FileBarChart2, soon: true },
     ],
   },

@@ -827,3 +827,54 @@ deploy via `npx vercel --prod`.
 - Nota: testes de integração rodaram com `MICI_TEST_NO_RESET=1`
   (sem `--force-reset` no `mici_test`).
 - Status salvo no ROADMAP (seção 21/10). Retomada: **E12 Field**.
+
+## 21/10/2026 (noite) — E12 Field, Fatia 1
+
+### Escopo decidido
+
+- E12 fatiado em 2 fatias (decisão do usuário): **Fatia 1** = `FieldDiary`,
+  `FieldTask`, `Constraint` + `PhotoEvidence` (entidade própria com
+  `diaryId` opcional — decisão do usuário: não embutir a foto no diário);
+  **Fatia 2** = `ProgressMeasurement` (BR-006: percentual financeiro não
+  define avanço físico), home de campo mobile/PWA (offline com UUID
+  idempotente) e fotos ligadas a atividade/WBS/inspeção.
+- Spec: §38 (mobile-first), §26 (campos do diário), §12 (entidades) e
+  §39 (Constraint Identification → Constraint Removal).
+
+### Entrega
+
+- **Schema** (`phase10_field`, 12ª migration, aplicada localmente): enums
+  `FieldDiaryStatus` (DRAFT/SUBMITTED/APPROVED/REJECTED/CANCELLED),
+  `FieldTaskStatus`, `FieldPriority`, `ConstraintStatus`,
+  `ConstraintType` (8); models `FieldDiary` (únicos `projectId+code` e
+  `projectId+entryDate` — um diário por dia de obra), `FieldTask`,
+  `Constraint`, `PhotoEvidence` (content bytea + hash/MIME/sizeBytes);
+  relações reversas em `Project`/`WBSNode`/`ScheduleActivity`.
+- **Domain** (`src/modules/field/`): `engine.ts` (máquinas puras + labels
+  PT + `summarizeFieldBoard` Hoje/Esta semana/Atrasadas/Restrições),
+  `schemas.ts` (zod), escrita (`diaries/tasks/constraints/photos.ts` com
+  audit + domain events), `selectors.ts` (leitura com escopo org +
+  `listFieldSummaries`), `common.ts` (`ActorContext`, `nextFieldCode`
+  FD/FT/CN/PH001, `assertFieldLinks`), `http.ts` (helpers das rotas).
+  Erro novo `FIELD_INVALID_STATE` (409).
+- **Permissões** (módulo `FIELD` já no catálogo seed): `SITE_COORDINATOR`
+  = VIEW/CREATE/EDIT (não aprova o próprio diário); `PROJECT_MANAGER` =
+  7 sem ADMIN. Transição do diário exige `FIELD:APPROVE`/`FIELD:REJECT`.
+- **API** (12 rotas): `/field/diaries` (+`[id]`, `+[id]/status`),
+  `/field/tasks`, `/field/constraints`, `/field/photos` (multipart com
+  allowlist de imagem) e `/field/summary`.
+- **UI**: `/campo` (quadro da organização por projeto) e
+  `/projetos/[id]/campo` (`field-view.tsx`: 4 abas — Diários, Tarefas,
+  Restrições, Fotos — resumo do dia, transições conforme permissão);
+  item "Campo" (`HardHat`) na nav.
+
+### Verificação
+
+- Gate ✅: lint · typecheck · **190 unit / 15 arquivos** (+21 em
+  `tests/unit/field-engine.test.ts`) · **221 integração / 13 arquivos**
+  (+17 em `tests/integration/field.test.ts`: unicidade de data, workflow,
+  imutabilidade terminal, restrição com resolução, allowlist de foto,
+  isolamento de tenant) · build **121 rotas** (91 endpoints + 30 páginas).
+- Nota: testes de integração rodaram com `MICI_TEST_NO_RESET=1`.
+- Não commitado (usuário não pediu commit nesta rodada).
+- Retomada: **E12 Fatia 2**.
