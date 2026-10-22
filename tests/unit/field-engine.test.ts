@@ -10,6 +10,7 @@ import {
   DIARY_TRANSITIONS,
   TASK_STATUSES,
   TASK_TRANSITIONS,
+  appliedActivityProgress,
   availableConstraintActions,
   availableDiaryActions,
   availableTaskActions,
@@ -19,6 +20,7 @@ import {
   isDiaryEditable,
   isDiaryTerminal,
   isSameDiaryDate,
+  isValidMeasurement,
   isValidProgressPercent,
   isTaskEditable,
   isTaskOverdue,
@@ -26,6 +28,7 @@ import {
   nextConstraintStatus,
   nextDiaryStatus,
   nextTaskStatus,
+  progressLevelFor,
   summarizeFieldBoard,
 } from "@/modules/field/engine";
 
@@ -157,6 +160,34 @@ describe("regras puras de campo", () => {
   it("um dirio por data de obra", () => {
     expect(isSameDiaryDate("2026-10-21", "2026-10-21")).toBe(true);
     expect(isSameDiaryDate("2026-10-21", "2026-10-22")).toBe(false);
+  });
+});
+
+describe("medicao de avanco fisico (E12-US04, BR-006, §12)", () => {
+  it("deriva o nivel: Atividade > Pacote (WBS) > Projeto", () => {
+    expect(progressLevelFor({ activityId: "act-1", wbsNodeId: "wbs-1" })).toBe("ACTIVITY");
+    expect(progressLevelFor({ activityId: "act-1" })).toBe("ACTIVITY");
+    expect(progressLevelFor({ wbsNodeId: "wbs-1" })).toBe("WBS");
+    expect(progressLevelFor({})).toBe("PROJECT");
+    expect(progressLevelFor({ activityId: null, wbsNodeId: null })).toBe("PROJECT");
+  });
+
+  it("toda medicao exige percentual 0-100 e criterio de verificacao", () => {
+    expect(isValidMeasurement({ progressPercent: 60, criterion: "42/60 pontos conferidos" })).toBe(
+      true
+    );
+    expect(isValidMeasurement({ progressPercent: 60, criterion: "  " })).toBe(false);
+    expect(isValidMeasurement({ progressPercent: 60, criterion: null })).toBe(false);
+    expect(isValidMeasurement({ progressPercent: -1, criterion: "ok" })).toBe(false);
+    expect(isValidMeasurement({ progressPercent: 101, criterion: "ok" })).toBe(false);
+    expect(isValidMeasurement({ progressPercent: Number.NaN, criterion: "ok" })).toBe(false);
+    expect(isValidMeasurement({ progressPercent: 0, criterion: "primeiro lote" })).toBe(true);
+  });
+
+  it("atividade COMPLETED responde sempre 100 (regra de E07)", () => {
+    expect(appliedActivityProgress("COMPLETED", 40)).toBe(100);
+    expect(appliedActivityProgress("IN_PROGRESS", 40)).toBe(40);
+    expect(appliedActivityProgress("NOT_STARTED", 0)).toBe(0);
   });
 });
 

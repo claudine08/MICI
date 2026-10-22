@@ -5,6 +5,7 @@ import {
   assertFieldLinks,
   audit,
   emitDomainEvent,
+  findByIdempotentKey,
   nextFieldCode,
   type ActorContext,
 } from "@/modules/field/common";
@@ -45,6 +46,7 @@ export function preparePhotoUpload(file: {
 export interface CreatePhotoInput {
   projectId: string;
   code?: string;
+  clientUuid?: string;
   caption?: string;
   takenAt?: string;
   diaryId?: string | null;
@@ -65,6 +67,16 @@ async function assertDiary(organizationId: string, projectId: string, diaryId: s
 
 export async function createPhoto(input: ActorContext & CreatePhotoInput) {
   await assertFieldProject(input.organizationId, input.projectId);
+
+  // Idempotência offline (§38): reenvio do mesmo UUID devolve o original
+  // (sem reprocessar o binário).
+  const replay = await findByIdempotentKey(input.projectId, input.clientUuid, (where) =>
+    prisma.photoEvidence.findFirst({ where, select: { id: true } })
+  );
+  if (replay) {
+    return prisma.photoEvidence.findFirstOrThrow({ where: { id: replay.id } });
+  }
+
   await assertFieldLinks(input.organizationId, input.projectId, {
     wbsNodeId: input.wbsNodeId,
     activityId: input.activityId,
@@ -98,6 +110,7 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
       takenAt: input.takenAt ? new Date(input.takenAt) : null,
       wbsNodeId: input.wbsNodeId ?? null,
       activityId: input.activityId ?? null,
+      clientUuid: input.clientUuid ?? null,
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

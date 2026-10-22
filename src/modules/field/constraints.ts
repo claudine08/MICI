@@ -7,6 +7,7 @@ import {
   assertMember,
   audit,
   emitDomainEvent,
+  findByIdempotentKey,
   nextFieldCode,
   toDate,
   type ActorContext,
@@ -19,6 +20,7 @@ import { assertFieldProject } from "@/modules/field/selectors";
 export interface CreateConstraintInput {
   projectId: string;
   code?: string;
+  clientUuid?: string;
   title: string;
   description?: string;
   type?: "SCOPE" | "SCHEDULE" | "COST" | "RESOURCE" | "TECHNICAL" | "EXTERNAL" | "REGULATORY" | "SAFETY";
@@ -41,6 +43,15 @@ async function loadLiveConstraint(organizationId: string, constraintId: string) 
 
 export async function createConstraint(input: ActorContext & CreateConstraintInput) {
   await assertFieldProject(input.organizationId, input.projectId);
+
+  // Idempotência offline (§38): reenvio do mesmo UUID devolve o original.
+  const replay = await findByIdempotentKey(input.projectId, input.clientUuid, (where) =>
+    prisma.constraint.findFirst({ where, select: { id: true } })
+  );
+  if (replay) {
+    return prisma.constraint.findFirstOrThrow({ where: { id: replay.id } });
+  }
+
   if (input.ownerId) await assertMember(input.organizationId, input.ownerId);
   await assertFieldLinks(input.organizationId, input.projectId, {
     wbsNodeId: input.wbsNodeId,
@@ -73,6 +84,7 @@ export async function createConstraint(input: ActorContext & CreateConstraintInp
       wbsNodeId: input.wbsNodeId ?? null,
       activityId: input.activityId ?? null,
       identifiedAt: new Date(),
+      clientUuid: input.clientUuid ?? null,
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

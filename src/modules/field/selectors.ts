@@ -9,6 +9,8 @@ import {
   type DiaryStatus,
   type FieldPriority,
   type FieldBoardCounts,
+  type ProgressLevel,
+  type ProgressMethodValue,
   type TaskStatus,
 } from "@/modules/field/engine";
 
@@ -469,6 +471,111 @@ export async function getPhotoContent(
 }
 
 // ---------------------------------------------------------------------------
+// Medição de avanço físico (E12-US04, BR-006)
+// ---------------------------------------------------------------------------
+
+export interface ProgressRow {
+  id: string;
+  code: string;
+  measurementDate: string;
+  level: ProgressLevel;
+  wbsNodeId: string | null;
+  wbsNodeCode: string | null;
+  activityId: string | null;
+  activityCode: string | null;
+  method: ProgressMethodValue;
+  progressPercent: number;
+  quantityPlanned: number | null;
+  quantityReal: number | null;
+  unit: string | null;
+  criterion: string;
+  notes: string | null;
+  createdAt: string;
+  version: number;
+}
+
+interface ProgressRecord {
+  id: string;
+  code: string;
+  measurementDate: Date;
+  level: ProgressLevel;
+  wbsNodeId: string | null;
+  wbsNode: { code: string } | null;
+  activityId: string | null;
+  activity: { code: string } | null;
+  method: ProgressMethodValue;
+  progressPercent: number;
+  quantityPlanned: number | null;
+  quantityReal: number | null;
+  unit: string | null;
+  criterion: string;
+  notes: string | null;
+  createdAt: Date;
+  version: number;
+}
+
+function toProgressRow(row: ProgressRecord): ProgressRow {
+  return {
+    id: row.id,
+    code: row.code,
+    measurementDate: isoDate(row.measurementDate)!,
+    level: row.level,
+    wbsNodeId: row.wbsNodeId,
+    wbsNodeCode: row.wbsNode?.code ?? null,
+    activityId: row.activityId,
+    activityCode: row.activity?.code ?? null,
+    method: row.method,
+    progressPercent: row.progressPercent,
+    quantityPlanned: row.quantityPlanned,
+    quantityReal: row.quantityReal,
+    unit: row.unit,
+    criterion: row.criterion,
+    notes: row.notes,
+    createdAt: isoDateTime(row.createdAt)!,
+    version: row.version,
+  };
+}
+
+const progressInclude = {
+  wbsNode: { select: { code: true } },
+  activity: { select: { code: true } },
+} as const;
+
+export async function listProgress(
+  organizationId: string,
+  projectId: string,
+  filters?: { activityId?: string; wbsNodeId?: string }
+): Promise<ProgressRow[]> {
+  await assertFieldProject(organizationId, projectId);
+  const rows = await prisma.progressMeasurement.findMany({
+    where: {
+      organizationId,
+      projectId,
+      deletedAt: null,
+      ...(filters?.activityId ? { activityId: filters.activityId } : {}),
+      ...(filters?.wbsNodeId ? { wbsNodeId: filters.wbsNodeId } : {}),
+    },
+    include: progressInclude,
+    orderBy: [{ measurementDate: "desc" }, { code: "asc" }],
+  });
+  return rows.map(toProgressRow);
+}
+
+export async function getProgressRow(
+  organizationId: string,
+  progressId: string
+): Promise<ProgressRow> {
+  const row = await prisma.progressMeasurement.findFirst({
+    where: { id: progressId, organizationId, deletedAt: null },
+    include: progressInclude,
+  });
+  if (!row) {
+    throw new AppError("NOT_FOUND", "Medição não encontrada nesta organização.");
+  }
+  return toProgressRow(row);
+}
+
+// ---------------------------------------------------------------------------
 // Home de campo (§38): Hoje / Esta semana / Atrasadas / Restrições
 // ---------------------------------------------------------------------------
 
@@ -479,10 +586,13 @@ export interface FieldSummaryRow {
   board: FieldBoardCounts;
   approvedDiaries: number;
   openTasks: number;
+  // Avanço físico médio das atividades (BR-006: nunca do financeiro).
+  physicalAverage: number;
+  measurementCount: number;
 }
 
 export async function listFieldSummaries(organizationId: string): Promise<FieldSummaryRow[]> {
-  const [projects, diaries, tasks, constraints] = await Promise.all([
+  const [projects, diaries, tasks, constraints, activities, measurements] = await Promise.all([
     prisma.project.findMany({
       where: { organizationId, deletedAt: null },
       select: { id: true, code: true, name: true },
@@ -499,6 +609,14 @@ export async function listFieldSummaries(organizationId: string): Promise<FieldS
       where: { organizationId, deletedAt: null },
       select: { projectId: true, status: true },
     }),
+    prisma.scheduleActivity.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { projectId: true, physicalProgress: true, status: true },
+    }),
+    prisma.progressMeasurement.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { projectId: true },
+    }),
   ]);
 
   const today = todayIso();
@@ -508,6 +626,19 @@ export async function listFieldSummaries(organizationId: string): Promise<FieldS
     const projectDiaries = diaries.filter((d) => d.projectId === project.id);
     const projectTasks = tasks.filter((t) => t.projectId === project.id);
     const projectConstraints = constraints.filter((c) => c.projectId === project.id);
+    const projectActivities = activities.filter((a) => a.projectId === project.id);
+    const projectMeasurements = measurements.filter((m) => m.projectId === project.id);
+
+    const activeActivities = projectActivities.filter(
+      (activity) => activity.status !== "CANCELLED"
+    );
+    const physicalAverage =
+      activeActivities.length === 0
+        ? 0
+        : Math.round(
+            activeActivities.reduce((sum, activity) => sum + activity.physicalProgress, 0) /
+              activeActivities.length
+          );
 
     return {
       projectId: project.id,
@@ -530,6 +661,8 @@ export async function listFieldSummaries(organizationId: string): Promise<FieldS
       approvedDiaries: projectDiaries.filter((d) => d.status === "APPROVED").length,
       openTasks: projectTasks.filter((t) => t.status !== "DONE" && t.status !== "CANCELLED")
         .length,
+      physicalAverage,
+      measurementCount: projectMeasurements.length,
     };
   });
 }

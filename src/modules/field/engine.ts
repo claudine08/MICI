@@ -250,6 +250,59 @@ export function isValidProgressPercent(value: number): boolean {
   return Number.isFinite(value) && value >= 0 && value <= 100;
 }
 
+// ---------------------------------------------------------------------------
+// Medição de avanço físico (E12-US04, §12 "Controle físico")
+// ---------------------------------------------------------------------------
+
+export const PROGRESS_LEVELS = ["PROJECT", "WBS", "ACTIVITY"] as const;
+
+export type ProgressLevel = (typeof PROGRESS_LEVELS)[number];
+
+export const PROGRESS_LEVEL_LABELS_PT: Record<ProgressLevel, string> = {
+  PROJECT: "Projeto",
+  WBS: "Pacote (WBS)",
+  ACTIVITY: "Atividade",
+};
+
+export const PROGRESS_METHODS = ["PERCENT_COMPLETE", "PHYSICAL", "UNITS"] as const;
+
+export type ProgressMethodValue = (typeof PROGRESS_METHODS)[number];
+
+export const PROGRESS_METHOD_LABELS_PT: Record<ProgressMethodValue, string> = {
+  PERCENT_COMPLETE: "% concluído",
+  PHYSICAL: "Quantidade física",
+  UNITS: "Unidades",
+};
+
+// Três níveis (§12): Atividade > Pacote (WBS) > Projeto. O nível é derivado
+// dos vínculos informados — atividade prevalece sobre o WBS.
+export function progressLevelFor(links: {
+  wbsNodeId?: string | null;
+  activityId?: string | null;
+}): ProgressLevel {
+  if (links.activityId) return "ACTIVITY";
+  if (links.wbsNodeId) return "WBS";
+  return "PROJECT";
+}
+
+// Toda medição precisa de método + percentual + critério (critério de
+// sucesso 6: "avanço físico possuir critério") — nunca derivado do custo.
+export function isValidMeasurement(input: {
+  progressPercent: number;
+  criterion: string | null | undefined;
+}): boolean {
+  return isValidProgressPercent(input.progressPercent) && Boolean(input.criterion?.trim());
+}
+
+// Avanço da medição aplicado à atividade: completar força 100 (regra de E07).
+export function appliedActivityProgress(
+  currentStatus: string,
+  measurementPercent: number
+): number {
+  return currentStatus === "COMPLETED" ? 100 : measurementPercent;
+}
+
+
 // Diário por projeto é único na data (§26): um diário por dia de obra.
 export function isSameDiaryDate(a: string, b: string): boolean {
   return a === b;

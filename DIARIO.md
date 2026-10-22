@@ -885,3 +885,70 @@ deploy via `npx vercel --prod`.
   de campo sem sessão → 401 UNAUTHENTICATED.
 - Registro do deploy commitado à parte (docs).
 - Retomada: **E12 Fatia 2**.
+
+## 22/10/2026 — E12 Field, Fatia 2
+
+### Escopo (decisão acordada)
+
+- **Fatia 2 do E12**: `ProgressMeasurement` (BR-006 + critério de sucesso
+  6 "avanço físico possuir critério"), idempotência offline com UUID
+  (`clientUuid`, §38 "toda operação offline deve possuir UUID
+  idempotente") nas entidades da Fatia 1 e na medição, fotos ligadas a
+  WBS/atividade e aba "Avanço" na UI. Fila offline/PWA completa e
+  inspeções/punch list continuam fora (E13).
+- Spec: §12 "Controle físico" (níveis Marco/Pacote/Atividade, preferir
+  quantidade física real), BR-006 (percentual financeiro nunca define
+  avanço físico), E12-US04 (Progress), E12-US06 (mobile).
+
+### Entrega
+
+- **Schema** (`phase11_progress`, **13ª migration** — `prisma migrate dev`
+  não roda não-interativo; gerada com `prisma migrate diff --from-migrations`
+  usando banco shadow `mici_shadow` (`SHADOW_DATABASE_URL` no `.env` e
+  `shadowDatabaseUrl` no `prisma7.config.ts`), escrita em UTF-8 sem BOM e
+  aplicada localmente): enum `ProgressLevel` (PROJECT/WBS/ACTIVITY), model
+  `ProgressMeasurement` (code PM001, `measurementDate`, `level` derivado,
+  `method` (enum `ProgressMethod` já existente), `progressPercent`,
+  `quantityPlanned/quantityReal/unit`, `criterion` NOT NULL, notes;
+  únicos `[projectId, code]` e `[projectId, clientUuid]`; relações em
+  `Project`/`WBSNode`/`ScheduleActivity`); `clientUuid uuid` + único
+  `[projectId, clientUuid]` em FieldDiary/FieldTask/Constraint/PhotoEvidence.
+- **Domain**: `engine.ts` (`progressLevelFor` Atividade>WBS>Projeto,
+  `isValidMeasurement`, `appliedActivityProgress` COMPLETED→100, labels
+  PT); `progress.ts` novo — create/update/delete com idempotência por
+  `clientUuid`, validação BR-006 dentro do módulo (`assertMeasurement`,
+  inclusive no PATCH combinando com o valor existente) e
+  `syncActivityProgress` reaproveitando `updateActivityProgress`
+  (audit PROGRESS + recálculo de forecast); idempotência por `clientUuid`
+  adicionada a diário/tarefa/restrição/foto (`findByIdempotentKey` em
+  `common.ts`); seletores `listProgress`/`getProgressRow` e
+  `physicalAverage`/`measurementCount` no resumo de campo.
+- **API** (+2 = 14 em `field/*`): `/field/progress` (GET com filtro
+  `?activityId`/`?wbsNodeId`, POST) e `/field/progress/[progressId]`
+  (GET/PATCH/DELETE), RBAC `FIELD`.
+- **UI** (`field-view.tsx`): 5ª aba "Avanço" (tabela com nível, vínculo,
+  método, avanço, quantidade real, critério + criação/edição com data,
+  método, %, quantidades, unidade, critério* e selects WBS/atividade);
+  célula "Avanço físico" no resumo do projeto e na home `/campo`;
+  selects de WBS/atividade no diálogo de foto; `crypto.randomUUID()` como
+  `clientUuid` em todos os creates (diário/tarefa/restrição/foto/medição).
+
+### Verificação (gate ✅)
+
+- lint · typecheck · **193 unit / 15 arquivos** (+3 em
+  `tests/unit/field-engine.test.ts`: derivação de nível, critério
+  obrigatório, COMPLETED força 100) · **228 integração / 13 arquivos**
+  (+7 em `tests/integration/field.test.ts`: PM001 + sincronização do
+  `physicalProgress`, critério vazio/percentual fora da faixa barrados,
+  edição reaplica e exclusão não retroage, **custo registrado não altera
+  avanço (BR-006)**, idempotência `clientUuid` (medição/diário/tarefa),
+  isolamento de tenant, código PM001 por projeto) · build **122 rotas**
+  (94 endpoints + 28 páginas).
+- **Nota de ambiente**: os únicos `unique` novos fizeram o
+  `prisma db push` dos testes exigir `--accept-data-loss`; o **Prisma 7
+  bloqueia comandos destrutivos feitos por IA** e pediu consentimento
+  explícito — usuário autorizou o reset do banco dedicado `mici_test`
+  (fluxo padrão do `global-setup`), via
+  `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`.
+- **Pendente do usuário**: commit/push/deploy — `phase11_progress` (13ª)
+  ainda não aplicada no Neon.

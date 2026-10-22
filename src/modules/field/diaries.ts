@@ -8,6 +8,7 @@ import {
   assertCodeFree,
   audit,
   emitDomainEvent,
+  findByIdempotentKey,
   nextFieldCode,
   toDate,
   type ActorContext,
@@ -22,6 +23,7 @@ import { assertFieldProject } from "@/modules/field/selectors";
 export interface CreateDiaryInput {
   projectId: string;
   code?: string;
+  clientUuid?: string;
   entryDate: string;
   team?: string;
   workHours?: number;
@@ -53,6 +55,14 @@ async function loadLiveDiary(organizationId: string, diaryId: string) {
 
 export async function createDiary(input: ActorContext & CreateDiaryInput) {
   await assertFieldProject(input.organizationId, input.projectId);
+
+  // Idempotência offline (§38): reenvio do mesmo UUID devolve o original.
+  const replay = await findByIdempotentKey(input.projectId, input.clientUuid, (where) =>
+    prisma.fieldDiary.findFirst({ where, select: { id: true } })
+  );
+  if (replay) {
+    return prisma.fieldDiary.findFirstOrThrow({ where: { id: replay.id } });
+  }
 
   let code = input.code?.trim();
   if (code) {
@@ -100,6 +110,7 @@ export async function createDiary(input: ActorContext & CreateDiaryInput) {
       water: input.water ?? null,
       energy: input.energy ?? null,
       wasteNotes: input.wasteNotes?.trim() || null,
+      clientUuid: input.clientUuid ?? null,
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

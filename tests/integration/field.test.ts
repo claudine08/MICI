@@ -2,7 +2,7 @@
 // tarefas de campo, retrições (Identification → Removal), fotos com
 // allowlist de imagem e isolamento de tenant. Estados reais em Postgres.
 
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
@@ -17,6 +17,9 @@ import {
   transitionConstraint,
 } from "@/modules/field/constraints";
 import { createPhoto, deletePhoto, preparePhotoUpload } from "@/modules/field/photos";
+import { createProgress, updateProgress, deleteProgress } from "@/modules/field/progress";
+import { createActivity } from "@/modules/schedule/activities";
+import { createActual } from "@/modules/cost/actuals";
 import {
   listDiaries,
   getDiaryRow,
@@ -25,6 +28,8 @@ import {
   listPhotos,
   getPhotoContent,
   listFieldSummaries,
+  listProgress,
+  getProgressRow,
 } from "@/modules/field/selectors";
 
 const suffix = `${Date.now().toString(36)}${randomBytes(3).toString("hex")}`;
@@ -441,5 +446,220 @@ describe("isolamento de tenant e escopo de projeto", () => {
     });
     expect(taskB.code).toBe("FT001");
     expect(taskB.projectId).toBe(otherProjectId);
+  });
+});
+
+describe("medicao de avanco fisico (E12-US04, BR-006, 12)", () => {
+  it("cria PM001 no nivel Atividade e sincroniza o physicalProgress", async () => {
+    const activity = await createActivity({
+      ...actorA(),
+      projectId,
+      name: "Alvenaria 2 pavimento",
+      duration: 5,
+      plannedStart: "2026-06-01",
+      plannedFinish: "2026-06-05",
+      progressMethod: "PHYSICAL",
+    });
+
+    const measurement = await createProgress({
+      ...actorA(),
+      projectId,
+      measurementDate: "2026-06-03",
+      activityId: activity.id,
+      method: "PHYSICAL",
+      progressPercent: 60,
+      quantityPlanned: 60,
+      quantityReal: 36,
+      unit: "ponto",
+      criterion: "36 de 60 pontos conferidos em campo",
+    });
+    expect(measurement.code).toBe("PM001");
+    expect(measurement.level).toBe("ACTIVITY");
+
+    const synced = await prisma.scheduleActivity.findFirst({ where: { id: activity.id } });
+    expect(synced?.physicalProgress).toBe(60);
+
+    const row = await getProgressRow(orgA.id, measurement.id);
+    expect(row.activityCode).toBe(activity.code);
+    expect(row.criterion).toContain("pontos conferidos");
+    expect(row.quantityReal).toBe(36);
+  });
+
+  it("criterio vazio e percentual fora da faixa sao barrados (BR-006)", async () => {
+    await expectAppError(
+      createProgress({
+        ...actorA(),
+        projectId,
+        measurementDate: "2026-06-04",
+        progressPercent: 50,
+        criterion: "   ",
+      }),
+      "VALIDATION_ERROR"
+    );
+    await expectAppError(
+      createProgress({
+        ...actorA(),
+        projectId,
+        measurementDate: "2026-06-04",
+        progressPercent: 150,
+        criterion: "qualquer criterio",
+      }),
+      "VALIDATION_ERROR"
+    );
+  });
+
+  it("edicao reaplica na atividade e exclusao nao retroage", async () => {
+    const activity = await createActivity({
+      ...actorA(),
+      projectId,
+      name: "Revestimento argamassa",
+      duration: 3,
+    });
+    const measurement = await createProgress({
+      ...actorA(),
+      projectId,
+      measurementDate: "2026-06-10",
+      activityId: activity.id,
+      progressPercent: 40,
+      criterion: "40% conferido em vistoria",
+    });
+
+    const updated = await updateProgress({
+      ...actorA(),
+      progressId: measurement.id,
+      progressPercent: 80,
+    });
+    expect(updated.progressPercent).toBe(80);
+    let synced = await prisma.scheduleActivity.findFirst({ where: { id: activity.id } });
+    expect(synced?.physicalProgress).toBe(80);
+
+    await deleteProgress({ ...actorA(), progressId: measurement.id });
+    const list = await listProgress(orgA.id, projectId);
+    expect(list.some((row) => row.id === measurement.id)).toBe(false);
+    await expectAppError(getProgressRow(orgA.id, measurement.id), "NOT_FOUND");
+
+    // A exclusao nao retroage o avanco aplicado: a proxima medicao corrige.
+    synced = await prisma.scheduleActivity.findFirst({ where: { id: activity.id } });
+    expect(synced?.physicalProgress).toBe(80);
+  });
+
+  it("custo registrado nao altera o avanco fisico (BR-006)", async () => {
+    const activity = await createActivity({
+      ...actorA(),
+      projectId,
+      name: "Fundacao direta",
+      duration: 4,
+    });
+    await createProgress({
+      ...actorA(),
+      projectId,
+      measurementDate: "2026-06-12",
+      activityId: activity.id,
+      progressPercent: 60,
+      criterion: "60% medido no canteiro",
+    });
+
+    await createActual({
+      ...actorA(),
+      projectId,
+      description: "Concreto fck30",
+      amount: 12500,
+      incurredAt: "2026-06-12",
+    });
+
+    const synced = await prisma.scheduleActivity.findFirst({ where: { id: activity.id } });
+    expect(synced?.physicalProgress).toBe(60);
+  });
+
+  it("idempotencia offline com clientUuid (medicao, dirio e tarefa)", async () => {
+    const clientUuid = randomUUID();
+    const first = await createProgress({
+      ...actorA(),
+      projectId,
+      measurementDate: "2026-06-15",
+      progressPercent: 10,
+      criterion: "lote 1 executado",
+      clientUuid,
+    });
+    const replay = await createProgress({
+      ...actorA(),
+      projectId,
+      measurementDate: "2026-06-16",
+      progressPercent: 99,
+      criterion: "reenvio sem rede",
+      clientUuid,
+    });
+    expect(replay.id).toBe(first.id);
+    expect(replay.progressPercent).toBe(10);
+
+    const diaryUuid = randomUUID();
+    const diary = await createDiary({
+      ...actorA(),
+      projectId,
+      entryDate: "2026-06-20",
+      clientUuid: diaryUuid,
+    });
+    const diaryReplay = await createDiary({
+      ...actorA(),
+      projectId,
+      entryDate: "2026-06-20",
+      team: "reenvio offline",
+      clientUuid: diaryUuid,
+    });
+    expect(diaryReplay.id).toBe(diary.id);
+
+    const taskUuid = randomUUID();
+    const task = await createTask({
+      ...actorA(),
+      projectId,
+      title: "Tarefa offline",
+      clientUuid: taskUuid,
+    });
+    const taskReplay = await createTask({
+      ...actorA(),
+      projectId,
+      title: "Tarefa offline (reenvio)",
+      clientUuid: taskUuid,
+    });
+    expect(taskReplay.id).toBe(task.id);
+  });
+
+  it("listagem e escrita da medicao respeitam tenant", async () => {
+    const measurement = await createProgress({
+      ...actorA(),
+      projectId,
+      measurementDate: "2026-06-25",
+      progressPercent: 5,
+      criterion: "inicio de servico",
+    });
+    await expectAppError(getProgressRow(orgB.id, measurement.id), "NOT_FOUND");
+    await expectAppError(listProgress(orgB.id, projectId), "NOT_FOUND");
+    await expectAppError(
+      updateProgress({ ...actorB(), progressId: measurement.id, progressPercent: 99 }),
+      "NOT_FOUND"
+    );
+    await expectAppError(deleteProgress({ ...actorB(), progressId: measurement.id }), "NOT_FOUND");
+  });
+
+  it("projetos diferentes nao compartilham medicoes", async () => {
+    const measurement = await createProgress({
+      ...actorA(),
+      projectId,
+      measurementDate: "2026-06-26",
+      progressPercent: 12,
+      criterion: "medicao do projeto A",
+    });
+    const inOther = await listProgress(orgA.id, otherProjectId);
+    expect(inOther.some((row) => row.id === measurement.id)).toBe(false);
+
+    const codeRestarted = await createProgress({
+      ...actorA(),
+      projectId: otherProjectId,
+      measurementDate: "2026-06-26",
+      progressPercent: 3,
+      criterion: "medicao do projeto B",
+    });
+    expect(codeRestarted.code).toBe("PM001");
+    expect(codeRestarted.projectId).toBe(otherProjectId);
   });
 });

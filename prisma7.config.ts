@@ -10,5 +10,8 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // Shadow database local exigido pelo `prisma migrate diff --from-migrations`
+    // (E12 Fatia 2 — criação da migration phase11_progress).
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });

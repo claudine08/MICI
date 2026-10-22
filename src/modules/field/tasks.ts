@@ -7,6 +7,7 @@ import {
   assertMember,
   audit,
   emitDomainEvent,
+  findByIdempotentKey,
   nextFieldCode,
   toDate,
   type ActorContext,
@@ -20,6 +21,7 @@ import { assertFieldProject } from "@/modules/field/selectors";
 export interface CreateTaskInput {
   projectId: string;
   code?: string;
+  clientUuid?: string;
   title: string;
   description?: string;
   priority?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -52,6 +54,15 @@ async function assertDiary(organizationId: string, projectId: string, diaryId: s
 
 export async function createTask(input: ActorContext & CreateTaskInput) {
   await assertFieldProject(input.organizationId, input.projectId);
+
+  // Idempotência offline (§38): reenvio do mesmo UUID devolve o original.
+  const replay = await findByIdempotentKey(input.projectId, input.clientUuid, (where) =>
+    prisma.fieldTask.findFirst({ where, select: { id: true } })
+  );
+  if (replay) {
+    return prisma.fieldTask.findFirstOrThrow({ where: { id: replay.id } });
+  }
+
   if (input.assigneeId) await assertMember(input.organizationId, input.assigneeId);
   await assertFieldLinks(input.organizationId, input.projectId, {
     wbsNodeId: input.wbsNodeId,
@@ -84,6 +95,7 @@ export async function createTask(input: ActorContext & CreateTaskInput) {
       dueDate: toDate(input.dueDate),
       wbsNodeId: input.wbsNodeId ?? null,
       activityId: input.activityId ?? null,
+      clientUuid: input.clientUuid ?? null,
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

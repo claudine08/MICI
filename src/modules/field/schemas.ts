@@ -3,6 +3,7 @@ import {
   CONSTRAINT_TYPES,
   DIARY_ACTIONS,
   FIELD_PRIORITIES,
+  PROGRESS_METHODS,
   TASK_ACTIONS,
   CONSTRAINT_ACTIONS,
 } from "@/modules/field/engine";
@@ -30,6 +31,11 @@ export const taskActionSchema = z.enum(TASK_ACTIONS);
 export const constraintActionSchema = z.enum(CONSTRAINT_ACTIONS);
 export const constraintTypeSchema = z.enum(CONSTRAINT_TYPES);
 export const fieldPrioritySchema = z.enum(FIELD_PRIORITIES);
+export const progressMethodValueSchema = z.enum(PROGRESS_METHODS);
+
+// UUID idempotente gerado pelo cliente (§38 Offline: toda operação offline
+// possui UUID idempotente — reenvio devolve o registro já criado).
+const clientUuid = z.string().uuid().optional();
 
 // ---------------------------------------------------------------------------
 // Diário de obra (§26)
@@ -54,9 +60,10 @@ export const createDiarySchema = z.object({
   water: z.number().min(0).optional(),
   energy: z.number().min(0).optional(),
   wasteNotes: longText.optional(),
+  clientUuid,
 });
 
-export const updateDiarySchema = createDiarySchema.partial().omit({ code: true });
+export const updateDiarySchema = createDiarySchema.partial().omit({ code: true, clientUuid: true });
 
 export const diaryTransitionSchema = z.object({
   action: diaryActionSchema,
@@ -77,9 +84,10 @@ export const createTaskSchema = z.object({
   wbsNodeId: z.string().uuid().nullable().optional(),
   activityId: z.string().uuid().nullable().optional(),
   diaryId: z.string().uuid().nullable().optional(),
+  clientUuid,
 });
 
-export const updateTaskSchema = createTaskSchema.partial().omit({ code: true });
+export const updateTaskSchema = createTaskSchema.partial().omit({ code: true, clientUuid: true });
 
 export const taskTransitionSchema = z.object({
   action: taskActionSchema,
@@ -100,9 +108,12 @@ export const createConstraintSchema = z.object({
   dueDate: isoDate.optional(),
   wbsNodeId: z.string().uuid().nullable().optional(),
   activityId: z.string().uuid().nullable().optional(),
+  clientUuid,
 });
 
-export const updateConstraintSchema = createConstraintSchema.partial().omit({ code: true });
+export const updateConstraintSchema = createConstraintSchema
+  .partial()
+  .omit({ code: true, clientUuid: true });
 
 export const constraintTransitionSchema = z.object({
   action: constraintActionSchema,
@@ -121,9 +132,34 @@ export const uploadPhotoFieldsSchema = z.object({
   diaryId: z.string().uuid().nullable().optional(),
   wbsNodeId: z.string().uuid().nullable().optional(),
   activityId: z.string().uuid().nullable().optional(),
+  clientUuid,
 });
 
 export const updatePhotoSchema = z.object({
   caption: z.string().trim().max(300).optional(),
   takenAt: z.string().datetime({ offset: true }).nullable().optional(),
 });
+
+// ---------------------------------------------------------------------------
+// Medição de avanço físico (E12-US04, BR-006, critério de sucesso 6)
+// ---------------------------------------------------------------------------
+
+export const createProgressSchema = z.object({
+  code: fieldCode.optional(),
+  measurementDate: isoDate,
+  wbsNodeId: z.string().uuid().nullable().optional(),
+  activityId: z.string().uuid().nullable().optional(),
+  method: progressMethodValueSchema.default("PHYSICAL"),
+  progressPercent: z.number().min(0).max(100),
+  quantityPlanned: z.number().min(0).optional(),
+  quantityReal: z.number().min(0).optional(),
+  unit: z.string().trim().max(16).optional(),
+  // BR-006 / critério de sucesso 6: avanço físico exige critério explícito.
+  criterion: z.string().trim().min(1).max(1000),
+  notes: longText.optional(),
+  clientUuid,
+});
+
+export const updateProgressSchema = createProgressSchema
+  .partial()
+  .omit({ code: true, clientUuid: true });

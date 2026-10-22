@@ -63,10 +63,10 @@ export async function emitDomainEvent(
   });
 }
 
-// Código automático por projeto e prefixo (FD001/FT001/CN001/PH001).
+// Código automático por projeto e prefixo (FD/FT/CN/PH/PM001).
 export async function nextFieldCode(
   projectId: string,
-  prefix: "FD" | "FT" | "CN" | "PH"
+  prefix: "FD" | "FT" | "CN" | "PH" | "PM"
 ): Promise<string> {
   let rows: { code: string }[];
   switch (prefix) {
@@ -78,6 +78,12 @@ export async function nextFieldCode(
       break;
     case "CN":
       rows = await prisma.constraint.findMany({ where: { projectId }, select: { code: true } });
+      break;
+    case "PM":
+      rows = await prisma.progressMeasurement.findMany({
+        where: { projectId },
+        select: { code: true },
+      });
       break;
     default:
       rows = await prisma.photoEvidence.findMany({
@@ -142,4 +148,16 @@ export async function assertCodeFree(
   if (existing) {
     throw new AppError("CONFLICT", `Código ${entityLabel} "${code}" já existe no projeto.`);
   }
+}
+
+// Idempotência offline (§38): o cliente gera um UUID por registro; se o
+// reenvio chegar de novo (retry/sync), devolvemos o registro já criado em
+// vez de duplicar. Retorna null quando não há clientUuid ou correspondência.
+export async function findByIdempotentKey<T>(
+  projectId: string,
+  clientUuid: string | undefined,
+  find: (where: { projectId: string; clientUuid: string }) => Promise<T | null>
+): Promise<T | null> {
+  if (!clientUuid) return null;
+  return find({ projectId, clientUuid });
 }

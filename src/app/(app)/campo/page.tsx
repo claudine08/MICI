@@ -50,12 +50,13 @@ export default async function CampoPage() {
               </span>
             </div>
             <div className="mt-1 truncate text-sm font-medium">{summary.projectName}</div>
-            <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+            <div className="mt-3 grid grid-cols-5 gap-2 text-center">
               {[
                 { label: "Hoje", value: summary.board.today },
                 { label: "Semana", value: summary.board.thisWeek },
                 { label: "Atrasadas", value: summary.board.overdue },
                 { label: "Restrições", value: summary.board.openConstraints },
+                { label: "Avanço", value: `${summary.physicalAverage}%` },
               ].map((cell) => (
                 <div key={cell.label} className="rounded border border-border bg-background p-1">
                   <div className="text-[10px] uppercase text-muted-foreground">{cell.label}</div>

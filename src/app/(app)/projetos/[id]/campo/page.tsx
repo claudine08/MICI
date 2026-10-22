@@ -1,7 +1,13 @@
 import { getTenantContext } from "@/core/tenant";
 import { can, toPermissionSet } from "@/core/rbac";
 import { getProjectDetail } from "@/modules/portfolio/selectors";
-import { listDiaries, listTasks, listConstraints, listPhotos } from "@/modules/field/selectors";
+import {
+  listDiaries,
+  listTasks,
+  listConstraints,
+  listPhotos,
+  listProgress,
+} from "@/modules/field/selectors";
 import { summarizeFieldBoard } from "@/modules/field/engine";
 import { listMembers } from "@/modules/identity/selectors";
 import { getWbsTree } from "@/modules/wbs/selectors";
@@ -29,15 +35,17 @@ export default async function ProjetoCampoPage({
 
   const project = await getProjectDetail(context.organizationId, id);
 
-  const [diaries, tasks, constraints, photos, members, tree, activityRows] = await Promise.all([
-    listDiaries(context.organizationId, id),
-    listTasks(context.organizationId, id),
-    listConstraints(context.organizationId, id),
-    listPhotos(context.organizationId, id),
-    listMembers(context.organizationId),
-    getWbsTree(context.organizationId, id),
-    listActivities(context.organizationId, id),
-  ]);
+  const [diaries, tasks, constraints, photos, progress, members, tree, activityRows] =
+    await Promise.all([
+      listDiaries(context.organizationId, id),
+      listTasks(context.organizationId, id),
+      listConstraints(context.organizationId, id),
+      listPhotos(context.organizationId, id),
+      listProgress(context.organizationId, id),
+      listMembers(context.organizationId),
+      getWbsTree(context.organizationId, id),
+      listActivities(context.organizationId, id),
+    ]);
 
   const wbsNodes = flattenWbsTree(tree).map((node) => ({
     id: node.id,
@@ -56,6 +64,17 @@ export default async function ProjetoCampoPage({
   const weekEndDate = new Date();
   weekEndDate.setDate(weekEndDate.getDate() + (7 - weekEndDate.getDay()));
 
+  const activeActivities = activityRows.filter(
+    (activity) => activity.status !== "CANCELLED"
+  );
+  const physicalAverage =
+    activeActivities.length === 0
+      ? 0
+      : Math.round(
+          activeActivities.reduce((sum, activity) => sum + activity.physicalProgress, 0) /
+            activeActivities.length
+        );
+
   const board = summarizeFieldBoard({
     diaryEntries: diaries.map((diary) => ({ entryDate: diary.entryDate })),
     tasks: tasks.map((task) => ({ status: task.status, dueDate: task.dueDate })),
@@ -71,7 +90,7 @@ export default async function ProjetoCampoPage({
           Campo — {project.code} {project.name}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Diários de obra, tarefas, restrições e fotos de evidência (E12, §38).
+          Diários, tarefas, restrições, fotos e medição de avanço físico (E12, §38).
         </p>
       </div>
       <FieldView
@@ -80,7 +99,9 @@ export default async function ProjetoCampoPage({
         initialTasks={tasks}
         initialConstraints={constraints}
         initialPhotos={photos}
+        initialProgress={progress}
         board={board}
+        physicalAverage={physicalAverage}
         members={activeMembers}
         wbsNodes={wbsNodes}
         activities={activities}
