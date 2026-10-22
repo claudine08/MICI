@@ -95,7 +95,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | RBAC | módulos `COST`, `DOCUMENT`, `RISK`, `CHANGE` e `FIELD` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
 | Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 22/10 (commit `722bfb4`, E12 Fatia 2: avanço físico BR-006 + UUID idempotente, 122 rotas); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | E12 fechado; próximo épico na fila: **E13 Quality** (checklist, inspeção, NCR, punch list) |
+| Pendências imediatas | E12 fechado e no ar (22/10); **amanhã (23/10): iniciar E13 Quality** — checklist, inspeção, NCR, ação corretiva, punch list. Backlog E12: PWA/fila offline completa |
 | Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`) — **Prisma 7 exige consentimento explícito para comandos destrutivos** (`PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`; autorizado pelo usuário em 22/10 por causa dos unique constraints novos de `clientUuid`); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump`; upload direto de arquivo **OneDrive online-only** falha no browser (copiar local antes de enviar — a mensagem de erro do MICI já orienta) |
 
 ### Incidente de upload (21/10/2026) — resolvido

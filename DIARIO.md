@@ -961,3 +961,11 @@ deploy via `npx vercel --prod`.
 - **E12 fechado** (as duas fatias em produção). Fora do arco entregue:
   PWA/fila offline completa (só a idempotência server-side entrou) e
   inspeções/punch list (E13).
+- **Estado no fim do dia**: working tree limpa — tudo commitado
+  (`722bfb4` feat + `cbe868b` docs), pushado, `phase11_progress` no Neon
+  e smoke verde. Nada pela metade.
+- **Retomada (23/10)**: iniciar **E13 Quality** (checklist, inspeção,
+  NCR, ação corretiva, punch list — espelha o padrão de fatiado do E12:
+  schema+domain, API, telas, gate, deploy). Backlog do E12 quando
+  houver demanda: PWA/fila offline completa (service worker + fila
+  local, aproveitando o `clientUuid` já no lugar).
