@@ -950,5 +950,14 @@ deploy via `npx vercel --prod`.
   explícito — usuário autorizou o reset do banco dedicado `mici_test`
   (fluxo padrão do `global-setup`), via
   `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`.
-- **Pendente do usuário**: commit/push/deploy — `phase11_progress` (13ª)
-  ainda não aplicada no Neon.
+- **Deploy (22/10)**: commit `722bfb4` (21 arquivos, +1601) em `main` e
+  push; `prisma migrate deploy` aplicou `phase11_progress` no Neon (13ª
+  de 13); `vercel deploy --prod` → `mici-8hqvx6ulb` pronto. Smoke
+  autenticado (login Auth.js, `admin@mici.demo`): `/api/v1/projects` →
+  DEMO-001, `/field/summary` → 200, **`/field/progress` → 200
+  `{"progress":[]}`** (rota nova), página `/projetos/[id]/campo` → 200
+  (34 KB), home `/campo` → 200 com célula "Avanço 0%", `/api/v1/health`
+  → 200; rota de progresso sem sessão → 401 UNAUTHENTICATED.
+- **E12 fechado** (as duas fatias em produção). Fora do arco entregue:
+  PWA/fila offline completa (só a idempotência server-side entrou) e
+  inspeções/punch list (E13).

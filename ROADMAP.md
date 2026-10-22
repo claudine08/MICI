@@ -87,15 +87,15 @@ para `http://localhost:3000`. Duas causas independentes:
 
 | Área | Situação |
 |---|---|
-| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) · E11 ✅ · E12 **Fatia 1** ✅ / **Fatia 2** ✅ (local) |
-| Épicos | E01–E11 ✅ · E12 🟡 (Fatia 1 ✅ em produção / Fatia 2 ✅ local, aguardando commit+deploy) · E13–E18 ⬜ |
+| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) · E11 ✅ · E12 **Fatia 1** ✅ / **Fatia 2** ✅ |
+| Épicos | E01–E11 ✅ · E12 ✅ (Fatia 1 e Fatia 2 em produção — só resta PWA/fila offline completa) · E13–E18 ⬜ |
 | Testes | 193 unit (15 arquivos) + 228 integração (13 arquivos) — todos verdes (integração com reset padrão do `mici_test`; ver nota de consentimento do Prisma abaixo) |
-| Migrations | 13 aplicadas localmente (`init_foundation_identity` → `phase11_progress`); `phase10_field` aplicada no Neon em 21/10; **`phase11_progress` pendente no Neon** |
+| Migrations | 13 aplicadas (`init_foundation_identity` → `phase11_progress`), todas no Neon desde 22/10 |
 | Rotas | 122 no build (94 endpoints `/api/v1` + 28 páginas); `field/progress` (GET/POST/PATCH/DELETE) novos |
 | RBAC | módulos `COST`, `DOCUMENT`, `RISK`, `CHANGE` e `FIELD` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
-| Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 21/10 (commit `4846fa4`, E12 Fatia 1: campo no ar, 121 rotas); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | Commit/push/deploy da **E12 Fatia 2** (`phase11_progress` no Neon + smoke); PWA/fila offline completa e inspeções/punch list ficam para frente (E13) |
+| Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 22/10 (commit `722bfb4`, E12 Fatia 2: avanço físico BR-006 + UUID idempotente, 122 rotas); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
+| Pendências imediatas | E12 fechado; próximo épico na fila: **E13 Quality** (checklist, inspeção, NCR, punch list) |
 | Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`) — **Prisma 7 exige consentimento explícito para comandos destrutivos** (`PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`; autorizado pelo usuário em 22/10 por causa dos unique constraints novos de `clientUuid`); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump`; upload direto de arquivo **OneDrive online-only** falha no browser (copiar local antes de enviar — a mensagem de erro do MICI já orienta) |
 
 ### Incidente de upload (21/10/2026) — resolvido
@@ -134,7 +134,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E09 Documents** | Upload, revisão, aprovação, release, link de objetos | ✅ Fase 4 |
 | **E10 Risk** | Risk register, matriz, resposta, risco residual | ✅ Fase 4 — risk register com ciclo Identify→…→Close, matriz 5×5 configurável por organização, respostas (RiskResponse histórico), risco residual no CLOSE, escalada CRITICAL (domain events), telas `/riscos` e `/projetos/[id]/riscos` |
 | **E11 Change** | Request, impacto, aprovação, baseline revision, implementation | ✅ Fase 4 — ChangeRequest (CR001 automático, ciclo DRAFT→…→CLOSED), análise de impacto 11 dimensões (ChangeImpact upsert, severidade agregada), aprovação append-only (ChangeApproval), implementação vincula Baseline via `Baseline.changeRequestId` (BR-005), telas `/mudancas` e `/projetos/[id]/mudancas` |
-| **E12 Field** | Diário, foto, tarefa, avanço, restrição, mobile/PWA | 🟡 Fatiado — **Fatia 1 ✅** (produção): `FieldDiary` (FD001, um por data, DRAFT→SUBMITTED→APPROVED/REJECTED com `FIELD:APPROVE`), `FieldTask` (FT001), `Constraint` (CN001, OPEN→ADDRESSED→REMOVED), `PhotoEvidence` (PH001, bytea 4 MB + SHA-256, allowlist de imagem), API `field/*` (12 rotas), telas `/campo` e `/projetos/[id]/campo`, item "Campo" na nav. **Fatia 2 ✅** (local, aguardando commit): `ProgressMeasurement` (PM001, BR-006 — método+percentual+quantidade física+`criterion` obrigatório, níveis PROJECT/WBS/ACTIVITY, sincroniza `physicalProgress` auditado em PROGRESS), idempotência offline `clientUuid` em todas as entidades de campo (§38), fotos com vínculo WBS/atividade, aba "Avanço" + avanço físico médio na home |
+| **E12 Field** | Diário, foto, tarefa, avanço, restrição, mobile/PWA | ✅ Fatiado — **Fatia 1** (produção): `FieldDiary` (FD001, um por data, DRAFT→SUBMITTED→APPROVED/REJECTED com `FIELD:APPROVE`), `FieldTask` (FT001), `Constraint` (CN001, OPEN→ADDRESSED→REMOVED), `PhotoEvidence` (PH001, bytea 4 MB + SHA-256, allowlist de imagem), API `field/*` (14 rotas), telas `/campo` e `/projetos/[id]/campo`, item "Campo" na nav. **Fatia 2** (produção): `ProgressMeasurement` (PM001, BR-006 — método+percentual+quantidade física+`criterion` obrigatório, níveis PROJECT/WBS/ACTIVITY, sincroniza `physicalProgress` auditado em PROGRESS), idempotência offline `clientUuid` em todas as entidades de campo (§38), fotos com vínculo WBS/atividade, aba "Avanço" + avanço físico médio na home. Fora: PWA/fila offline completa (backlog) |
 | **E13 Quality** | Checklist, inspeção, NCR, ação corretiva, punch list | ⬜ |
 | **E14 Procurement** | Purchase request, cotação, comparação, aprovação, PO, recebimento | ⬜ |
 | **E15 Commissioning** | Plano, teste, reteste, aceite | ⬜ |
