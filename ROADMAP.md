@@ -90,11 +90,11 @@ para `http://localhost:3000`. Duas causas independentes:
 | Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) · E11 ✅ · E12 **Fatia 1** ✅ |
 | Épicos | E01–E11 ✅ · E12 ⬜ (Fatia 1 ✅ / Fatia 2 ⬜) · E13–E18 ⬜ |
 | Testes | 190 unit (15 arquivos) + 221 integração (13 arquivos) — todos verdes (integração com `MICI_TEST_NO_RESET=1`, sem reset do `mici_test`) |
-| Migrations locais | 12 aplicadas (`init_foundation_identity` → `phase10_field`) |
+| Migrations | 12 aplicadas (`init_foundation_identity` → `phase10_field`); `phase10_field` aplicada no Neon em 21/10 |
 | Rotas | 121 no build (91 endpoints `/api/v1` + 30 páginas); `/campo`, `/projetos/[id]/campo` e API `field/{diaries,tasks,constraints,photos,summary}` novos |
 | RBAC | módulos `COST`, `DOCUMENT`, `RISK`, `CHANGE` e `FIELD` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
-| Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 21/10 (commit `ed299f5`, correções de upload); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
+| Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 21/10 (commit `4846fa4`, E12 Fatia 1: campo no ar, 121 rotas); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
 | Pendências imediatas | **E12 Fatia 2**: `ProgressMeasurement` (BR-006), home de campo mobile/PWA (offline com UUID idempotente) e fotos ligadas a atividade/WBS/inspeção |
 | Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`; use `MICI_TEST_NO_RESET=1` para preservar dados); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump`; upload direto de arquivo **OneDrive online-only** falha no browser (copiar local antes de enviar — a mensagem de erro do MICI já orienta) |
 

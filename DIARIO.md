@@ -876,5 +876,12 @@ deploy via `npx vercel --prod`.
   imutabilidade terminal, restrição com resolução, allowlist de foto,
   isolamento de tenant) · build **121 rotas** (91 endpoints + 30 páginas).
 - Nota: testes de integração rodaram com `MICI_TEST_NO_RESET=1`.
-- Não commitado (usuário não pediu commit nesta rodada).
+- **Deploy (21/10)**: commit `4846fa4` (32 arquivos, +5323) em `main` e
+  push; `prisma migrate deploy` aplicou `phase10_field` no Neon (12ª de
+  12); `vercel deploy --prod` → `mici-nvj22o9vy` pronto. Smoke
+  autenticado (login Auth.js, `admin@mici.demo`): `/api/v1/projects`
+  → DEMO-001, `/field/summary` → 200 com board zerado, página
+  `/projetos/[id]/campo` → 200 (33 KB); `/api/v1/health` → 200; rota
+  de campo sem sessão → 401 UNAUTHENTICATED.
+- Registro do deploy commitado à parte (docs).
 - Retomada: **E12 Fatia 2**.
