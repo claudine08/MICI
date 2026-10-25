@@ -83,20 +83,20 @@ para `http://localhost:3000`. Duas causas independentes:
       `/painel`/`/orcamento` 200 · WBS/requisitos/cronograma com dados ·
       EXAURA-001 66 atividades via API.
 
-## Status do sistema (22/10/2026)
+## Status do sistema (24/10/2026)
 
 | Área | Situação |
 |---|---|
-| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) · E11 ✅ · E12 **Fatia 1** ✅ / **Fatia 2** ✅ |
-| Épicos | E01–E11 ✅ · E12 ✅ (Fatia 1 e Fatia 2 em produção — só resta PWA/fila offline completa) · E13–E18 ⬜ |
-| Testes | 193 unit (15 arquivos) + 228 integração (13 arquivos) — todos verdes (integração com reset padrão do `mici_test`; ver nota de consentimento do Prisma abaixo) |
-| Migrations | 13 aplicadas (`init_foundation_identity` → `phase11_progress`), todas no Neon desde 22/10 |
-| Rotas | 122 no build (94 endpoints `/api/v1` + 28 páginas); `field/progress` (GET/POST/PATCH/DELETE) novos |
-| RBAC | módulos `COST`, `DOCUMENT`, `RISK`, `CHANGE` e `FIELD` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
+| Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) · E11 ✅ · E12 **Fatia 1** ✅ / **Fatia 2** ✅ · E13 **Fatia 1** ✅ |
+| Épicos | E01–E12 ✅ (E12 só tem PWA/fila offline em backlog) · E13 em andamento (**Fatia 1** em produção: checklist modelo/execução + inspeção; **Fatia 2** ⬜: NCR, ação corretiva, punch list) · E14–E18 ⬜ |
+| Testes | 208 unit (16 arquivos) + 249 integração (14 arquivos) — todos verdes (última execução de integração com `MICI_TEST_NO_RESET=1`, sem reset do `mici_test`) |
+| Migrations | 14 aplicadas (`init_foundation_identity` → `phase12_quality`), todas no Neon desde 24/10 |
+| Rotas | 132 no build (102 endpoints `/api/v1` + 30 páginas); 8 rotas novas em `projects/[id]/quality/*` + páginas `/qualidade` e `/projetos/[id]/qualidade` |
+| RBAC | módulos `COST`, `DOCUMENT`, `RISK`, `CHANGE`, `FIELD` e `QUALITY` operantes (`VIEW/CREATE/EDIT/DELETE/APPROVE/REJECT/ADMIN` por ação na API) |
 | Banco local | PostgreSQL 17 portátil (`%LOCALAPPDATA%`), seed demo (5 usuários, `Demo@1234`); sobe via tarefa agendada `mici-postgres` (ver DIARIO 15/10) |
-| Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 22/10 (commit `722bfb4`, E12 Fatia 2: avanço físico BR-006 + UUID idempotente, 122 rotas); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
-| Pendências imediatas | E12 fechado e no ar (22/10); **amanhã (23/10): iniciar E13 Quality** — checklist, inspeção, NCR, ação corretiva, punch list. Backlog E12: PWA/fila offline completa |
-| Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`) — **Prisma 7 exige consentimento explícito para comandos destrutivos** (`PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`; autorizado pelo usuário em 22/10 por causa dos unique constraints novos de `clientUuid`); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump`; upload direto de arquivo **OneDrive online-only** falha no browser (copiar local antes de enviar — a mensagem de erro do MICI já orienta) |
+| Produção | Vercel `mici-theta.vercel.app` + Neon — último deploy 24/10 (commit `ddefc21`, E13 Fatia 1: checklist + inspeção, 132 rotas); `AUTH_URL` configurada; `AUTH_SECRET` é Secret |
+| Pendências imediatas | **E13 Fatia 2**: `NonConformity` (NCR), `CorrectiveAction` (Verification → Closed) e punch list (§34), fechando Planned → … → Closed. Backlog E12: PWA/fila offline completa |
+| Riscos/notas | Prisma CLI não conecta em `localhost` (IPv6) nesta máquina — `.env*` usam `127.0.0.1`; testes de integração resetam `mici_test` por default (`--force-reset`) — **Prisma 7 exige consentimento explícito para comandos destrutivos** (`PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`; autorizado pelo usuário em 22/10 por causa dos unique constraints novos de `clientUuid`); Prisma 7: `migrate diff` usa `--to-schema` (sem `--shadow-database-url`, vem do config); backup pré-sync do Neon em `%TEMP%\mici-sync\neon-backup.dump`; upload direto de arquivo **OneDrive online-only** falha no browser (copiar local antes de enviar — a mensagem de erro do MICI já orienta) |
 
 ### Incidente de upload (21/10/2026) — resolvido
 
@@ -135,7 +135,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E10 Risk** | Risk register, matriz, resposta, risco residual | ✅ Fase 4 — risk register com ciclo Identify→…→Close, matriz 5×5 configurável por organização, respostas (RiskResponse histórico), risco residual no CLOSE, escalada CRITICAL (domain events), telas `/riscos` e `/projetos/[id]/riscos` |
 | **E11 Change** | Request, impacto, aprovação, baseline revision, implementation | ✅ Fase 4 — ChangeRequest (CR001 automático, ciclo DRAFT→…→CLOSED), análise de impacto 11 dimensões (ChangeImpact upsert, severidade agregada), aprovação append-only (ChangeApproval), implementação vincula Baseline via `Baseline.changeRequestId` (BR-005), telas `/mudancas` e `/projetos/[id]/mudancas` |
 | **E12 Field** | Diário, foto, tarefa, avanço, restrição, mobile/PWA | ✅ Fatiado — **Fatia 1** (produção): `FieldDiary` (FD001, um por data, DRAFT→SUBMITTED→APPROVED/REJECTED com `FIELD:APPROVE`), `FieldTask` (FT001), `Constraint` (CN001, OPEN→ADDRESSED→REMOVED), `PhotoEvidence` (PH001, bytea 4 MB + SHA-256, allowlist de imagem), API `field/*` (14 rotas), telas `/campo` e `/projetos/[id]/campo`, item "Campo" na nav. **Fatia 2** (produção): `ProgressMeasurement` (PM001, BR-006 — método+percentual+quantidade física+`criterion` obrigatório, níveis PROJECT/WBS/ACTIVITY, sincroniza `physicalProgress` auditado em PROGRESS), idempotência offline `clientUuid` em todas as entidades de campo (§38), fotos com vínculo WBS/atividade, aba "Avanço" + avanço físico médio na home. Fora: PWA/fila offline completa (backlog) |
-| **E13 Quality** | Checklist, inspeção, NCR, ação corretiva, punch list | ⬜ |
+| **E13 Quality** | Checklist, inspeção, NCR, ação corretiva, punch list | 🔄 **Fatiado** — **Fatia 1** (produção, 24/10): `ChecklistTemplate` (CT001, `items Json`), `ChecklistExecution` (CE001, snapshot do modelo + respostas PASS/FAIL/NA, DRAFT→COMPLETED/CANCELLED, só edita rascunho), `Inspection` (IN001, `criterion` obrigatório, PLANNED→EXECUTED→PASSED/FAILED→CLOSED + CANCELLED, PASS/FAIL exige **evidência** — foto vinculada ou checklist concluído, FAIL exige `resultNotes`), fotos com `inspectionId` (evidência + filtro `?inspectionId=`), API `quality/*` (8 rotas, `QUALITY:VIEW/CREATE/EDIT/DELETE`), telas `/qualidade` (resumo por projeto) e `/projetos/[id]/qualidade` (Modelos/Execuções/Inspeções), item "Qualidade" na nav. **Fatia 2** ⬜: `NonConformity`, `CorrectiveAction` (Verification → Closed), punch list (§34) |
 | **E14 Procurement** | Purchase request, cotação, comparação, aprovação, PO, recebimento | ⬜ |
 | **E15 Commissioning** | Plano, teste, reteste, aceite | ⬜ |
 | **E16 Sustainability** | PSP, baseline, metas, medições, resíduo, relatório ambiental | ⬜ |

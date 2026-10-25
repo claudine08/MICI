@@ -969,3 +969,92 @@ deploy via `npx vercel --prod`.
   schema+domain, API, telas, gate, deploy). Backlog do E12 quando
   houver demanda: PWA/fila offline completa (service worker + fila
   local, aproveitando o `clientUuid` já no lugar).
+
+## 24/10/2026 — E13 Quality, Fatia 1 (checklist + inspeção)
+
+**E13 fatiado em 2 fatias (decisão do usuário)**: **Fatia 1** =
+`ChecklistTemplate`/`ChecklistExecution` + `Inspection` (E13-US01/US02);
+**Fatia 2** = `NonConformity` (NCR) + `CorrectiveAction` + punch list
+(E13-US03/US04/US05, §34). Deploy completo por fatia (gate → commit →
+Neon → Vercel → smoke).
+
+### Schema e migration
+
+- `prisma/schema.prisma`: enums `checklist_execution_status`
+  (DRAFT/COMPLETED/CANCELLED) e `inspection_status`
+  (PLANNED/EXECUTED/PASSED/FAILED/CLOSED/CANCELLED); tabelas
+  `checklist_templates` (`items Json`, `@@unique (projectId, code)`),
+  `checklist_executions` (snapshot `templateCode/templateName/items` com
+  resultado, `inspectionId`, `clientUuid` idempotente) e `inspections`
+  (`criterion` NOT NULL, `inspectionDate`, vínculos WBS/atividade);
+  `photo_evidence.inspection_id` + reverse relations em `Project`,
+  `WBSNode` e `ScheduleActivity`.
+- Migration `20261024120000_phase12_quality` (14ª) gerada com
+  `prisma migrate diff --from-migrations prisma/migrations --to-schema
+  prisma/schema.prisma --script` — **Prisma 7**: `--to-schema` substituiu
+  `--to-schema-datamodel` e o shadow database vem do `prisma7.config.ts`
+  (sem `--shadow-database-url`); escrita em UTF-8 sem BOM. Aplicada local
+  e no Neon.
+- RBAC: módulo `QUALITY` (e `QUALITY:DELETE` para ADMIN/PMO) já existiam
+  no catálogo (`allPermissionCodes`) → **nenhuma migration de permissão**.
+
+### Domínio (`src/modules/quality/`)
+
+- `engine.ts` (puro): transições da inspeção e da execução, rótulos PT,
+  `summarizeChecklistItems` (concluído = todo **obrigatório** respondido),
+  `inspectionHasEvidence` (foto ≥ 1 **ou** checklist concluído ≥ 1) e
+  `summarizeQualityBoard`.
+- `common.ts` reutiliza `audit`/`emitDomainEvent`/`assertCodeFree`/
+  `findByIdempotentKey`/`assertMember`/`assertFieldLinks` do módulo de
+  campo e acrescenta `nextQualityCode` (CT/CE/IN) e `assertQualityProject`.
+- Regras gravadas nos writers: snapshot de itens congelado na criação da
+  execução; respostas **só em DRAFT**; `COMPLETE` exige todos os
+  obrigatórios respondidos; modelo com execuções não é excluível;
+  execução `COMPLETED` não é excluível (reabra → cancele); inspeção só
+  edita em PLANNED/EXECUTED; sair de `EXECUTED` (PASS/FAIL) exige
+  **evidência adequada** (§33); `FAIL` exige `resultNotes` (o NCR vira na
+  Fatia 2); `CANCEL` exige motivo; inspeção executada não é excluível.
+- Fotos: `inspectionId` aceito no upload (`field/photos` + schema) e
+  filtro `?inspectionId=` — é a prova material que sustenta PASS/FAIL.
+
+### API e telas
+
+- 8 rotas em `/api/v1/projects/[id]/quality/*`:
+  `checklist-templates`, `checklist-executions`,
+  `inspections` (GET/POST + `[id]` GET/PATCH/DELETE + `[id]/status` POST),
+  permissões `QUALITY:VIEW/CREATE/EDIT/DELETE`, mesmos padrões de
+  `field/*` (`apiHandler`, `actorOf`, `idsFrom`).
+- `components/quality/quality-view.tsx`: quadro (Modelos / Execuções
+  pendentes / Inspeções abertas / Planejadas / Reprovadas / Encerradas) e
+  3 abas — Modelos (editor de itens com obrigatoriedade), Execuções
+  (resposta por item com PASS/FAIL/NA + observação, transições) e
+  Inspeções (critério, evidências, transições com motivo/não
+  conformidade).
+- `/qualidade` (resumo por projeto, espelho de `/campo`),
+  `/projetos/[id]/qualidade` (server-side com selectors), item
+  "Qualidade" na sidebar (ícone `ClipboardCheck`) e link "Qualidade
+  (E13)" no cabeçalho do projeto.
+
+### Gate e deploy
+
+- **Gate verde**: `eslint` 0 problemas · `tsc --noEmit` limpo ·
+  **208 unit (16 arquivos)** — 15 novos em `tests/unit/quality-engine.test.ts`
+  · **249 integração (14 arquivos)** — 21 novos em
+  `tests/integration/quality.test.ts` (executados com
+  `MICI_TEST_NO_RESET=1`) · `next build` **132 rotas** (102 endpoints +
+  30 páginas).
+- **Deploy (24/10)**: commit `ddefc21` (30 arquivos) em `main` e push;
+  `prisma migrate deploy` aplicou `phase12_quality` no Neon (14ª de 14 —
+  primeira tentativa falhou com P1001 transitório, retry OK);
+  `vercel --prod` → `mici-ff842b4h4-homeland1` pronto (alias
+  `mici-theta.vercel.app`; primeiro upload caiu com `fetch failed`, retry
+  OK). Smoke autenticado (`admin@mici.demo`): `/api/v1/health` → 200,
+  `/api/v1/projects` → DEMO-001, **3 rotas novas → 200 com listas vazias**
+  (`{"inspections":[]}`, `{"templates":[]}`, `{"executions":[]}`),
+  páginas `/qualidade` → 200 (35 KB) e `/projetos/[id]/qualidade` → 200
+  (34 KB), rota de qualidade sem sessão → 401 UNAUTHENTICATED.
+- **E13 Fatia 1 fechada** (checklist e inspeção no ar). Próximo passo:
+  **E13 Fatia 2** — NCR, ação corretiva (Verification → Closed) e punch
+  list (§34); em `FAILED`, o `CLOSE` passará a exigir o NCR encerrado.
+- **Estado no fim do dia**: working tree limpa após o commit de docs,
+  pushado, `phase12_quality` no Neon e smoke verde. Nada pela metade.
