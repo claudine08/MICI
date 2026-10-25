@@ -17,6 +17,7 @@ import {
   Milestone,
   Settings,
   HardHat,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -53,6 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Riscos", href: "/riscos", icon: TriangleAlert },
       { label: "Mudanças", href: "/mudancas", icon: GitPullRequestArrow },
       { label: "Campo", href: "/campo", icon: HardHat },
+      { label: "Qualidade", href: "/qualidade", icon: ClipboardCheck },
       { label: "Relatórios", icon: FileBarChart2, soon: true },
     ],
   },

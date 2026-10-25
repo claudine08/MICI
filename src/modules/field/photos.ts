@@ -52,6 +52,7 @@ export interface CreatePhotoInput {
   diaryId?: string | null;
   wbsNodeId?: string | null;
   activityId?: string | null;
+  inspectionId?: string | null;
   file: FilePayload;
 }
 
@@ -62,6 +63,18 @@ async function assertDiary(organizationId: string, projectId: string, diaryId: s
   });
   if (!diary) {
     throw new AppError("VALIDATION_ERROR", "Diário inválido para este projeto.");
+  }
+}
+
+// Vínculo de evidência à inspeção (E13-US02): precisa ser inspeção viva do
+// mesmo projeto — é o que sustenta PASS/FAIL (§33 "evidência adequada").
+async function assertInspection(organizationId: string, projectId: string, inspectionId: string) {
+  const inspection = await prisma.inspection.findFirst({
+    where: { id: inspectionId, organizationId, projectId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!inspection) {
+    throw new AppError("VALIDATION_ERROR", "Inspeção inválida para este projeto.");
   }
 }
 
@@ -82,6 +95,9 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
     activityId: input.activityId,
   });
   if (input.diaryId) await assertDiary(input.organizationId, input.projectId, input.diaryId);
+  if (input.inspectionId) {
+    await assertInspection(input.organizationId, input.projectId, input.inspectionId);
+  }
 
   let code = input.code?.trim();
   if (code) {
@@ -110,6 +126,7 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
       takenAt: input.takenAt ? new Date(input.takenAt) : null,
       wbsNodeId: input.wbsNodeId ?? null,
       activityId: input.activityId ?? null,
+      inspectionId: input.inspectionId ?? null,
       clientUuid: input.clientUuid ?? null,
       createdBy: input.actorId,
       updatedBy: input.actorId,

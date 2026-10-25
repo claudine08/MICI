@@ -16,8 +16,10 @@ export const { GET, POST } = apiHandler({
     const tenant = await requireTenantContext();
     assertPermission(tenant, "FIELD", "VIEW");
     const projectId = await projectIdFrom(context);
-    const diaryId = new URL(request.url).searchParams.get("diaryId") ?? undefined;
-    const photos = await listPhotos(tenant.organizationId, projectId, diaryId);
+    const url = new URL(request.url);
+    const diaryId = url.searchParams.get("diaryId") ?? undefined;
+    const inspectionId = url.searchParams.get("inspectionId") ?? undefined;
+    const photos = await listPhotos(tenant.organizationId, projectId, diaryId, inspectionId);
     return Response.json({ photos });
   },
 
@@ -38,6 +40,7 @@ export const { GET, POST } = apiHandler({
       diaryId: formData.get("diaryId")?.toString() || undefined,
       wbsNodeId: formData.get("wbsNodeId")?.toString() || undefined,
       activityId: formData.get("activityId")?.toString() || undefined,
+      inspectionId: formData.get("inspectionId")?.toString() || undefined,
     };
     const parsed = uploadPhotoFieldsSchema.safeParse(rawFields);
     if (!parsed.success) {

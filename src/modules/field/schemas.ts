@@ -132,6 +132,9 @@ export const uploadPhotoFieldsSchema = z.object({
   diaryId: z.string().uuid().nullable().optional(),
   wbsNodeId: z.string().uuid().nullable().optional(),
   activityId: z.string().uuid().nullable().optional(),
+  // Evidência de inspeção (E13-US02, §33): foto pode servir de prova de
+  // resultado — PASS/FAIL da inspeção exige foto ou checklist concluído.
+  inspectionId: z.string().uuid().nullable().optional(),
   clientUuid,
 });
 

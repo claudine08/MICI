@@ -413,6 +413,7 @@ export interface PhotoRow {
   diaryCode: string | null;
   wbsNodeId: string | null;
   activityId: string | null;
+  inspectionId: string | null;
   createdAt: string;
   version: number;
 }
@@ -420,7 +421,8 @@ export interface PhotoRow {
 export async function listPhotos(
   organizationId: string,
   projectId: string,
-  diaryId?: string
+  diaryId?: string,
+  inspectionId?: string
 ): Promise<PhotoRow[]> {
   await assertFieldProject(organizationId, projectId);
   const rows = await prisma.photoEvidence.findMany({
@@ -429,6 +431,7 @@ export async function listPhotos(
       projectId,
       deletedAt: null,
       ...(diaryId ? { diaryId } : {}),
+      ...(inspectionId ? { inspectionId } : {}),
     },
     include: { diary: { select: { code: true } } },
     orderBy: [{ takenAt: "desc" }, { code: "asc" }],
@@ -446,6 +449,7 @@ export async function listPhotos(
     diaryCode: row.diary?.code ?? null,
     wbsNodeId: row.wbsNodeId,
     activityId: row.activityId,
+    inspectionId: row.inspectionId,
     createdAt: isoDateTime(row.createdAt)!,
     version: row.version,
   }));

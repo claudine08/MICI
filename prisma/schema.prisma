@@ -527,6 +527,9 @@ model Project {
   constraints     Constraint[]
   photos          PhotoEvidence[]
   progressMeasurements ProgressMeasurement[]
+  checklistTemplates ChecklistTemplate[]
+  checklistExecutions ChecklistExecution[]
+  inspections     Inspection[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -784,6 +787,7 @@ model WBSNode {
   constraints  Constraint[]
   photos       PhotoEvidence[]
   progressMeasurements ProgressMeasurement[]
+  inspections  Inspection[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId, parentId])
@@ -890,6 +894,7 @@ model ScheduleActivity {
   constraints   Constraint[]
   photos        PhotoEvidence[]
   progressMeasurements ProgressMeasurement[]
+  inspections   Inspection[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -1738,9 +1743,10 @@ model PhotoEvidence {
   hash           String   @db.VarChar(64)
   content        Bytes
   takenAt        DateTime? @map("taken_at")
-  wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
-  activityId     String?  @map("activity_id") @db.Uuid
-  clientUuid     String?  @map("client_uuid") @db.Uuid
+  wbsNodeId      String?   @map("wbs_node_id") @db.Uuid
+  activityId     String?   @map("activity_id") @db.Uuid
+  inspectionId   String?   @map("inspection_id") @db.Uuid
+  clientUuid     String?   @map("client_uuid") @db.Uuid
 
   createdAt DateTime  @default(now()) @map("created_at")
   createdBy String?   @map("created_by") @db.Uuid
@@ -1754,6 +1760,7 @@ model PhotoEvidence {
   diary    FieldDiary?       @relation(fields: [diaryId], references: [id], onDelete: SetNull)
   wbsNode  WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
   activity ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  inspection Inspection?     @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
 
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])
@@ -1813,4 +1820,144 @@ model ProgressMeasurement {
   @@index([organizationId, projectId, measurementDate])
   @@index([organizationId, projectId, activityId])
   @@map("progress_measurements")
+}
+
+// ---------------------------------------------------------------------------
+// Qualidade (E13, §33): checklist (modelo + execução) e inspeção. Fluxo da
+// spec: Planned → Executed → Passed / Failed → Corrective Action →
+// Verification → Closed. Regra: item só conclui quando atinge o critério e
+// possui evidência adequada (foto e/ou execução de checklist concluída).
+// NCR e ação corretiva entram na Fatia 2; punch list em §34 (Fatia 2).
+// ---------------------------------------------------------------------------
+
+enum ChecklistExecutionStatus {
+  DRAFT
+  COMPLETED
+  CANCELLED
+
+  @@map("checklist_execution_status")
+}
+
+model ChecklistTemplate {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  name           String   @db.VarChar(200)
+  description    String?  @db.Text
+
+  // Itens do modelo: [{ key, text, required }] — a execução copia o snapshot.
+  items          Json     @default("[]")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  executions ChecklistExecution[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@map("checklist_templates")
+}
+
+model ChecklistExecution {
+  id             String                  @id @default(uuid()) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  projectId      String                  @map("project_id") @db.Uuid
+  code           String                  @db.VarChar(32)
+  templateId     String                  @map("template_id") @db.Uuid
+  templateCode   String                  @map("template_code") @db.VarChar(32)
+  templateName   String                  @map("template_name") @db.VarChar(200)
+  inspectionId   String?                 @map("inspection_id") @db.Uuid
+  status         ChecklistExecutionStatus @default(DRAFT)
+
+  // Snapshot dos itens no momento da execução, já com o resultado:
+  // [{ key, text, required, result: PASS|FAIL|NA|null, note }]
+  items          Json                    @default("[]")
+  inspectorId    String?                 @map("inspector_id") @db.Uuid
+  notes          String?                 @db.Text
+  completedAt    DateTime?               @map("completed_at")
+  cancelReason   String?                 @map("cancel_reason") @db.VarChar(1000)
+  clientUuid     String?                 @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  template   ChecklistTemplate  @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  inspection Inspection?        @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@index([organizationId, inspectionId])
+  @@map("checklist_executions")
+}
+
+enum InspectionStatus {
+  PLANNED
+  EXECUTED
+  PASSED
+  FAILED
+  CLOSED
+  CANCELLED
+
+  @@map("inspection_status")
+}
+
+model Inspection {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  projectId      String          @map("project_id") @db.Uuid
+  code           String          @db.VarChar(32)
+  title          String          @db.VarChar(200)
+  description    String?         @db.Text
+  inspectionDate DateTime        @map("inspection_date") @db.Date
+  status         InspectionStatus @default(PLANNED)
+
+  inspectorId    String?         @map("inspector_id") @db.Uuid
+  wbsNodeId      String?         @map("wbs_node_id") @db.Uuid
+  activityId     String?         @map("activity_id") @db.Uuid
+
+  // Critério de aceite da inspeção — obrigatório (§33: "item somente
+  // concluído quando atingir o critério e possuir evidência adequada").
+  criterion      String          @db.Text
+  resultNotes    String?         @map("result_notes") @db.Text
+
+  executedAt     DateTime?       @map("executed_at")
+  closedAt       DateTime?       @map("closed_at")
+  cancelReason   String?         @map("cancel_reason") @db.VarChar(1000)
+  clientUuid     String?         @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project    Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode    WBSNode?            @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity   ScheduleActivity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  photos     PhotoEvidence[]
+  executions ChecklistExecution[]
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@index([organizationId, projectId, inspectionDate])
+  @@map("inspections")
 }

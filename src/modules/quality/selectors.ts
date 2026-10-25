@@ -1,0 +1,406 @@
+import { prisma } from "@/lib/prisma";
+import { AppError } from "@/core/errors";
+import {
+  availableChecklistExecutionActions,
+  availableInspectionActions,
+  isChecklistExecutionEditable,
+  isInspectionEditable,
+  isInspectionOpen,
+  parseChecklistItems,
+  summarizeChecklistItems,
+  summarizeQualityBoard,
+  type ChecklistExecutionAction,
+  type ChecklistExecutionStatus,
+  type ChecklistItem,
+  type ChecklistSummary,
+  type InspectionAction,
+  type InspectionStatus,
+  type QualityBoardCounts,
+} from "@/modules/quality/engine";
+import { assertQualityProject } from "@/modules/quality/common";
+
+// Leituras de qualidade (E13, §33/§34) — sempre escopadas pelo
+// organization_id, mesmo padrão do módulo de campo.
+
+function isoDate(value: Date | null): string | null {
+  return value ? value.toISOString().slice(0, 10) : null;
+}
+
+function isoDateTime(value: Date | null): string | null {
+  return value ? value.toISOString() : null;
+}
+
+async function resolveUserNames(ids: Set<string>): Promise<Map<string, string>> {
+  if (ids.size === 0) return new Map();
+  const users = await prisma.user.findMany({
+    where: { id: { in: [...ids] } },
+    select: { id: true, name: true },
+  });
+  return new Map(users.map((user) => [user.id, user.name]));
+}
+
+// ---------------------------------------------------------------------------
+// Modelo de checklist (E13-US01)
+// ---------------------------------------------------------------------------
+
+export interface ChecklistTemplateRow {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  items: ChecklistItem[];
+  itemCount: number;
+  requiredCount: number;
+  executionCount: number;
+  createdAt: string;
+  version: number;
+}
+
+export async function listChecklistTemplates(
+  organizationId: string,
+  projectId: string
+): Promise<ChecklistTemplateRow[]> {
+  await assertQualityProject(organizationId, projectId);
+  const rows = await prisma.checklistTemplate.findMany({
+    where: { organizationId, projectId, deletedAt: null },
+    include: { executions: { where: { deletedAt: null }, select: { id: true } } },
+    orderBy: [{ code: "asc" }],
+  });
+
+  return rows.map((row) => {
+    const items = parseChecklistItems(row.items);
+    return {
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      description: row.description,
+      items,
+      itemCount: items.length,
+      requiredCount: items.filter((item) => item.required).length,
+      executionCount: row.executions.length,
+      createdAt: isoDateTime(row.createdAt)!,
+      version: row.version,
+    };
+  });
+}
+
+export async function getChecklistTemplateRow(
+  organizationId: string,
+  templateId: string
+): Promise<ChecklistTemplateRow> {
+  const row = await prisma.checklistTemplate.findFirst({
+    where: { id: templateId, organizationId, deletedAt: null },
+    include: { executions: { where: { deletedAt: null }, select: { id: true } } },
+  });
+  if (!row) {
+    throw new AppError("NOT_FOUND", "Modelo de checklist não encontrado nesta organização.");
+  }
+  const items = parseChecklistItems(row.items);
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    description: row.description,
+    items,
+    itemCount: items.length,
+    requiredCount: items.filter((item) => item.required).length,
+    executionCount: row.executions.length,
+    createdAt: isoDateTime(row.createdAt)!,
+    version: row.version,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Execução de checklist (E13-US01)
+// ---------------------------------------------------------------------------
+
+export interface ChecklistExecutionRow {
+  id: string;
+  code: string;
+  templateId: string;
+  templateCode: string;
+  templateName: string;
+  inspectionId: string | null;
+  inspectionCode: string | null;
+  inspectionTitle: string | null;
+  status: ChecklistExecutionStatus;
+  items: ChecklistItem[];
+  summary: ChecklistSummary;
+  inspectorId: string | null;
+  inspectorName: string | null;
+  notes: string | null;
+  completedAt: string | null;
+  cancelReason: string | null;
+  actions: ChecklistExecutionAction[];
+  editable: boolean;
+  isOpen: boolean;
+  version: number;
+  createdAt: string;
+}
+
+interface ChecklistExecutionRecord {
+  id: string;
+  code: string;
+  templateId: string;
+  templateCode: string;
+  templateName: string;
+  inspectionId: string | null;
+  inspection: { code: string; title: string } | null;
+  status: ChecklistExecutionStatus;
+  items: unknown;
+  inspectorId: string | null;
+  notes: string | null;
+  completedAt: Date | null;
+  cancelReason: string | null;
+  version: number;
+  createdAt: Date;
+}
+
+async function toExecutionRows(rows: ChecklistExecutionRecord[]): Promise<ChecklistExecutionRow[]> {
+  const names = await resolveUserNames(
+    new Set(rows.map((row) => row.inspectorId).filter((id): id is string => Boolean(id)))
+  );
+  return rows.map((row) => {
+    const items = parseChecklistItems(row.items);
+    return {
+      id: row.id,
+      code: row.code,
+      templateId: row.templateId,
+      templateCode: row.templateCode,
+      templateName: row.templateName,
+      inspectionId: row.inspectionId,
+      inspectionCode: row.inspection?.code ?? null,
+      inspectionTitle: row.inspection?.title ?? null,
+      status: row.status,
+      items,
+      summary: summarizeChecklistItems(items),
+      inspectorId: row.inspectorId,
+      inspectorName: row.inspectorId ? names.get(row.inspectorId) ?? null : null,
+      notes: row.notes,
+      completedAt: isoDateTime(row.completedAt),
+      cancelReason: row.cancelReason,
+      actions: availableChecklistExecutionActions(row.status),
+      editable: isChecklistExecutionEditable(row.status),
+      isOpen: row.status === "DRAFT",
+      version: row.version,
+      createdAt: isoDateTime(row.createdAt)!,
+    };
+  });
+}
+
+const executionInclude = { inspection: { select: { code: true, title: true } } } as const;
+
+export async function listChecklistExecutions(
+  organizationId: string,
+  projectId: string,
+  filters?: { inspectionId?: string; status?: string }
+): Promise<ChecklistExecutionRow[]> {
+  await assertQualityProject(organizationId, projectId);
+  const rows = await prisma.checklistExecution.findMany({
+    where: {
+      organizationId,
+      projectId,
+      deletedAt: null,
+      ...(filters?.inspectionId ? { inspectionId: filters.inspectionId } : {}),
+      ...(filters?.status ? { status: filters.status as ChecklistExecutionStatus } : {}),
+    },
+    include: executionInclude,
+    orderBy: [{ code: "desc" }],
+  });
+  return toExecutionRows(rows);
+}
+
+export async function getChecklistExecutionRow(
+  organizationId: string,
+  executionId: string
+): Promise<ChecklistExecutionRow> {
+  const row = await prisma.checklistExecution.findFirst({
+    where: { id: executionId, organizationId, deletedAt: null },
+    include: executionInclude,
+  });
+  if (!row) {
+    throw new AppError("NOT_FOUND", "Execução de checklist não encontrada nesta organização.");
+  }
+  return (await toExecutionRows([row]))[0];
+}
+
+// ---------------------------------------------------------------------------
+// Inspeção (E13-US02, §33)
+// ---------------------------------------------------------------------------
+
+export interface InspectionRow {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  inspectionDate: string;
+  status: InspectionStatus;
+  inspectorId: string | null;
+  inspectorName: string | null;
+  wbsNodeId: string | null;
+  wbsNodeCode: string | null;
+  activityId: string | null;
+  activityCode: string | null;
+  criterion: string;
+  resultNotes: string | null;
+  executedAt: string | null;
+  closedAt: string | null;
+  cancelReason: string | null;
+  photoCount: number;
+  checklistCount: number;
+  completedChecklistCount: number;
+  hasEvidence: boolean;
+  actions: InspectionAction[];
+  editable: boolean;
+  isOpen: boolean;
+  version: number;
+  createdAt: string;
+}
+
+interface InspectionRecord {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  inspectionDate: Date;
+  status: InspectionStatus;
+  inspectorId: string | null;
+  wbsNodeId: string | null;
+  wbsNode: { code: string } | null;
+  activityId: string | null;
+  activity: { code: string } | null;
+  criterion: string;
+  resultNotes: string | null;
+  executedAt: Date | null;
+  closedAt: Date | null;
+  cancelReason: string | null;
+  version: number;
+  createdAt: Date;
+  photos: { id: string }[];
+  executions: { id: string; status: ChecklistExecutionStatus }[];
+}
+
+async function toInspectionRows(rows: InspectionRecord[]): Promise<InspectionRow[]> {
+  const names = await resolveUserNames(
+    new Set(rows.map((row) => row.inspectorId).filter((id): id is string => Boolean(id)))
+  );
+  return rows.map((row) => {
+    const completed = row.executions.filter((item) => item.status === "COMPLETED").length;
+    return {
+      id: row.id,
+      code: row.code,
+      title: row.title,
+      description: row.description,
+      inspectionDate: isoDate(row.inspectionDate)!,
+      status: row.status,
+      inspectorId: row.inspectorId,
+      inspectorName: row.inspectorId ? names.get(row.inspectorId) ?? null : null,
+      wbsNodeId: row.wbsNodeId,
+      wbsNodeCode: row.wbsNode?.code ?? null,
+      activityId: row.activityId,
+      activityCode: row.activity?.code ?? null,
+      criterion: row.criterion,
+      resultNotes: row.resultNotes,
+      executedAt: isoDateTime(row.executedAt),
+      closedAt: isoDateTime(row.closedAt),
+      cancelReason: row.cancelReason,
+      photoCount: row.photos.length,
+      checklistCount: row.executions.length,
+      completedChecklistCount: completed,
+      hasEvidence: row.photos.length > 0 || completed > 0,
+      actions: availableInspectionActions(row.status),
+      editable: isInspectionEditable(row.status),
+      isOpen: isInspectionOpen(row.status),
+      version: row.version,
+      createdAt: isoDateTime(row.createdAt)!,
+    };
+  });
+}
+
+const inspectionInclude = {
+  wbsNode: { select: { code: true } },
+  activity: { select: { code: true } },
+  photos: { where: { deletedAt: null }, select: { id: true } },
+  executions: {
+    where: { deletedAt: null },
+    select: { id: true, status: true },
+  },
+} as const;
+
+export async function listInspections(
+  organizationId: string,
+  projectId: string,
+  filters?: { status?: string }
+): Promise<InspectionRow[]> {
+  await assertQualityProject(organizationId, projectId);
+  const rows = await prisma.inspection.findMany({
+    where: {
+      organizationId,
+      projectId,
+      deletedAt: null,
+      ...(filters?.status ? { status: filters.status as InspectionStatus } : {}),
+    },
+    include: inspectionInclude,
+    orderBy: [{ inspectionDate: "desc" }, { code: "asc" }],
+  });
+  return toInspectionRows(rows);
+}
+
+export async function getInspectionRow(
+  organizationId: string,
+  inspectionId: string
+): Promise<InspectionRow> {
+  const row = await prisma.inspection.findFirst({
+    where: { id: inspectionId, organizationId, deletedAt: null },
+    include: inspectionInclude,
+  });
+  if (!row) {
+    throw new AppError("NOT_FOUND", "Inspeção não encontrada nesta organização.");
+  }
+  return (await toInspectionRows([row]))[0];
+}
+
+// ---------------------------------------------------------------------------
+// Portfólio: resumo de qualidade por projeto
+// ---------------------------------------------------------------------------
+
+export interface QualitySummaryRow {
+  projectId: string;
+  projectCode: string;
+  projectName: string;
+  board: QualityBoardCounts;
+}
+
+export async function listQualitySummaries(
+  organizationId: string
+): Promise<QualitySummaryRow[]> {
+  const [projects, templates, executions, inspections] = await Promise.all([
+    prisma.project.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { id: true, code: true, name: true },
+    }),
+    prisma.checklistTemplate.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { id: true, projectId: true },
+    }),
+    prisma.checklistExecution.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { id: true, projectId: true, status: true },
+    }),
+    prisma.inspection.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { id: true, projectId: true, status: true },
+    }),
+  ]);
+
+  return projects.map((project) => ({
+    projectId: project.id,
+    projectCode: project.code,
+    projectName: project.name,
+    board: summarizeQualityBoard({
+      templates: templates.filter((item) => item.projectId === project.id),
+      executions: executions.filter((item) => item.projectId === project.id),
+      inspections: inspections.filter((item) => item.projectId === project.id),
+    }),
+  }));
+}
