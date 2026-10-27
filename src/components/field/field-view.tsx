@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, ArrowRightLeft, Camera } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowRightLeft, Camera, Eye } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -237,11 +237,15 @@ export function FieldView({
   } | null>(null);
 
   const [photoDialog, setPhotoDialog] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState<PhotoRow | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [photoCaption, setPhotoCaption] = useState("");
   const [photoDiaryId, setPhotoDiaryId] = useState("");
   const [photoWbsNodeId, setPhotoWbsNodeId] = useState("");
   const [photoActivityId, setPhotoActivityId] = useState("");
   const [photoClientUuid, setPhotoClientUuid] = useState("");
+  const [viewingPhoto, setViewingPhoto] = useState<PhotoRow | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadAll = async () => {
@@ -563,41 +567,86 @@ export function FieldView({
   };
 
   // --- Fotos --------------------------------------------------------------
-  const openPhotoDialog = () => {
-    setPhotoClientUuid(crypto.randomUUID());
+  const photoUrl = (photoId: string) => `/api/v1/projects/${projectId}/field/photos/${photoId}`;
+
+  const resetPhotoForm = () => {
+    setEditingPhoto(null);
+    setPhotoFile(null);
+    setPhotoPreviewUrl((previous) => {
+      if (previous?.startsWith("blob:")) URL.revokeObjectURL(previous);
+      return null;
+    });
     setPhotoCaption("");
     setPhotoDiaryId("");
     setPhotoWbsNodeId("");
     setPhotoActivityId("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const openPhotoDialog = () => {
+    resetPhotoForm();
+    setPhotoClientUuid(crypto.randomUUID());
     setError(null);
     setPhotoDialog(true);
   };
 
-  const submitPhoto = async (file: File) => {
+  const openPhotoEdit = (photo: PhotoRow) => {
+    resetPhotoForm();
+    setEditingPhoto(photo);
+    setPhotoCaption(photo.caption ?? "");
+    setPhotoDiaryId(photo.diaryId ?? "");
+    setPhotoWbsNodeId(photo.wbsNodeId ?? "");
+    setPhotoActivityId(photo.activityId ?? "");
+    setError(null);
+    setPhotoDialog(true);
+  };
+
+  const closePhotoDialog = () => {
+    setPhotoDialog(false);
+    resetPhotoForm();
+  };
+
+  const selectPhotoFile = (file: File) => {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const submitPhoto = async () => {
     setBusy(true);
     setError(null);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      if (photoCaption) form.append("caption", photoCaption);
-      if (photoDiaryId) form.append("diaryId", photoDiaryId);
-      if (photoWbsNodeId) form.append("wbsNodeId", photoWbsNodeId);
-      if (photoActivityId) form.append("activityId", photoActivityId);
-      if (photoClientUuid) form.append("clientUuid", photoClientUuid);
-      const response = await fetch(photoBase, { method: "POST", body: form });
-      if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { message?: string } | null;
-        throw new Error(body?.message ?? "Falha ao enviar a foto.");
+      if (editingPhoto) {
+        await apiRequest(`${photoBase}/${editingPhoto.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            caption: photoCaption || undefined,
+            diaryId: photoDiaryId || null,
+            wbsNodeId: photoWbsNodeId || null,
+            activityId: photoActivityId || null,
+          }),
+        });
+      } else {
+        if (!photoFile) throw new Error("Selecione a foto antes de enviar.");
+        const form = new FormData();
+        form.append("file", photoFile);
+        if (photoCaption) form.append("caption", photoCaption);
+        if (photoDiaryId) form.append("diaryId", photoDiaryId);
+        if (photoWbsNodeId) form.append("wbsNodeId", photoWbsNodeId);
+        if (photoActivityId) form.append("activityId", photoActivityId);
+        if (photoClientUuid) form.append("clientUuid", photoClientUuid);
+        const response = await fetch(photoBase, { method: "POST", body: form });
+        if (!response.ok) {
+          const body = (await response.json().catch(() => null)) as {
+            error?: { message?: string };
+          } | null;
+          throw new Error(body?.error?.message ?? "Falha ao enviar a foto.");
+        }
       }
-      setPhotoDialog(false);
-      setPhotoCaption("");
-      setPhotoDiaryId("");
-      setPhotoWbsNodeId("");
-      setPhotoActivityId("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      closePhotoDialog();
       await loadAll();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Falha ao enviar a foto.");
+      setError(caught instanceof Error ? caught.message : "Falha ao salvar a foto.");
     } finally {
       setBusy(false);
     }
@@ -1016,34 +1065,69 @@ export function FieldView({
                 key={photo.id}
                 className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-2"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/api/v1/projects/${projectId}/field/photos/${photo.id}`}
-                  alt={photo.caption ?? photo.code}
-                  className="h-32 w-full rounded-md border border-border bg-background object-cover"
-                  loading="lazy"
-                />
+                <button
+                  type="button"
+                  onClick={() => setViewingPhoto(photo)}
+                  title="Ver em tamanho real"
+                  className="overflow-hidden rounded-md border border-border"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photoUrl(photo.id)}
+                    alt={photo.caption ?? photo.code}
+                    className="h-32 w-full bg-background object-cover transition hover:opacity-90"
+                    loading="lazy"
+                  />
+                </button>
                 <div className="text-xs">
                   <div className="font-mono">{photo.code}</div>
                   <div className="line-clamp-2 text-muted-foreground">
                     {photo.caption ?? photo.fileName}
                   </div>
                   <div className="text-muted-foreground">
-                    {photo.diaryCode ? `Diário ${photo.diaryCode} · ` : ""}
-                    {photo.createdAt.slice(0, 10)}
+                    {photo.diaryCode ? `Diário ${photo.diaryCode}` : ""}
+                    {photo.diaryCode && photo.wbsNodeCode ? " · " : ""}
+                    {photo.wbsNodeCode ? `WBS ${photo.wbsNodeCode}` : ""}
+                    {photo.wbsNodeCode && photo.activityCode ? " · " : ""}
+                    {photo.activityCode ? `Ativ. ${photo.activityCode}` : ""}
                   </div>
+                  <div className="text-muted-foreground">{photo.createdAt.slice(0, 10)}</div>
                 </div>
-                {canDelete && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="justify-start"
-                    onClick={() => void removePhoto(photo)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Excluir
-                  </Button>
-                )}
+                <div className="flex gap-1">
+                  {(canEdit || canDelete) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="justify-start"
+                      onClick={() => setViewingPhoto(photo)}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Ver
+                    </Button>
+                  )}
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="justify-start"
+                      onClick={() => openPhotoEdit(photo)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Editar
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="justify-start"
+                      onClick={() => void removePhoto(photo)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Excluir
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -1573,31 +1657,50 @@ export function FieldView({
         )}
       </Dialog>
 
-      {/* Envio de foto */}
+      {/* Envio/edição de foto */}
       <Dialog
         open={photoDialog}
-        title="Enviar foto"
-        onClose={() => {
-          setPhotoDialog(false);
-          setPhotoCaption("");
-          if (fileInputRef.current) fileInputRef.current.value = "";
-        }}
+        title={editingPhoto ? `Editar foto ${editingPhoto.code}` : "Enviar foto"}
+        onClose={closePhotoDialog}
       >
         <div className="flex flex-col gap-3">
-          <div className="grid gap-2">
-            <Label htmlFor="photo-file">Arquivo (JPG/PNG/WebP, até 4 MB) *</Label>
-            <input
-              ref={fileInputRef}
-              id="photo-file"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void submitPhoto(file);
-              }}
-            />
-          </div>
+          {editingPhoto ? (
+            <div className="overflow-hidden rounded-md border border-border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photoUrl(editingPhoto.id)}
+                alt={editingPhoto.caption ?? editingPhoto.code}
+                className="max-h-64 w-full bg-background object-contain"
+              />
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="photo-file">Arquivo (JPG/PNG/WebP, até 4 MB) *</Label>
+                <input
+                  ref={fileInputRef}
+                  id="photo-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                  className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) selectPhotoFile(file);
+                  }}
+                />
+              </div>
+              {photoPreviewUrl && (
+                <div className="overflow-hidden rounded-md border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photoPreviewUrl}
+                    alt="Pré-visualização da foto selecionada"
+                    className="max-h-64 w-full bg-background object-contain"
+                  />
+                </div>
+              )}
+            </>
+          )}
           <div className="grid gap-2">
             <Label htmlFor="photo-caption">Legenda</Label>
             <Input
@@ -1656,23 +1759,86 @@ export function FieldView({
             </select>
           </div>
           <p className="text-xs text-muted-foreground">
-            O envio acontece imediatamente ao escolher o arquivo; a legenda pode ser editada depois.
+            {editingPhoto
+              ? "A imagem não muda — legenda e vínculos podem ser ajustados aqui."
+              : "Preencha os dados e clique em enviar; nada é enviado antes disso."}
           </p>
         </div>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={closePhotoDialog}>
+            Cancelar
+          </Button>
           <Button
-            variant="outline"
-            onClick={() => {
-              setPhotoDialog(false);
-              setPhotoCaption("");
-              setPhotoDiaryId("");
-              setPhotoWbsNodeId("");
-              setPhotoActivityId("");
-            }}
+            onClick={() => void submitPhoto()}
+            disabled={busy || (!editingPhoto && !photoFile)}
           >
-            Fechar
+            {busy ? "Salvando…" : editingPhoto ? "Salvar alterações" : "Enviar foto"}
           </Button>
         </div>
+      </Dialog>
+
+      {/* Visualização de foto */}
+      <Dialog
+        open={viewingPhoto !== null}
+        title={viewingPhoto ? `${viewingPhoto.code} — foto de evidência` : "Foto"}
+        onClose={() => setViewingPhoto(null)}
+        wide
+      >
+        {viewingPhoto && (
+          <div className="flex flex-col gap-3">
+            <div className="overflow-hidden rounded-md border border-border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photoUrl(viewingPhoto.id)}
+                alt={viewingPhoto.caption ?? viewingPhoto.code}
+                className="max-h-[60vh] w-full bg-background object-contain"
+              />
+            </div>
+            <div className="text-sm">
+              <div className="font-mono text-xs">{viewingPhoto.code}</div>
+              <div>{viewingPhoto.caption ?? "—"}</div>
+              <div className="text-xs text-muted-foreground">
+                {viewingPhoto.fileName} · {Math.round(viewingPhoto.sizeBytes / 1024)} KB ·{" "}
+                {viewingPhoto.createdAt.slice(0, 10)}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {viewingPhoto.diaryCode ? `Diário ${viewingPhoto.diaryCode}` : ""}
+                {viewingPhoto.diaryCode && viewingPhoto.wbsNodeCode ? " · " : ""}
+                {viewingPhoto.wbsNodeCode ? `WBS ${viewingPhoto.wbsNodeCode}` : ""}
+                {viewingPhoto.wbsNodeCode && viewingPhoto.activityCode ? " · " : ""}
+                {viewingPhoto.activityCode ? `Ativ. ${viewingPhoto.activityCode}` : ""}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <a
+                href={photoUrl(viewingPhoto.id)}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-primary underline-offset-2 hover:underline"
+              >
+                Abrir em tamanho real
+              </a>
+              <div className="flex gap-2">
+                {canEdit && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const photo = viewingPhoto;
+                      setViewingPhoto(null);
+                      openPhotoEdit(photo);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar dados
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => setViewingPhoto(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </Dialog>
 
       {/* Medição de avanço físico */}

@@ -141,6 +141,9 @@ export const uploadPhotoFieldsSchema = z.object({
 export const updatePhotoSchema = z.object({
   caption: z.string().trim().max(300).optional(),
   takenAt: z.string().datetime({ offset: true }).nullable().optional(),
+  diaryId: z.string().uuid().nullable().optional(),
+  wbsNodeId: z.string().uuid().nullable().optional(),
+  activityId: z.string().uuid().nullable().optional(),
 });
 
 // ---------------------------------------------------------------------------

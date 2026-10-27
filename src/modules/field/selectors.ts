@@ -412,10 +412,60 @@ export interface PhotoRow {
   diaryId: string | null;
   diaryCode: string | null;
   wbsNodeId: string | null;
+  wbsNodeCode: string | null;
   activityId: string | null;
+  activityCode: string | null;
   inspectionId: string | null;
   createdAt: string;
   version: number;
+}
+
+interface PhotoRecord {
+  id: string;
+  code: string;
+  caption: string | null;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  hash: string;
+  takenAt: Date | null;
+  diaryId: string | null;
+  diary: { code: string } | null;
+  wbsNodeId: string | null;
+  wbsNode: { code: string } | null;
+  activityId: string | null;
+  activity: { code: string } | null;
+  inspectionId: string | null;
+  createdAt: Date;
+  version: number;
+}
+
+const photoInclude = {
+  diary: { select: { code: true } },
+  wbsNode: { select: { code: true } },
+  activity: { select: { code: true } },
+} as const;
+
+function toPhotoRow(row: PhotoRecord): PhotoRow {
+  return {
+    id: row.id,
+    code: row.code,
+    caption: row.caption,
+    fileName: row.fileName,
+    mimeType: row.mimeType,
+    sizeBytes: row.sizeBytes,
+    hash: row.hash,
+    takenAt: isoDateTime(row.takenAt),
+    diaryId: row.diaryId,
+    diaryCode: row.diary?.code ?? null,
+    wbsNodeId: row.wbsNodeId,
+    wbsNodeCode: row.wbsNode?.code ?? null,
+    activityId: row.activityId,
+    activityCode: row.activity?.code ?? null,
+    inspectionId: row.inspectionId,
+    createdAt: isoDateTime(row.createdAt)!,
+    version: row.version,
+  };
 }
 
 export async function listPhotos(
@@ -433,26 +483,10 @@ export async function listPhotos(
       ...(diaryId ? { diaryId } : {}),
       ...(inspectionId ? { inspectionId } : {}),
     },
-    include: { diary: { select: { code: true } } },
+    include: photoInclude,
     orderBy: [{ takenAt: "desc" }, { code: "asc" }],
   });
-  return rows.map((row) => ({
-    id: row.id,
-    code: row.code,
-    caption: row.caption,
-    fileName: row.fileName,
-    mimeType: row.mimeType,
-    sizeBytes: row.sizeBytes,
-    hash: row.hash,
-    takenAt: isoDateTime(row.takenAt),
-    diaryId: row.diaryId,
-    diaryCode: row.diary?.code ?? null,
-    wbsNodeId: row.wbsNodeId,
-    activityId: row.activityId,
-    inspectionId: row.inspectionId,
-    createdAt: isoDateTime(row.createdAt)!,
-    version: row.version,
-  }));
+  return rows.map(toPhotoRow);
 }
 
 export async function getPhotoContent(

@@ -147,7 +147,14 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
 }
 
 export async function updatePhoto(
-  input: ActorContext & { photoId: string; caption?: string; takenAt?: string | null }
+  input: ActorContext & {
+    photoId: string;
+    caption?: string;
+    takenAt?: string | null;
+    diaryId?: string | null;
+    wbsNodeId?: string | null;
+    activityId?: string | null;
+  }
 ) {
   const photo = await prisma.photoEvidence.findFirst({
     where: { id: input.photoId, organizationId: input.organizationId, deletedAt: null },
@@ -156,9 +163,18 @@ export async function updatePhoto(
     throw new AppError("NOT_FOUND", "Foto não encontrada nesta organização.");
   }
 
+  if (input.diaryId) await assertDiary(input.organizationId, photo.projectId, input.diaryId);
+  await assertFieldLinks(input.organizationId, photo.projectId, {
+    wbsNodeId: input.wbsNodeId,
+    activityId: input.activityId,
+  });
+
   const data: Record<string, unknown> = {};
   if (input.caption !== undefined) data.caption = input.caption.trim() || null;
   if (input.takenAt !== undefined) data.takenAt = input.takenAt ? new Date(input.takenAt) : null;
+  if (input.diaryId !== undefined) data.diaryId = input.diaryId;
+  if (input.wbsNodeId !== undefined) data.wbsNodeId = input.wbsNodeId;
+  if (input.activityId !== undefined) data.activityId = input.activityId;
 
   const updated = await prisma.photoEvidence.update({
     where: { id: photo.id },
@@ -167,8 +183,18 @@ export async function updatePhoto(
 
   await audit(input, photo.projectId, "PhotoEvidence", "UPDATE", {
     objectId: photo.id,
-    oldValue: { caption: photo.caption },
-    newValue: { caption: updated.caption },
+    oldValue: {
+      caption: photo.caption,
+      diaryId: photo.diaryId,
+      wbsNodeId: photo.wbsNodeId,
+      activityId: photo.activityId,
+    },
+    newValue: {
+      caption: updated.caption,
+      diaryId: updated.diaryId,
+      wbsNodeId: updated.wbsNodeId,
+      activityId: updated.activityId,
+    },
   });
 
   return updated;

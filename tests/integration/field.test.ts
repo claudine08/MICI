@@ -16,7 +16,7 @@ import {
   updateConstraint,
   transitionConstraint,
 } from "@/modules/field/constraints";
-import { createPhoto, deletePhoto, preparePhotoUpload } from "@/modules/field/photos";
+import { createPhoto, deletePhoto, preparePhotoUpload, updatePhoto } from "@/modules/field/photos";
 import { createProgress, updateProgress, deleteProgress } from "@/modules/field/progress";
 import { createActivity } from "@/modules/schedule/activities";
 import { createActual } from "@/modules/cost/actuals";
@@ -371,6 +371,55 @@ describe("foto de evidência (E12-US02)", () => {
     const photos = await listPhotos(orgA.id, projectId, diary.id);
     expect(photos.some((row) => row.id === photo.id)).toBe(true);
     expect(photos[0].diaryCode).toBe(diary.code);
+  });
+
+  it("edita legenda e vnculos (dirio/atividade) depois do upload", async () => {
+    const diary = await createDiary({ ...actorA(), projectId, entryDate: "2026-03-02" });
+    const activity = await createActivity({
+      ...actorA(),
+      projectId,
+      name: "Instalao eltrica",
+      duration: 3,
+      plannedStart: "2026-06-10",
+      plannedFinish: "2026-06-12",
+      progressMethod: "PHYSICAL",
+    });
+    const photo = await createPhoto({
+      ...actorA(),
+      projectId,
+      file: imagePayload("editar.png"),
+    });
+
+    const updated = await updatePhoto({
+      ...actorA(),
+      photoId: photo.id,
+      caption: "Ripas do forro",
+      diaryId: diary.id,
+      activityId: activity.id,
+    });
+    expect(updated.caption).toBe("Ripas do forro");
+    expect(updated.diaryId).toBe(diary.id);
+    expect(updated.activityId).toBe(activity.id);
+
+    const rows = await listPhotos(orgA.id, projectId, diary.id);
+    const row = rows.find((item) => item.id === photo.id);
+    expect(row?.caption).toBe("Ripas do forro");
+    expect(row?.diaryCode).toBe(diary.code);
+    expect(row?.activityCode).toBe(activity.code);
+
+    // Vnculo inexistente no projeto  barrado antes de gravar.
+    await expectAppError(
+      updatePhoto({ ...actorA(), photoId: photo.id, wbsNodeId: randomUUID() }),
+      "VALIDATION_ERROR"
+    );
+
+    // Vnculo a outro dirio tira a foto do filtro do dirio original.
+    const otherDiary = await createDiary({ ...actorA(), projectId, entryDate: "2026-03-03" });
+    await updatePhoto({ ...actorA(), photoId: photo.id, diaryId: otherDiary.id });
+    const stillLinked = await listPhotos(orgA.id, projectId, diary.id);
+    expect(stillLinked.some((item) => item.id === photo.id)).toBe(false);
+    const reLinked = await listPhotos(orgA.id, projectId, otherDiary.id);
+    expect(reLinked.some((item) => item.id === photo.id)).toBe(true);
   });
 
   it("rejeita arquivo que no  imagem", () => {
