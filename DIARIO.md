@@ -1085,9 +1085,15 @@ falhava com "Registrar o resultado exige evidência" mesmo com foto enviada.
 
 - Gate verde: `eslint` 0 · `tsc --noEmit` limpo · **208 unit** (16 arquivos).
 - Testes de integração não rodaram localmente (Postgres/Docker parados).
-- **Deploy (27/10)**: commit desta entrega em `main` + push;
-  `vercel --prod` → produção `mici-theta.vercel.app` (o commit `1c7c397`
-  da UI de foto já tinha ido ao ar mais cedo).
+- **Deploy (27/10)**: commit `6fcb832` em `main` + push; `vercel --prod` →
+  `mici-7h2a4kw6n-homeland1` (alias `mici-theta.vercel.app`; o commit
+  `1c7c397` da UI de foto já tinha ido ao ar mais cedo). Smoke autenticado
+  (`admin@mici.demo` / `Demo@1234`): `/api/v1/health` → 200,
+  `/api/v1/projects` → DEMO-001, `/projetos/[id]/campo` → 200 (34 KB — o
+  server component rodou `listInspections` sem erro) e
+  `/projetos/[id]/qualidade` → 200. O select de inspeção vive dentro do
+  diálogo de foto (`Dialog` monta só quando aberto) — verificado por
+  typecheck + página 200, não aparece no HTML inicial.
 - **Estado no fim do dia**: evidência de inspeção agora é vinculável pela UI
   (campo → foto → inspeção); PASS/FAIL sustentado por foto ou checklist
   concluído, conforme §33.
