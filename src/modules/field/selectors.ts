@@ -416,6 +416,7 @@ export interface PhotoRow {
   activityId: string | null;
   activityCode: string | null;
   inspectionId: string | null;
+  inspectionCode: string | null;
   createdAt: string;
   version: number;
 }
@@ -436,6 +437,7 @@ interface PhotoRecord {
   activityId: string | null;
   activity: { code: string } | null;
   inspectionId: string | null;
+  inspection: { code: string } | null;
   createdAt: Date;
   version: number;
 }
@@ -444,6 +446,7 @@ const photoInclude = {
   diary: { select: { code: true } },
   wbsNode: { select: { code: true } },
   activity: { select: { code: true } },
+  inspection: { select: { code: true } },
 } as const;
 
 function toPhotoRow(row: PhotoRecord): PhotoRow {
@@ -463,6 +466,7 @@ function toPhotoRow(row: PhotoRecord): PhotoRow {
     activityId: row.activityId,
     activityCode: row.activity?.code ?? null,
     inspectionId: row.inspectionId,
+    inspectionCode: row.inspection?.code ?? null,
     createdAt: isoDateTime(row.createdAt)!,
     version: row.version,
   };

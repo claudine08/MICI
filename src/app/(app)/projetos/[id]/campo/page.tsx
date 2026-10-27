@@ -9,6 +9,7 @@ import {
   listProgress,
 } from "@/modules/field/selectors";
 import { summarizeFieldBoard } from "@/modules/field/engine";
+import { listInspections } from "@/modules/quality/selectors";
 import { listMembers } from "@/modules/identity/selectors";
 import { getWbsTree } from "@/modules/wbs/selectors";
 import { flattenWbsTree } from "@/modules/wbs/engine";
@@ -35,7 +36,7 @@ export default async function ProjetoCampoPage({
 
   const project = await getProjectDetail(context.organizationId, id);
 
-  const [diaries, tasks, constraints, photos, progress, members, tree, activityRows] =
+  const [diaries, tasks, constraints, photos, progress, members, tree, activityRows, inspectionRows] =
     await Promise.all([
       listDiaries(context.organizationId, id),
       listTasks(context.organizationId, id),
@@ -45,6 +46,7 @@ export default async function ProjetoCampoPage({
       listMembers(context.organizationId),
       getWbsTree(context.organizationId, id),
       listActivities(context.organizationId, id),
+      listInspections(context.organizationId, id),
     ]);
 
   const wbsNodes = flattenWbsTree(tree).map((node) => ({
@@ -54,6 +56,13 @@ export default async function ProjetoCampoPage({
   const activities = activityRows.map((activity) => ({
     id: activity.id,
     label: `${activity.code} — ${activity.name}`,
+  }));
+  // Evidência de inspeção (E13-US02, §33): o upload de foto pode apontar para
+  // qualquer inspeção do projeto — é o que sustenta PASS/FAIL. Todas ficam na
+  // lista para editar vínculos já gravados (inclusive de inspeção encerrada).
+  const inspections = inspectionRows.map((inspection) => ({
+    id: inspection.id,
+    label: `${inspection.code} — ${inspection.title}`,
   }));
 
   const activeMembers = members
@@ -105,6 +114,7 @@ export default async function ProjetoCampoPage({
         members={activeMembers}
         wbsNodes={wbsNodes}
         activities={activities}
+        inspections={inspections}
         canCreate={can(permissions, "FIELD", "CREATE")}
         canEdit={can(permissions, "FIELD", "EDIT")}
         canDelete={can(permissions, "FIELD", "DELETE")}

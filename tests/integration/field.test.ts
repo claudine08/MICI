@@ -20,6 +20,7 @@ import { createPhoto, deletePhoto, preparePhotoUpload, updatePhoto } from "@/mod
 import { createProgress, updateProgress, deleteProgress } from "@/modules/field/progress";
 import { createActivity } from "@/modules/schedule/activities";
 import { createActual } from "@/modules/cost/actuals";
+import { createInspection } from "@/modules/quality/inspections";
 import {
   listDiaries,
   getDiaryRow,
@@ -420,6 +421,38 @@ describe("foto de evidência (E12-US02)", () => {
     expect(stillLinked.some((item) => item.id === photo.id)).toBe(false);
     const reLinked = await listPhotos(orgA.id, projectId, otherDiary.id);
     expect(reLinked.some((item) => item.id === photo.id)).toBe(true);
+  });
+
+  it("edita vinculo de inspecao depois do upload (evidencia de qualidade E13)", async () => {
+    const inspection = await createInspection({
+      ...actorA(),
+      projectId,
+      title: "Inspeo de evidncia",
+      inspectionDate: "2026-03-05",
+      criterion: "Foto da instalao conferida",
+    });
+    const photo = await createPhoto({
+      ...actorA(),
+      projectId,
+      file: imagePayload("evidencia.png"),
+    });
+
+    const updated = await updatePhoto({
+      ...actorA(),
+      photoId: photo.id,
+      inspectionId: inspection.id,
+    });
+    expect(updated.inspectionId).toBe(inspection.id);
+
+    const rows = await listPhotos(orgA.id, projectId, undefined, inspection.id);
+    const row = rows.find((item) => item.id === photo.id);
+    expect(row?.inspectionCode).toBe(inspection.code);
+
+    // Desvincular limpa a inspecao e tira a foto do filtro.
+    const cleared = await updatePhoto({ ...actorA(), photoId: photo.id, inspectionId: null });
+    expect(cleared.inspectionId).toBeNull();
+    const withoutLink = await listPhotos(orgA.id, projectId, undefined, inspection.id);
+    expect(withoutLink.some((item) => item.id === photo.id)).toBe(false);
   });
 
   it("rejeita arquivo que no  imagem", () => {

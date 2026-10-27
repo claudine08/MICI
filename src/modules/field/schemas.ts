@@ -144,6 +144,7 @@ export const updatePhotoSchema = z.object({
   diaryId: z.string().uuid().nullable().optional(),
   wbsNodeId: z.string().uuid().nullable().optional(),
   activityId: z.string().uuid().nullable().optional(),
+  inspectionId: z.string().uuid().nullable().optional(),
 });
 
 // ---------------------------------------------------------------------------

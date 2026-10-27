@@ -154,6 +154,7 @@ export async function updatePhoto(
     diaryId?: string | null;
     wbsNodeId?: string | null;
     activityId?: string | null;
+    inspectionId?: string | null;
   }
 ) {
   const photo = await prisma.photoEvidence.findFirst({
@@ -168,6 +169,9 @@ export async function updatePhoto(
     wbsNodeId: input.wbsNodeId,
     activityId: input.activityId,
   });
+  if (input.inspectionId) {
+    await assertInspection(input.organizationId, photo.projectId, input.inspectionId);
+  }
 
   const data: Record<string, unknown> = {};
   if (input.caption !== undefined) data.caption = input.caption.trim() || null;
@@ -175,6 +179,7 @@ export async function updatePhoto(
   if (input.diaryId !== undefined) data.diaryId = input.diaryId;
   if (input.wbsNodeId !== undefined) data.wbsNodeId = input.wbsNodeId;
   if (input.activityId !== undefined) data.activityId = input.activityId;
+  if (input.inspectionId !== undefined) data.inspectionId = input.inspectionId;
 
   const updated = await prisma.photoEvidence.update({
     where: { id: photo.id },
@@ -188,12 +193,14 @@ export async function updatePhoto(
       diaryId: photo.diaryId,
       wbsNodeId: photo.wbsNodeId,
       activityId: photo.activityId,
+      inspectionId: photo.inspectionId,
     },
     newValue: {
       caption: updated.caption,
       diaryId: updated.diaryId,
       wbsNodeId: updated.wbsNodeId,
       activityId: updated.activityId,
+      inspectionId: updated.inspectionId,
     },
   });
 

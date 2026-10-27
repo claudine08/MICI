@@ -1058,3 +1058,36 @@ Neon → Vercel → smoke).
   list (§34); em `FAILED`, o `CLOSE` passará a exigir o NCR encerrado.
 - **Estado no fim do dia**: working tree limpa após o commit de docs,
   pushado, `phase12_quality` no Neon e smoke verde. Nada pela metade.
+
+## 27/10/2026 — E13: evidência de inspeção na UI de campo
+
+**Gap fechado**: a tela de campo não expunha `inspectionId` no upload/edição
+de foto — a evidência era vinculada só via API e o PASS/FAIL da inspeção
+falhava com "Registrar o resultado exige evidência" mesmo com foto enviada.
+
+### Mudanças
+
+- `field/schemas.ts`: `updatePhotoSchema` aceita `inspectionId` (uuid nullable).
+- `field/photos.ts`: `updatePhoto` valida e grava `inspectionId`
+  (`assertInspection` — mesma regra do upload) e audita o vínculo
+  (oldValue/newValue).
+- `field/selectors.ts`: `PhotoRow` expõe `inspectionCode`; include de
+  `inspection` em `photoInclude`.
+- `campo/page.tsx`: busca inspeções via `listInspections` e passa opções
+  (todas — inclusive encerradas/canceladas, para editar vínculos já gravados).
+- `field-view.tsx`: select "Vincular à inspeção (evidência §33)" no diálogo
+  de foto (novo e edição), envio no multipart/PATCH, exibição `Insp. CXxxx`
+  nos cards e no visualizador de tela cheia.
+- `tests/integration/field.test.ts`: teste de edição de vínculo de inspeção
+  (vincular → listagem com filtro → desvincular → sai do filtro).
+
+### Gate e deploy
+
+- Gate verde: `eslint` 0 · `tsc --noEmit` limpo · **208 unit** (16 arquivos).
+- Testes de integração não rodaram localmente (Postgres/Docker parados).
+- **Deploy (27/10)**: commit desta entrega em `main` + push;
+  `vercel --prod` → produção `mici-theta.vercel.app` (o commit `1c7c397`
+  da UI de foto já tinha ido ao ar mais cedo).
+- **Estado no fim do dia**: evidência de inspeção agora é vinculável pela UI
+  (campo → foto → inspeção); PASS/FAIL sustentado por foto ou checklist
+  concluído, conforme §33.

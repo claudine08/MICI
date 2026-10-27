@@ -61,6 +61,7 @@ interface Props {
   members: OptionLite[];
   wbsNodes: OptionLite[];
   activities: OptionLite[];
+  inspections: OptionLite[];
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -186,6 +187,7 @@ export function FieldView({
   members,
   wbsNodes,
   activities,
+  inspections,
   canCreate,
   canEdit,
   canDelete,
@@ -244,6 +246,7 @@ export function FieldView({
   const [photoDiaryId, setPhotoDiaryId] = useState("");
   const [photoWbsNodeId, setPhotoWbsNodeId] = useState("");
   const [photoActivityId, setPhotoActivityId] = useState("");
+  const [photoInspectionId, setPhotoInspectionId] = useState("");
   const [photoClientUuid, setPhotoClientUuid] = useState("");
   const [viewingPhoto, setViewingPhoto] = useState<PhotoRow | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -580,6 +583,7 @@ export function FieldView({
     setPhotoDiaryId("");
     setPhotoWbsNodeId("");
     setPhotoActivityId("");
+    setPhotoInspectionId("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -597,6 +601,7 @@ export function FieldView({
     setPhotoDiaryId(photo.diaryId ?? "");
     setPhotoWbsNodeId(photo.wbsNodeId ?? "");
     setPhotoActivityId(photo.activityId ?? "");
+    setPhotoInspectionId(photo.inspectionId ?? "");
     setError(null);
     setPhotoDialog(true);
   };
@@ -624,6 +629,7 @@ export function FieldView({
             diaryId: photoDiaryId || null,
             wbsNodeId: photoWbsNodeId || null,
             activityId: photoActivityId || null,
+            inspectionId: photoInspectionId || null,
           }),
         });
       } else {
@@ -634,6 +640,7 @@ export function FieldView({
         if (photoDiaryId) form.append("diaryId", photoDiaryId);
         if (photoWbsNodeId) form.append("wbsNodeId", photoWbsNodeId);
         if (photoActivityId) form.append("activityId", photoActivityId);
+        if (photoInspectionId) form.append("inspectionId", photoInspectionId);
         if (photoClientUuid) form.append("clientUuid", photoClientUuid);
         const response = await fetch(photoBase, { method: "POST", body: form });
         if (!response.ok) {
@@ -1085,11 +1092,14 @@ export function FieldView({
                     {photo.caption ?? photo.fileName}
                   </div>
                   <div className="text-muted-foreground">
-                    {photo.diaryCode ? `Diário ${photo.diaryCode}` : ""}
-                    {photo.diaryCode && photo.wbsNodeCode ? " · " : ""}
-                    {photo.wbsNodeCode ? `WBS ${photo.wbsNodeCode}` : ""}
-                    {photo.wbsNodeCode && photo.activityCode ? " · " : ""}
-                    {photo.activityCode ? `Ativ. ${photo.activityCode}` : ""}
+                    {[
+                      photo.diaryCode ? `Diário ${photo.diaryCode}` : "",
+                      photo.wbsNodeCode ? `WBS ${photo.wbsNodeCode}` : "",
+                      photo.activityCode ? `Ativ. ${photo.activityCode}` : "",
+                      photo.inspectionCode ? `Insp. ${photo.inspectionCode}` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </div>
                   <div className="text-muted-foreground">{photo.createdAt.slice(0, 10)}</div>
                 </div>
@@ -1758,6 +1768,22 @@ export function FieldView({
               ))}
             </select>
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="photo-inspection">Vincular à inspeção (evidência §33)</Label>
+            <select
+              id="photo-inspection"
+              value={photoInspectionId}
+              onChange={(event) => setPhotoInspectionId(event.target.value)}
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            >
+              <option value="">— sem vínculo —</option>
+              {inspections.map((inspection) => (
+                <option key={inspection.id} value={inspection.id}>
+                  {inspection.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <p className="text-xs text-muted-foreground">
             {editingPhoto
               ? "A imagem não muda — legenda e vínculos podem ser ajustados aqui."
@@ -1802,11 +1828,14 @@ export function FieldView({
                 {viewingPhoto.createdAt.slice(0, 10)}
               </div>
               <div className="text-xs text-muted-foreground">
-                {viewingPhoto.diaryCode ? `Diário ${viewingPhoto.diaryCode}` : ""}
-                {viewingPhoto.diaryCode && viewingPhoto.wbsNodeCode ? " · " : ""}
-                {viewingPhoto.wbsNodeCode ? `WBS ${viewingPhoto.wbsNodeCode}` : ""}
-                {viewingPhoto.wbsNodeCode && viewingPhoto.activityCode ? " · " : ""}
-                {viewingPhoto.activityCode ? `Ativ. ${viewingPhoto.activityCode}` : ""}
+                {[
+                  viewingPhoto.diaryCode ? `Diário ${viewingPhoto.diaryCode}` : "",
+                  viewingPhoto.wbsNodeCode ? `WBS ${viewingPhoto.wbsNodeCode}` : "",
+                  viewingPhoto.activityCode ? `Ativ. ${viewingPhoto.activityCode}` : "",
+                  viewingPhoto.inspectionCode ? `Insp. ${viewingPhoto.inspectionCode}` : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
