@@ -302,7 +302,8 @@ export function FieldView({
     setBusy(true);
     setError(null);
     try {
-      const payload = cleanPayload({ ...diaryForm, workHours: diaryForm.workHours });
+      const payload: Record<string, unknown> = cleanPayload(diaryForm);
+      if (diaryForm.workHours !== "") payload.workHours = Number(diaryForm.workHours);
       await apiRequest(editingDiaryId ? `${diaryBase}/${editingDiaryId}` : diaryBase, {
         method: editingDiaryId ? "PATCH" : "POST",
         body: JSON.stringify(payload),
