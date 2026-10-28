@@ -1097,3 +1097,93 @@ falhava com "Registrar o resultado exige evidência" mesmo com foto enviada.
 - **Estado no fim do dia**: evidência de inspeção agora é vinculável pela UI
   (campo → foto → inspeção); PASS/FAIL sustentado por foto ou checklist
   concluído, conforme §33.
+
+## 27/10/2026 — E13 Quality, Fatia 2a (NCR + ação corretiva)
+
+**Fatia 2 fatiada de novo (decisão do usuário)**: **2a** = `NonConformity`
+(NCR) + `CorrectiveAction` (E13-US03/US04, §33), com **NCR automático quando a
+inspeção reprova (FAIL)**; **2b** = punch list (E13-US05, §34).
+
+### Schema e migration
+
+- `prisma/schema.prisma`: enums `non_conformity_status`
+  (OPEN/CORRECTION/VERIFICATION/CLOSED/CANCELLED) e
+  `corrective_action_status` (OPEN/IN_PROGRESS/DONE/VERIFIED/CLOSED/CANCELLED);
+  modelos `NonConformity` (NCxxx, `@@unique([projectId, code])`,
+  `clientUuid` idempotente, `inspectionId` com `SET NULL`) e
+  `CorrectiveAction` (CAxxx, `nonConformityId` em cascata, `responsibleId`,
+  `dueDate`); reverse relations em `Project` e `Inspection`.
+- Migration `20261027180000_phase13_ncr_corrective` (105 linhas) gerada com
+  `prisma migrate diff --from-migrations --to-schema` (Prisma 7), aplicada
+  localmente e client regenerado (7.10.0 em `src/generated/prisma`).
+
+### Domínio (`src/modules/quality/`)
+
+- `engine.ts`: máquinas NCR (`OPEN →(START) CORRECTION →(SUBMIT) VERIFICATION
+  →(VERIFY) CLOSED`, `REJECT`/`CANCEL`/`REOPEN`) e ação corretiva
+  (`OPEN →(START) IN_PROGRESS →(COMPLETE) DONE →(VERIFY) VERIFIED →(CLOSE)
+  CLOSED`, `REJECT` volta a IN_PROGRESS), rótulos PT, helpers
+  (`isNonConformityEditable/Open/Resolved`,
+  `isCorrectiveActionEditable/Open`) e quadro estendido
+  (`nonConformities[Open]`, `correctiveActions[Open]`).
+- `common.ts`: `nextQualityCode` aceita `NC` e `CA`.
+- `nonconformities.ts` e `corrective-actions.ts` (novos): CRUD + transições
+  com notas obrigatórias (`SUBMIT` exige `correctionNotes`, `VERIFY` NCR
+  exige `verificationNotes`, `COMPLETE` exige `actionNotes`, `VERIFY` CA
+  exige `verificationNotes`, `CANCEL` exige motivo), idempotência
+  `clientUuid`, exclusão lógica só nos status editáveis, audit + eventos.
+- `inspections.ts`: **FAIL cria NCR automático**
+  (`createNonConformityFromInspection` — título "Não conformidade — {título}",
+  descrição = `resultNotes`, evento com `auto: true`) e **CLOSE em FAILED
+  gateado**: se houver NCR vinculado fora de CLOSED/CANCELLED → `CONFLICT`
+  ("Encerrar inspeção reprovada exige a não conformidade encerrada…").
+- `schemas.ts`/`selectors.ts`: schemas zod de NCR/CA e rows
+  `NonConformityRow`/`CorrectiveActionRow` (com nomes de responsável
+  resolvidos), `listNonConformities`/`listCorrectiveActions` com filtros e
+  board por projeto estendido.
+
+### API e telas
+
+- **10 rotas novas** em `/api/v1/projects/[id]/quality/*`:
+  `non-conformities` e `corrective-actions` (GET/POST + `[id]`
+  GET/PATCH/DELETE + `[id]/status` POST), permissões `QUALITY:*`, mesmo
+  padrão das demais (`apiHandler`, `actorOf`, `idsFrom`).
+- `quality-view.tsx`: **5 abas** (novas "Não conformidades" e "Ações
+  corretivas" com tabelas, CRUD e transições), quadro com "NCR abertas" e
+  "Ações corretivas abertas", diálogo de transição generalizado (nota
+  obrigatória dinâmica por ação) e diálogos de NCR (título/descrição/inspeção
+  de origem) e de ação corretiva (NCR, título, descrição, responsável, prazo);
+  `qualidade/page.tsx` busca as duas listas e alimenta o board.
+
+### Verificação (gate ✅)
+
+- `eslint` 0 · `tsc --noEmit` limpo · **220 unit / 16 arquivos** (+12 em
+  `tests/unit/quality-engine.test.ts`: máquinas NCR/CA, tabela completa,
+  resolvido/aberto/editável, board com NCR e ações) ·
+  **260 integração / 14 arquivos** (+11 em `tests/integration/quality.test.ts`:
+  FAIL cria NCR, CLOSE bloqueado e liberado após NCR, notas obrigatórias,
+  CANCEL/REOPEN, CA001 + idempotência, NCR de outro projeto/cancelado
+  barrados, fluxo completo, filtros e isolamento).
+- **Postgres local voltou** via tarefa agendada `mici-postgres`
+  (`Start-ScheduledTask`, porta 5432) — integração rodou com o reset padrão
+  do `global-setup` no banco dedicado `mici_test` (consentimento explícito
+  do usuário via `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`).
+
+### Deploy
+
+- **Deploy (27/10)**: commit `762b55c` (19 arquivos, +2757) em `main` + push;
+  `prisma migrate deploy` aplicou `phase13_ncr_corrective` no Neon (15ª de
+  15); `vercel --prod` → `mici-7fzp222qm-homeland1` (alias
+  `mici-theta.vercel.app`, 51s). Smoke autenticado (`admin@mici.demo` /
+  `Demo@1234`): `/api/v1/health` → 200, `/api/v1/projects` → DEMO-001,
+  **`/quality/non-conformities` → 200 `{"nonConformities":[]}`** e
+  **`/quality/corrective-actions` → 200 `{"correctiveActions":[]}`** (10
+  rotas novas), páginas `/projetos/[id]/qualidade` → 200 (35 KB — os
+  selectors de NCR/CA rodaram contra o Neon recém-migrado) e `/qualidade`
+  → 200, rota sem sessão → 401 UNAUTHENTICATED.
+- **E13 Fatia 2a fechada** (NCR + ação corretiva no ar, FAIL gera NCR,
+  CLOSE de inspeção reprovada gateado). Próximo passo: **E13 Fatia 2b** —
+  punch list (E13-US05, §34).
+- **Estado no fim do dia**: working tree só com os docs desta entrada
+  (`DIARIO.md` + `qualidade.md`), commitados em seguida; Neon migrado e
+  smoke verde. Nada pela metade.

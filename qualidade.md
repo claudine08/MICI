@@ -1,26 +1,30 @@
-# Qualidade — fluxo de modelos, execuções e inspeções (E13)
+# Qualidade — fluxo de modelos, execuções, inspeções, NCR e ações corretivas (E13)
 
 > Fonte: código em `src/modules/quality/`, `prisma/schema.prisma` (§33/§34) e
-> registro em `DIARIO.md` (E13 Fatia 1, 24/10/2026).
-> **Status: Fatia 1 no ar** (modelos, execuções e inspeções).
-> **Fatia 2 pendente**: NCR (`NonConformity`), ação corretiva (`CorrectiveAction`)
-> e punch list (E13-US03/US04/US05, §34).
+> registro em `DIARIO.md` (E13 Fatia 1, 24/10/2026; Fatia 2a, 27/10/2026).
+> **Status: Fatia 1 + Fatia 2a no ar** (modelos, execuções, inspeções, NCR e
+> ação corretiva).
+> **Fatia 2b pendente**: punch list (E13-US05, §34).
 
 ---
 
-## 1. Os quatro conceitos
+## 1. Os seis conceitos
 
 | Conceito | Entidade | O que é | Código |
 |---|---|---|---|
 | **Modelo de checklist** | `ChecklistTemplate` | Biblioteca de itens por projeto. Guarda **apenas texto + obrigatoriedade** — nunca resultado. | `CT001`, `CT002`… |
 | **Execução de checklist** | `ChecklistExecution` | Uma "aplicação" do modelo para uma data/inspeção, com **snapshot congelado** dos itens e as respostas (`PASS`/`FAIL`/`NA` + observação). | `CE001`, `CE002`… |
 | **Inspeção** | `Inspection` | Verificação planejada com **critério de aceite obrigatório**, data, responsável e vínculos WBS/atividade. É o "caso" que sustenta o resultado. | `IN001`, `IN002`… |
+| **Não conformidade (NCR)** | `NonConformity` | O desvio constatado. **Nascida automaticamente** quando a inspeção falha (FAIL) — ou registrada manualmente. Gateia o encerramento da inspeção. | `NC001`, `NC002`… |
+| **Ação corretiva** | `CorrectiveAction` | O que fazer para resolver o NCR, com **responsável e prazo**. Sem ela o NCR não anda. | `CA001`, `CA002`… |
 | **Evidência** | `PhotoEvidence` | Foto de prova material. Pode ser vinculada a **inspeção** (`inspectionId`), **diário**, **WBS** ou **atividade**. | `PH001`… |
 
 Relações:
 - Modelo **1 → N** Execuções (a execução guarda `templateCode`/`templateName` no snapshot).
 - Inspeção **1 → N** Execuções (campo `inspectionId`, opcional; `ON DELETE SET NULL`).
 - Inspeção **1 → N** Fotos (`inspectionId` em `photo_evidence`).
+- Inspeção **1 → N** NCRs (`inspectionId` em `non_conformity`, `ON DELETE SET NULL`).
+- NCR **1 → N** Ações corretivas (`nonConformityId`, exclusão em cascata).
 
 ---
 
@@ -57,13 +61,40 @@ Relações:
 │    PLANNED ──EXECUTE──► EXECUTED ──PASS──► PASSED ──CLOSE──► CLOSED      │
 │                          │  │                                          │
 │                          │  └──FAIL──► FAILED ──CLOSE──► CLOSED         │
-│                          │                                               │
+│                          │            │        ▲                        │
+│                          │            │        └── exige NCR resolvido   │
+│                          │            │           (encerrado/cancelado)  │
 │                          │   ▲ sair de EXECUTED exige EVIDÊNCIA:        │
 │                          │   │  foto vinculada (≥1) OU execução         │
 │                          │   │  de checklist COMPLETED vinculada (≥1)   │
 │                          │   └── REOPEN (de PASSED/FAILED) volta a      │
 │                          │       EXECUTED                                │
 │    CANCELLED ──REOPEN──► PLANNED                                         │
+│    FAIL gera automaticamente um NCR (NCxxx) vinculado                    │
+└───────────────────────────┬──────────────────────────────────────────────┘
+                            │ NCR automático (ou manual)
+                            ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 4. NÃO CONFORMIDADE (NonConformity) — NCxxx                              │
+│    OPEN ──START──► CORRECTION ──SUBMIT──► VERIFICATION ──VERIFY──► CLOSED│
+│      │                 │                        │                        │
+│      │                 │                        └──REJECT──► CORRECTION  │
+│      └──CANCEL (motivo)─┴──CANCEL (motivo)──► CANCELLED                  │
+│    CLOSED ──REOPEN──► VERIFICATION · CANCELLED ──REOPEN──► OPEN          │
+│    SUBMIT exige correctionNotes · VERIFY exige verificationNotes         │
+└───────────────────────────┬──────────────────────────────────────────────┘
+                            │ "nova ação corretiva" escolhe o NCR
+                            ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 5. AÇÃO CORRETIVA (CorrectiveAction) — CAxxx                             │
+│    OPEN ──START──► IN_PROGRESS ──COMPLETE──► DONE ──VERIFY──► VERIFIED   │
+│      │                  │                       │             │         │
+│      │                  │                       └──REJECT─┐   │         │
+│      │                  │                       IN_PROGRESS◄──┘         │
+│      │                  │                                    └─CLOSE──► │
+│      │                  └──CANCEL (motivo)──► CANCELLED        CLOSED    │
+│    CLOSED ──REOPEN──► VERIFIED · CANCELLED ──REOPEN──► OPEN             │
+│    COMPLETE exige actionNotes · VERIFY exige verificationNotes          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -76,8 +107,13 @@ Fluxo recomendado na prática (o que a spec §33 descreve):
 5. Responder os itens da execução (`PASS`/`FAIL`/`NA`) e **concluir**.
 6. Registrar o resultado da inspeção: **PASS** ou **FAIL**
    (aqui o sistema **exige** a evidência do passo 4 ou do passo 5).
-7. **Encerrar** a inspeção (`CLOSE`) — hoje permitido a partir de PASSED ou FAILED;
-   na Fatia 2, em `FAILED` passará a exigir **NCR encerrado**.
+   - No **FAIL**, um **NCR é criado automaticamente** com as `resultNotes`
+     como descrição do desvio.
+7. Abrir a **ação corretiva** no NCR (responsável + prazo) e conduzi-la até
+   `VERIFIED`/`CLOSED`.
+8. **Encerrar o NCR** (`VERIFY` com `verificationNotes` → `CLOSED`).
+9. **Encerrar a inspeção** (`CLOSE`) — em `FAILED` só passa quando **todos os
+   NCRs vinculados estiverem encerrados ou cancelados**.
 
 ---
 
@@ -107,13 +143,56 @@ obrigatórios podem ficar pendentes.
 | `CANCELLED` | Cancelada | `REOPEN` (→ PLANNED) | não |
 
 Regras adicionais gravadas no writer (`inspections.ts`):
-- `FAIL` **exige** `resultNotes` (descrição da não conformidade). Na Fatia 2
-  esse campo alimenta o NCR.
+- `FAIL` **exige** `resultNotes` (descrição da não conformidade) e **cria um
+  NCR automaticamente** (`createNonConformityFromInspection`), com título
+  `Não conformidade — {título da inspeção}` e as `resultNotes` como descrição.
 - `PASS`/`FAIL` **exigem evidência**: `inspectionHasEvidence` →
   `photoCount > 0 || completedChecklists > 0`.
+- `CLOSE` vindo de `FAILED` **exige o NCR resolvido**: conta NCRs vinculados
+  com `status NOT IN (CLOSED, CANCELLED)` — se houver algum, `CONFLICT`
+  ("Encerrar inspeção reprovada exige a não conformidade encerrada…").
 - `CANCEL` exige motivo.
 - Exclusão lógica **só** em `PLANNED` ou `CANCELLED`; executa-se "cancelar"
   para preservar a trilha.
+
+### 3.3 Não conformidade — NCR (`engine.ts` + `nonconformities.ts`)
+
+| Status | Rótulo PT | Ações disponíveis | Editável? |
+|---|---|---|---|
+| `OPEN` | Aberta | `START`, `CANCEL` | sim |
+| `CORRECTION` | Em correção | `SUBMIT`, `CANCEL` | sim |
+| `VERIFICATION` | Em verificação | `VERIFY`, `REJECT`, `CANCEL` | não (histórico) |
+| `CLOSED` | Encerrada | `REOPEN` (→ VERIFICATION) | não |
+| `CANCELLED` | Cancelada | `REOPEN` (→ OPEN) | não |
+
+Regras do writer (`nonconformities.ts`):
+- `SUBMIT` exige `correctionNotes` (o que foi feito); grava `correctedAt`.
+- `VERIFY` exige `verificationNotes` (como foi conferido); grava
+  `verifiedAt` + `closedAt` — encerra de fato.
+- `CANCEL` exige motivo; `REOPEN` de `CLOSED` limpa `verifiedAt`/`closedAt`.
+- Só edita (título/descrição) em `OPEN`/`CORRECTION`; exclusão lógica também
+  só nesses status (verificação/encerrada viram histórico).
+- **Resolvido** = `CLOSED` ou `CANCELLED` (`isNonConformityResolved`) — é o
+  predicado que libera o `CLOSE` da inspeção reprovada.
+
+### 3.4 Ação corretiva (`engine.ts` + `corrective-actions.ts`)
+
+| Status | Rótulo PT | Ações disponíveis | Editável? |
+|---|---|---|---|
+| `OPEN` | Aberta | `START`, `CANCEL` | sim |
+| `IN_PROGRESS` | Em andamento | `COMPLETE`, `CANCEL` | sim |
+| `DONE` | Concluída | `VERIFY`, `REJECT` (→ IN_PROGRESS) | não |
+| `VERIFIED` | Verificada | `CLOSE`, `REJECT` (→ IN_PROGRESS) | não |
+| `CLOSED` | Encerrada | `REOPEN` (→ VERIFIED) | não |
+| `CANCELLED` | Cancelada | `REOPEN` (→ OPEN) | não |
+
+Regras do writer (`corrective-actions.ts`):
+- Vinculada a um NCR **vivo do mesmo projeto**; NCR `CANCELLED` **não aceita**
+  ações corretivas (`CONFLICT`).
+- `COMPLETE` exige `actionNotes`; `VERIFY` exige `verificationNotes`;
+  `CANCEL` exige motivo.
+- Só edita (título/descrição/responsável/prazo) em `OPEN`/`IN_PROGRESS`.
+- Responsável precisa ser membro ativo do projeto (`assertMember`).
 
 ---
 
@@ -138,20 +217,36 @@ Regras adicionais gravadas no writer (`inspections.ts`):
 - `criterion` obrigatório (§33: item só conclui quando atinge o critério).
 - Só edita em `PLANNED`/`EXECUTED`.
 - `PASS`/`FAIL` exigem evidência material (foto ou checklist concluído).
-- `FAIL` exige não conformidade descrita (`resultNotes`).
+- `FAIL` exige não conformidade descrita (`resultNotes`) e **gera o NCR**
+  (audit `CREATE` + evento `Quality.NonConformity.Created` com `auto: true`).
+- `CLOSE` de `FAILED` gateado nos NCRs vinculados (ver §3.2).
 - Inspeção executada não é excluível — cancele para preservar a trilha.
+
+**Não conformidade (`nonconformities.ts`)**
+- Pode nascer automática (FAIL) ou manual (com `inspectionId` opcional).
+- Idempotência offline por `clientUuid` (`@@unique([projectId, clientUuid])`).
+- Transições conforme §3.3; notas obrigatórias validadas no writer.
+- Exclusão lógica só em `OPEN`/`CORRECTION`.
+
+**Ação corretiva (`corrective-actions.ts`)**
+- `nonConformityId` obrigatório e do mesmo projeto; NCR cancelado bloqueado.
+- Responsável validado como membro; prazo (`dueDate`) opcional.
+- Idempotência offline por `clientUuid`; transições conforme §3.4.
+- Exclusão lógica só em `OPEN`/`IN_PROGRESS`.
 
 **Transversal (módulo `common.ts`, reutiliza o módulo de campo)**
 - Escopo de tenant sempre validado (`assertQualityProject`).
-- Código automático por projeto: `CT` (modelo), `CE` (execução), `IN` (inspeção)
-  — sequencial de 3 dígitos (`CT001`).
+- Código automático por projeto: `CT` (modelo), `CE` (execução),
+  `IN` (inspeção), `NC` (NCR), `CA` (ação corretiva) — sequencial de 3 dígitos
+  (`CT001`).
 - Idempotência offline por `clientUuid` (`@@unique([projectId, clientUuid])`
-  em execução e inspeção): reenvio devolve o registro original.
+  em execução, inspeção, NCR e ação corretiva): reenvio devolve o registro
+  original.
 - Toda escrita gera `AuditEvent` (CREATE/UPDATE/DELETE/ação) e `DomainEvent`
   (`Quality.ChecklistTemplate.*`, `Quality.ChecklistExecution.*`,
-  `Quality.Inspection.*`).
-- Campos de data: `inspectionDate` (DATE) e datas de transição
-  (`executedAt`, `closedAt`, `completedAt`).
+  `Quality.Inspection.*`, `Quality.NonConformity.*`, `Quality.CorrectiveAction.*`).
+- Campos de data: `inspectionDate`, `dueDate` (DATE) e datas de transição
+  (`executedAt`, `closedAt`, `completedAt`, `correctedAt`, `verifiedAt`).
 
 ---
 
@@ -168,7 +263,7 @@ Mostrado na tela de inspeções como `N foto(s) · M checklist(s) concluído(s)`
 
 ---
 
-## 6. API (8 rotas)
+## 6. API (27 rotas)
 
 Base: `/api/v1/projects/[id]/quality/…` — padrão `apiHandler` + `actorOf` +
 `idsFrom`, mesmo padrão do módulo de campo.
@@ -192,6 +287,18 @@ Base: `/api/v1/projects/[id]/quality/…` — padrão `apiHandler` + `actorOf` +
 | PATCH | `/inspections/[inspectionId]` | `QUALITY:EDIT` | edita (só PLANNED/EXECUTED) |
 | DELETE | `/inspections/[inspectionId]` | `QUALITY:DELETE` | exclui (se PLANNED/CANCELLED) |
 | POST | `/inspections/[inspectionId]/status` | `QUALITY:EDIT` | `EXECUTE`/`PASS`/`FAIL`/`CLOSE`/`REOPEN`/`CANCEL` |
+| GET | `/non-conformities` | `QUALITY:VIEW` | lista (`?status=`, `?inspectionId=`) |
+| POST | `/non-conformities` | `QUALITY:CREATE` | cria NCR manual (`NCxxx`) |
+| GET | `/non-conformities/[nonConformityId]` | `QUALITY:VIEW` | detalhe |
+| PATCH | `/non-conformities/[nonConformityId]` | `QUALITY:EDIT` | edita (só OPEN/CORRECTION) |
+| DELETE | `/non-conformities/[nonConformityId]` | `QUALITY:DELETE` | exclui (se OPEN/CORRECTION) |
+| POST | `/non-conformities/[nonConformityId]/status` | `QUALITY:EDIT` | `START`/`SUBMIT`/`VERIFY`/`REJECT`/`CANCEL`/`REOPEN` |
+| GET | `/corrective-actions` | `QUALITY:VIEW` | lista (`?status=`, `?nonConformityId=`) |
+| POST | `/corrective-actions` | `QUALITY:CREATE` | cria ação corretiva (`CAxxx`) |
+| GET | `/corrective-actions/[correctiveActionId]` | `QUALITY:VIEW` | detalhe |
+| PATCH | `/corrective-actions/[correctiveActionId]` | `QUALITY:EDIT` | edita (só OPEN/IN_PROGRESS) |
+| DELETE | `/corrective-actions/[correctiveActionId]` | `QUALITY:DELETE` | exclui (se OPEN/IN_PROGRESS) |
+| POST | `/corrective-actions/[correctiveActionId]/status` | `QUALITY:EDIT` | `START`/`COMPLETE`/`VERIFY`/`REJECT`/`CLOSE`/`CANCEL`/`REOPEN` |
 
 Contrato de erro padrão: `{ error: { code, message, details?, correlation_id } }`.
 
@@ -207,58 +314,71 @@ Contrato de erro padrão: `{ error: { code, message, details?, correlation_id } 
 
 Componentes da tela:
 - **Quadro**: Modelos · Execuções em preenchimento · Inspeções abertas ·
-  Planejadas · Reprovadas · Encerradas.
+  Planejadas · Reprovadas · Encerradas · NCR abertas · Ações corretivas abertas.
 - **Aba Modelos**: editor de itens com obrigatoriedade (criar/editar/excluir).
 - **Aba Execuções**: criar a partir de modelo (vinculando inspeção e
   responsável), responder item a item com `PASS`/`FAIL`/`NA` + observação,
   transições de status, excluir.
 - **Aba Inspeções**: critério, data, vínculos WBS/atividade, contagem de
   evidências, transições com motivo/não conformidade, editar/excluir.
+- **Aba Não conformidades**: título/descrição, inspeção de origem, contagem
+  de ações corretivas (com total de abertas em destaque), transições do fluxo
+  NCR, editar/excluir (só em OPEN/CORRECTION).
+- **Aba Ações corretivas**: NCR de origem, responsável, prazo, transições do
+  fluxo, editar/excluir (só em OPEN/IN_PROGRESS).
+
+Diálogo único de transição (compartilhado por todos os fluxos): escolhe a
+ação e pede a nota obrigatória da virada (não conformidade no `FAIL`,
+`correctionNotes` no `SUBMIT`, `verificationNotes` no `VERIFY`, `actionNotes`
+no `COMPLETE`) ou o motivo no `CANCEL`.
 
 ---
 
 ## 8. Limitações conhecidas (hoje)
 
-1. **NCR e ação corretiva não existem** — a reprovação (`FAIL`) registra a não
-   conformidade em `resultNotes`, mas não gera `NonConformity` nem
-   `CorrectiveAction`. Em `FAILED`, o `CLOSE` **ainda é livre** (na Fatia 2
-   passará a exigir NCR encerrado).
-2. **Punch list não existe** (E13-US05, §34).
-3. **Upload de foto pela UI não expõe `inspectionId`** — a tela de campo
-   (legenda/diário/WBS/atividade) não tem o campo de inspeção; vincular foto a
-   inspeção hoje é pela API (`inspectionId` no multipart) ou pela listagem
-   `?inspectionId=`. O backend aceita e valida.
-4. **Execução não pode ser editada após concluir** sem reabrir — por design
+1. **Punch list não existe** (E13-US05, §34) — fica para a Fatia 2b.
+2. **Execução não pode ser editada após concluir** sem reabrir — por design
    (rastro de conformidade), mas exige o passo extra de `REOPEN`.
-5. **Foto e checklist são formas de evidência equivalentes** na regra atual
+3. **Foto e checklist são formas de evidência equivalentes** na regra atual
    (`inspectionHasEvidence` usa OU).
+4. **NCR automático é 1 a cada FAIL** — reprovar de novo a mesma inspeção
+   (após REOPEN) gera um novo NCR; não há deduplicação por inspeção.
+5. **Encerrar NCR não exige ação corretiva** — o gate do `CLOSE` da inspeção
+   checa apenas o status do NCR; a spec prevê "Failed → Corrective Action",
+   mas hoje é opcional (sem CA o NCR ainda precisa de `correctionNotes` e
+   `verificationNotes` para fechar).
 
 ---
 
-## 9. Próximo passo (E13 Fatia 2)
+## 9. Próximo passo (E13 Fatia 2b)
 
-`NonConformity` (NCR) + `CorrectiveAction` + punch list (E13-US03/US04/US05, §34),
-com o fluxo §33 completo:
+**Punch list** (E13-US05, §34): itens de correção menores, ligados a
+WBS/atividade/foto, com estados
+`OPEN → ASSIGNED → IN_PROGRESS → READY_FOR_VERIFICATION → VERIFIED → CLOSED`
+(`REJECTED` volta a `IN_PROGRESS`).
+
+O fluxo §33 completo já está de pé:
 
 ```
 Planned → Executed → Passed / Failed → Corrective Action → Verification → Closed
 ```
 
-Impacto previsto:
-- Em `FAILED`, o `CLOSE` passará a exigir **NCR aberto e encerrado**.
-- `resultNotes` da reprovação vira o conteúdo inicial do NCR.
-- Nova entidade de punch list ligada a WBS/atividade/foto.
-
 ---
 
-## 10. Verificação (gate da Fatia 1)
+## 10. Verificação (gate da Fatia 2a)
 
 - `eslint` 0 problemas · `tsc --noEmit` limpo.
-- **208 testes unitários** (15 em `tests/unit/quality-engine.test.ts`).
-- **249 testes de integração** (21 em `tests/integration/quality.test.ts`).
-- `next build` com 132 rotas (102 endpoints + 30 páginas).
-- Migration `20261024120000_phase12_quality` aplicada no Neon; deploy
-  `mici-ff842b4h4` (24/10) com smoke verde nas 3 rotas novas.
+- **220 testes unitários** (27 em `tests/unit/quality-engine.test.ts`,
+  incluindo as máquinas NCR e ação corretiva).
+- **260 testes de integração** (incluindo NCR automático no FAIL, gating do
+  `CLOSE` e fluxo completo NCR → ação corretiva em
+  `tests/integration/quality.test.ts`).
+- Migration `20261027180000_phase13_ncr_corrective` (enums
+  `non_conformity_status`/`corrective_action_status` + tabelas
+  `non_conformity`/`corrective_action`) — aplicada local e no Neon (15ª de 15).
+- Deploy: commit `762b55c` (27/10) → `mici-7fzp222qm-homeland1` (alias
+  `mici-theta.vercel.app`), smoke verde nas 2 rotas novas e nas páginas.
+  Deploy da Fatia 1: `mici-ff842b4h4` (24/10).
 
-> Detalhamento diário em [`DIARIO.md`](DIARIO.md) (seção "24/10/2026 — E13
-> Quality, Fatia 1").
+> Detalhamento diário em [`DIARIO.md`](DIARIO.md) (seções "24/10/2026 — E13
+> Quality, Fatia 1" e "27/10/2026 — E13 Quality, Fatia 2a").
