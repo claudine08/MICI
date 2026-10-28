@@ -2,7 +2,9 @@ import { z } from "zod";
 import {
   CHECKLIST_EXECUTION_ACTIONS,
   CHECKLIST_ITEM_RESULTS,
+  CORRECTIVE_ACTION_ACTIONS,
   INSPECTION_ACTIONS,
+  NON_CONFORMITY_ACTIONS,
 } from "@/modules/quality/engine";
 
 // Qualidade (E13, §33): validações de entrada — checklist (modelo e
@@ -27,6 +29,8 @@ const clientUuid = z.string().uuid().optional();
 export const checklistItemResultValueSchema = z.enum(CHECKLIST_ITEM_RESULTS);
 export const checklistExecutionActionSchema = z.enum(CHECKLIST_EXECUTION_ACTIONS);
 export const inspectionActionSchema = z.enum(INSPECTION_ACTIONS);
+export const nonConformityActionSchema = z.enum(NON_CONFORMITY_ACTIONS);
+export const correctiveActionActionSchema = z.enum(CORRECTIVE_ACTION_ACTIONS);
 
 // Item de checklist: no modelo é texto + obrigatoriedade; na execução
 // ganha o resultado (§33 "atingir o critério").
@@ -106,4 +110,52 @@ export const inspectionTransitionSchema = z.object({
   action: inspectionActionSchema,
   reason: noteText.optional(),
   resultNotes: longText.optional(),
+});
+
+// ---------------------------------------------------------------------------
+// Não conformidade — NCR (E13-US03, §33)
+// ---------------------------------------------------------------------------
+
+export const createNonConformitySchema = z.object({
+  code: qualityCode.optional(),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(1).max(4000),
+  inspectionId: z.string().uuid().nullable().optional(),
+  clientUuid,
+});
+
+export const updateNonConformitySchema = createNonConformitySchema
+  .partial()
+  .omit({ code: true, clientUuid: true });
+
+export const nonConformityTransitionSchema = z.object({
+  action: nonConformityActionSchema,
+  reason: noteText.optional(),
+  correctionNotes: longText.optional(),
+  verificationNotes: longText.optional(),
+});
+
+// ---------------------------------------------------------------------------
+// Ação corretiva (E13-US04)
+// ---------------------------------------------------------------------------
+
+export const createCorrectiveActionSchema = z.object({
+  code: qualityCode.optional(),
+  nonConformityId: z.string().uuid(),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(1).max(4000),
+  responsibleId: z.string().uuid().nullable().optional(),
+  dueDate: isoDate.optional(),
+  clientUuid,
+});
+
+export const updateCorrectiveActionSchema = createCorrectiveActionSchema
+  .partial()
+  .omit({ code: true, clientUuid: true, nonConformityId: true });
+
+export const correctiveActionTransitionSchema = z.object({
+  action: correctiveActionActionSchema,
+  reason: noteText.optional(),
+  actionNotes: longText.optional(),
+  verificationNotes: longText.optional(),
 });

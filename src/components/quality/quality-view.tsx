@@ -15,21 +15,30 @@ import {
   CHECKLIST_EXECUTION_STATUS_LABELS_PT,
   CHECKLIST_ITEM_RESULTS,
   CHECKLIST_ITEM_RESULT_LABELS_PT,
+  CORRECTIVE_ACTION_ACTION_LABELS_PT,
+  CORRECTIVE_ACTION_STATUS_LABELS_PT,
   INSPECTION_ACTION_LABELS_PT,
   INSPECTION_STATUS_LABELS_PT,
+  NON_CONFORMITY_ACTION_LABELS_PT,
+  NON_CONFORMITY_STATUS_LABELS_PT,
   type ChecklistExecutionStatus,
   type ChecklistItemResult,
+  type CorrectiveActionStatus,
   type InspectionStatus,
+  type NonConformityStatus,
   type QualityBoardCounts,
 } from "@/modules/quality/engine";
 import type {
   ChecklistExecutionRow,
   ChecklistTemplateRow,
+  CorrectiveActionRow,
   InspectionRow,
+  NonConformityRow,
 } from "@/modules/quality/selectors";
 
 // Qualidade (E13, §33/§34): modelo de checklist → execução → inspeção com
-// critério de aceite e evidência. Três blocos operacionais em abas.
+// critério de aceite e evidência; NCR e ação corretiva fecham o ciclo de
+// reprovado (E13-US03/US04). Cinco blocos operacionais em abas.
 
 interface OptionLite {
   id: string;
@@ -41,6 +50,8 @@ interface Props {
   initialTemplates: ChecklistTemplateRow[];
   initialExecutions: ChecklistExecutionRow[];
   initialInspections: InspectionRow[];
+  initialNonConformities: NonConformityRow[];
+  initialCorrectiveActions: CorrectiveActionRow[];
   board: QualityBoardCounts;
   members: OptionLite[];
   wbsNodes: OptionLite[];
@@ -50,7 +61,7 @@ interface Props {
   canDelete: boolean;
 }
 
-type Tab = "modelos" | "execucoes" | "inspecoes";
+type Tab = "modelos" | "execucoes" | "inspecoes" | "ncrs" | "acoes";
 
 const EXECUTION_STATUS_VARIANT: Record<
   ChecklistExecutionStatus,
@@ -70,6 +81,29 @@ const INSPECTION_STATUS_VARIANT: Record<
   PASSED: "success",
   FAILED: "destructive",
   CLOSED: "secondary",
+  CANCELLED: "secondary",
+};
+
+const NON_CONFORMITY_STATUS_VARIANT: Record<
+  NonConformityStatus,
+  "secondary" | "default" | "warning" | "destructive" | "success"
+> = {
+  OPEN: "destructive",
+  CORRECTION: "warning",
+  VERIFICATION: "default",
+  CLOSED: "success",
+  CANCELLED: "secondary",
+};
+
+const CORRECTIVE_ACTION_STATUS_VARIANT: Record<
+  CorrectiveActionStatus,
+  "secondary" | "default" | "warning" | "destructive" | "success"
+> = {
+  OPEN: "secondary",
+  IN_PROGRESS: "warning",
+  DONE: "default",
+  VERIFIED: "default",
+  CLOSED: "success",
   CANCELLED: "secondary",
 };
 
@@ -105,6 +139,14 @@ const emptyInspectionForm = {
   activityId: "",
   criterion: "",
 };
+const emptyNonConformityForm = { title: "", description: "", inspectionId: "" };
+const emptyCorrectiveActionForm = {
+  nonConformityId: "",
+  title: "",
+  description: "",
+  responsibleId: "",
+  dueDate: "",
+};
 
 function toItemDraft(item: {
   key: string;
@@ -127,6 +169,8 @@ export function QualityView({
   initialTemplates,
   initialExecutions,
   initialInspections,
+  initialNonConformities,
+  initialCorrectiveActions,
   board,
   members,
   wbsNodes,
@@ -139,11 +183,19 @@ export function QualityView({
   const templateBase = `/api/v1/projects/${projectId}/quality/checklist-templates`;
   const executionBase = `/api/v1/projects/${projectId}/quality/checklist-executions`;
   const inspectionBase = `/api/v1/projects/${projectId}/quality/inspections`;
+  const nonConformityBase = `/api/v1/projects/${projectId}/quality/non-conformities`;
+  const correctiveActionBase = `/api/v1/projects/${projectId}/quality/corrective-actions`;
 
   const [tab, setTab] = useState<Tab>("modelos");
   const [templates, setTemplates] = useState<ChecklistTemplateRow[]>(initialTemplates);
   const [executions, setExecutions] = useState<ChecklistExecutionRow[]>(initialExecutions);
   const [inspections, setInspections] = useState<InspectionRow[]>(initialInspections);
+  const [nonConformities, setNonConformities] = useState<NonConformityRow[]>(
+    initialNonConformities
+  );
+  const [correctiveActions, setCorrectiveActions] = useState<CorrectiveActionRow[]>(
+    initialCorrectiveActions
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -163,8 +215,16 @@ export function QualityView({
   const [editingInspectionId, setEditingInspectionId] = useState<string | null>(null);
   const [inspectionForm, setInspectionForm] = useState(emptyInspectionForm);
 
+  const [ncrDialog, setNcrDialog] = useState(false);
+  const [editingNcrId, setEditingNcrId] = useState<string | null>(null);
+  const [ncrForm, setNcrForm] = useState(emptyNonConformityForm);
+
+  const [correctiveDialog, setCorrectiveDialog] = useState(false);
+  const [editingCorrectiveId, setEditingCorrectiveId] = useState<string | null>(null);
+  const [correctiveForm, setCorrectiveForm] = useState(emptyCorrectiveActionForm);
+
   const [transition, setTransition] = useState<{
-    kind: "execution" | "inspection";
+    kind: "execution" | "inspection" | "nonConformity" | "correctiveAction";
     id: string;
     code: string;
     action: string;
@@ -176,14 +236,18 @@ export function QualityView({
 
   const loadAll = async () => {
     try {
-      const [t, e, i] = await Promise.all([
+      const [t, e, i, n, c] = await Promise.all([
         apiRequest<{ templates: ChecklistTemplateRow[] }>(templateBase),
         apiRequest<{ executions: ChecklistExecutionRow[] }>(executionBase),
         apiRequest<{ inspections: InspectionRow[] }>(inspectionBase),
+        apiRequest<{ nonConformities: NonConformityRow[] }>(nonConformityBase),
+        apiRequest<{ correctiveActions: CorrectiveActionRow[] }>(correctiveActionBase),
       ]);
       setTemplates(t.templates);
       setExecutions(e.executions);
       setInspections(i.inspections);
+      setNonConformities(n.nonConformities);
+      setCorrectiveActions(c.correctiveActions);
       setError(null);
       router.refresh();
     } catch (caught) {
@@ -398,9 +462,135 @@ export function QualityView({
     }
   };
 
+  // --- Não conformidade (NCR) ----------------------------------------------
+  const openNcrCreate = () => {
+    setEditingNcrId(null);
+    setNcrForm({ ...emptyNonConformityForm });
+    setError(null);
+    setNcrDialog(true);
+  };
+
+  const openNcrEdit = (ncr: NonConformityRow) => {
+    setEditingNcrId(ncr.id);
+    setNcrForm({
+      title: ncr.title,
+      description: ncr.description,
+      inspectionId: ncr.inspectionId ?? "",
+    });
+    setError(null);
+    setNcrDialog(true);
+  };
+
+  const submitNonConformity = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const payload: Record<string, unknown> = {
+        title: ncrForm.title,
+        description: ncrForm.description,
+        inspectionId: ncrForm.inspectionId || null,
+      };
+      await apiRequest(
+        editingNcrId ? `${nonConformityBase}/${editingNcrId}` : nonConformityBase,
+        {
+          method: editingNcrId ? "PATCH" : "POST",
+          body: JSON.stringify(
+            editingNcrId ? payload : { ...payload, clientUuid: crypto.randomUUID() }
+          ),
+        }
+      );
+      setNcrDialog(false);
+      await loadAll();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao salvar a não conformidade.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeNonConformity = async (ncr: NonConformityRow) => {
+    if (!window.confirm(`Excluir a não conformidade ${ncr.code}?`)) return;
+    try {
+      await apiRequest(`${nonConformityBase}/${ncr.id}`, { method: "DELETE" });
+      await loadAll();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao excluir a não conformidade.");
+    }
+  };
+
+  // --- Ação corretiva -------------------------------------------------------
+  const openCorrectiveCreate = () => {
+    setEditingCorrectiveId(null);
+    setCorrectiveForm({
+      ...emptyCorrectiveActionForm,
+      nonConformityId: nonConformities.find((ncr) => ncr.status !== "CANCELLED")?.id ?? "",
+    });
+    setError(null);
+    setCorrectiveDialog(true);
+  };
+
+  const openCorrectiveEdit = (action: CorrectiveActionRow) => {
+    setEditingCorrectiveId(action.id);
+    setCorrectiveForm({
+      nonConformityId: action.nonConformityId,
+      title: action.title,
+      description: action.description,
+      responsibleId: action.responsibleId ?? "",
+      dueDate: action.dueDate ?? "",
+    });
+    setError(null);
+    setCorrectiveDialog(true);
+  };
+
+  const submitCorrectiveAction = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const payload: Record<string, unknown> = {
+        title: correctiveForm.title,
+        description: correctiveForm.description,
+        responsibleId: correctiveForm.responsibleId || null,
+        dueDate: correctiveForm.dueDate || undefined,
+      };
+      await apiRequest(
+        editingCorrectiveId
+          ? `${correctiveActionBase}/${editingCorrectiveId}`
+          : correctiveActionBase,
+        {
+          method: editingCorrectiveId ? "PATCH" : "POST",
+          body: JSON.stringify(
+            editingCorrectiveId
+              ? payload
+              : {
+                  ...payload,
+                  nonConformityId: correctiveForm.nonConformityId,
+                  clientUuid: crypto.randomUUID(),
+                }
+          ),
+        }
+      );
+      setCorrectiveDialog(false);
+      await loadAll();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao salvar a ação corretiva.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeCorrectiveAction = async (action: CorrectiveActionRow) => {
+    if (!window.confirm(`Excluir a ação corretiva ${action.code}?`)) return;
+    try {
+      await apiRequest(`${correctiveActionBase}/${action.id}`, { method: "DELETE" });
+      await loadAll();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao excluir a ação corretiva.");
+    }
+  };
+
   // --- Transições ----------------------------------------------------------
   const openTransition = (
-    kind: "execution" | "inspection",
+    kind: "execution" | "inspection" | "nonConformity" | "correctiveAction",
     id: string,
     code: string,
     allowed: string[],
@@ -415,14 +605,32 @@ export function QualityView({
     setBusy(true);
     setError(null);
     try {
-      const base = transition.kind === "execution" ? executionBase : inspectionBase;
-      await apiRequest(`${base}/${transition.id}/status`, {
+      const baseByKind = {
+        execution: executionBase,
+        inspection: inspectionBase,
+        nonConformity: nonConformityBase,
+        correctiveAction: correctiveActionBase,
+      } as const;
+      const notes = transition.resultNotes || undefined;
+      const payload: Record<string, unknown> = {
+        action: transition.action,
+        reason: transition.reason || undefined,
+      };
+      // Cada máquina tem sua própria nota obrigatória no momento da virada.
+      if (transition.kind === "inspection" && transition.action === "FAIL") {
+        payload.resultNotes = notes;
+      } else if (transition.kind === "nonConformity" && transition.action === "SUBMIT") {
+        payload.correctionNotes = notes;
+      } else if (transition.kind === "nonConformity" && transition.action === "VERIFY") {
+        payload.verificationNotes = notes;
+      } else if (transition.kind === "correctiveAction" && transition.action === "COMPLETE") {
+        payload.actionNotes = notes;
+      } else if (transition.kind === "correctiveAction" && transition.action === "VERIFY") {
+        payload.verificationNotes = notes;
+      }
+      await apiRequest(`${baseByKind[transition.kind]}/${transition.id}/status`, {
         method: "POST",
-        body: JSON.stringify({
-          action: transition.action,
-          reason: transition.reason || undefined,
-          resultNotes: transition.resultNotes || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       setTransition(null);
       await loadAll();
@@ -436,10 +644,25 @@ export function QualityView({
   const setTransitionField = (key: "action" | "reason" | "resultNotes", value: string) =>
     setTransition((previous) => (previous ? { ...previous, [key]: value } : previous));
 
+  // Rótulo da nota obrigatória por transição (o servidor valida o mesmo).
+  const transitionNotesLabel = (() => {
+    if (!transition) return null;
+    const { kind, action } = transition;
+    if (kind === "inspection" && action === "FAIL") return "Não conformidade observada *";
+    if (kind === "nonConformity" && action === "SUBMIT") return "Correção aplicada *";
+    if (kind === "nonConformity" && action === "VERIFY") return "Verificação da correção *";
+    if (kind === "correctiveAction" && action === "COMPLETE") return "Execução da correção *";
+    if (kind === "correctiveAction" && action === "VERIFY") return "Verificação da correção *";
+    return null;
+  })();
+  const transitionNotesRequired = transitionNotesLabel !== null;
+
   const tabs: { id: Tab; label: string; count: number }[] = [
     { id: "modelos", label: "Modelos", count: templates.length },
     { id: "execucoes", label: "Execuções", count: executions.length },
     { id: "inspecoes", label: "Inspeções", count: inspections.filter((item) => item.isOpen).length },
+    { id: "ncrs", label: "Não conformidades", count: nonConformities.filter((item) => item.isOpen).length },
+    { id: "acoes", label: "Ações corretivas", count: correctiveActions.filter((item) => item.isOpen).length },
   ];
 
   const inspectionOptions = inspections.filter((item) => item.status !== "CANCELLED");
@@ -453,7 +676,7 @@ export function QualityView({
           <h2 className="text-sm font-semibold">Quadro de qualidade</h2>
           <span className="text-xs text-muted-foreground">Modelo · execução · inspeção · §33</span>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Modelos", value: board.templates },
             { label: "Execuções em preenchimento", value: board.executionsPending },
@@ -461,6 +684,8 @@ export function QualityView({
             { label: "Planejadas", value: board.planned },
             { label: "Reprovadas", value: board.failed },
             { label: "Encerradas", value: board.closed },
+            { label: "NCR abertas", value: board.nonConformitiesOpen },
+            { label: "Ações corretivas abertas", value: board.correctiveActionsOpen },
           ].map((cell) => (
             <div key={cell.label} className="rounded-md border border-border bg-surface p-2">
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -506,6 +731,18 @@ export function QualityView({
           <Button onClick={openInspectionCreate}>
             <Plus className="h-4 w-4" />
             Nova inspeção
+          </Button>
+        )}
+        {canCreate && tab === "ncrs" && (
+          <Button onClick={openNcrCreate}>
+            <Plus className="h-4 w-4" />
+            Nova não conformidade
+          </Button>
+        )}
+        {canCreate && tab === "acoes" && nonConformities.length > 0 && (
+          <Button onClick={openCorrectiveCreate}>
+            <Plus className="h-4 w-4" />
+            Nova ação corretiva
           </Button>
         )}
       </div>
@@ -795,6 +1032,220 @@ export function QualityView({
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {tab === "ncrs" && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">Não conformidades (E13-US03, §33)</h2>
+              <p className="text-xs text-muted-foreground">
+                Aberta → Em correção → Em verificação → Encerrada; a reprovação de inspeção gera
+                o NCR automaticamente.
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Código</th>
+                  <th className="px-4 py-2.5">Título</th>
+                  <th className="px-4 py-2.5">Inspeção</th>
+                  <th className="px-4 py-2.5 text-center">Ações corretivas</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">Ações</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {nonConformities.length === 0 && (
+                  <tr>
+                    <td colSpan={6}>
+                      <Empty text="Nenhuma não conformidade registrada." />
+                    </td>
+                  </tr>
+                )}
+                {nonConformities.map((ncr) => (
+                  <tr key={ncr.id} className="border-b border-border last:border-0">
+                    <td className="px-4 py-2.5 font-mono text-xs">{ncr.code}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="font-medium">{ncr.title}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-1">
+                        {ncr.description}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {ncr.inspectionCode ? `${ncr.inspectionCode} — ${ncr.inspectionTitle}` : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span
+                        title={`${ncr.correctiveActionCount} ação(ões) corretiva(s) · ${ncr.openCorrectiveActionCount} aberta(s)`}
+                      >
+                        {ncr.correctiveActionCount}
+                        {ncr.openCorrectiveActionCount > 0 && (
+                          <span className="text-destructive"> ({ncr.openCorrectiveActionCount})</span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant={NON_CONFORMITY_STATUS_VARIANT[ncr.status]}>
+                        {NON_CONFORMITY_STATUS_LABELS_PT[ncr.status]}
+                      </Badge>
+                    </td>
+                    {(canEdit || canDelete) && (
+                      <td className="px-4 py-2.5">
+                        <div className="flex justify-end gap-1">
+                          {ncr.actions.length > 0 && canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Transição de status"
+                              onClick={() =>
+                                openTransition(
+                                  "nonConformity",
+                                  ncr.id,
+                                  ncr.code,
+                                  ncr.actions,
+                                  NON_CONFORMITY_ACTION_LABELS_PT
+                                )
+                              }
+                            >
+                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canEdit && ncr.editable && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar não conformidade"
+                              onClick={() => openNcrEdit(ncr)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canDelete && ncr.editable && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Excluir não conformidade"
+                              onClick={() => void removeNonConformity(ncr)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {tab === "acoes" && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">Ações corretivas (E13-US04, §33)</h2>
+              <p className="text-xs text-muted-foreground">
+                Aberta → Em andamento → Concluída → Verificada → Encerrada; vinculadas a um NCR.
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Código</th>
+                  <th className="px-4 py-2.5">Título</th>
+                  <th className="px-4 py-2.5">NCR</th>
+                  <th className="px-4 py-2.5">Responsável</th>
+                  <th className="px-4 py-2.5">Prazo</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">Ações</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {correctiveActions.length === 0 && (
+                  <tr>
+                    <td colSpan={7}>
+                      <Empty text="Nenhuma ação corretiva registrada." />
+                    </td>
+                  </tr>
+                )}
+                {correctiveActions.map((action) => (
+                  <tr key={action.id} className="border-b border-border last:border-0">
+                    <td className="px-4 py-2.5 font-mono text-xs">{action.code}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="font-medium">{action.title}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-1">
+                        {action.description}
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5 font-mono text-xs">
+                      {action.nonConformityCode}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {action.responsibleName ?? "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{action.dueDate ?? "—"}</td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant={CORRECTIVE_ACTION_STATUS_VARIANT[action.status]}>
+                        {CORRECTIVE_ACTION_STATUS_LABELS_PT[action.status]}
+                      </Badge>
+                    </td>
+                    {(canEdit || canDelete) && (
+                      <td className="px-4 py-2.5">
+                        <div className="flex justify-end gap-1">
+                          {action.actions.length > 0 && canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Transição de status"
+                              onClick={() =>
+                                openTransition(
+                                  "correctiveAction",
+                                  action.id,
+                                  action.code,
+                                  action.actions,
+                                  CORRECTIVE_ACTION_ACTION_LABELS_PT
+                                )
+                              }
+                            >
+                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canEdit && action.editable && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar ação corretiva"
+                              onClick={() => openCorrectiveEdit(action)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canDelete && action.editable && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Excluir ação corretiva"
+                              onClick={() => void removeCorrectiveAction(action)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     )}
@@ -1208,6 +1659,174 @@ export function QualityView({
         </div>
       </Dialog>
 
+      {/* Não conformidade (NCR) */}
+      <Dialog
+        open={ncrDialog}
+        title={editingNcrId ? "Editar não conformidade" : "Nova não conformidade"}
+        onClose={() => setNcrDialog(false)}
+        wide
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="ncr-title">Título *</Label>
+            <Input
+              id="ncr-title"
+              value={ncrForm.title}
+              onChange={(event) =>
+                setNcrForm((previous) => ({ ...previous, title: event.target.value }))
+              }
+              placeholder="Ex.: Desvio de nivelamento — laje L02"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="ncr-inspection">Inspeção de origem</Label>
+            <select
+              id="ncr-inspection"
+              value={ncrForm.inspectionId}
+              onChange={(event) =>
+                setNcrForm((previous) => ({ ...previous, inspectionId: event.target.value }))
+              }
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            >
+              <option value="">— sem vínculo —</option>
+              {inspectionOptions.map((inspection) => (
+                <option key={inspection.id} value={inspection.id}>
+                  {inspection.code} — {inspection.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="ncr-description">Descrição do desvio *</Label>
+            <textarea
+              id="ncr-description"
+              value={ncrForm.description}
+              onChange={(event) =>
+                setNcrForm((previous) => ({ ...previous, description: event.target.value }))
+              }
+              rows={3}
+              placeholder="Descreva o que foi constatado e o critério descumprido"
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setNcrDialog(false)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => void submitNonConformity()}
+            disabled={busy || !ncrForm.title.trim() || !ncrForm.description.trim()}
+          >
+            {busy ? "Salvando…" : "Salvar"}
+          </Button>
+        </div>
+      </Dialog>
+
+      {/* Ação corretiva */}
+      <Dialog
+        open={correctiveDialog}
+        title={editingCorrectiveId ? "Editar ação corretiva" : "Nova ação corretiva"}
+        onClose={() => setCorrectiveDialog(false)}
+        wide
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="corrective-ncr">Não conformidade *</Label>
+            <select
+              id="corrective-ncr"
+              value={correctiveForm.nonConformityId}
+              onChange={(event) =>
+                setCorrectiveForm((previous) => ({
+                  ...previous,
+                  nonConformityId: event.target.value,
+                }))
+              }
+              disabled={editingCorrectiveId !== null}
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm disabled:opacity-60"
+            >
+              <option value="">— selecionar —</option>
+              {nonConformities
+                .filter((ncr) => ncr.status !== "CANCELLED")
+                .map((ncr) => (
+                  <option key={ncr.id} value={ncr.id}>
+                    {ncr.code} — {ncr.title}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="corrective-title">Título *</Label>
+            <Input
+              id="corrective-title"
+              value={correctiveForm.title}
+              onChange={(event) =>
+                setCorrectiveForm((previous) => ({ ...previous, title: event.target.value }))
+              }
+              placeholder="Ex.: Reprocessar nivelamento da laje L02"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="corrective-responsible">Responsável</Label>
+            <select
+              id="corrective-responsible"
+              value={correctiveForm.responsibleId}
+              onChange={(event) =>
+                setCorrectiveForm((previous) => ({ ...previous, responsibleId: event.target.value }))
+              }
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            >
+              <option value="">— selecionar —</option>
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="corrective-due">Prazo</Label>
+            <Input
+              id="corrective-due"
+              type="date"
+              value={correctiveForm.dueDate}
+              onChange={(event) =>
+                setCorrectiveForm((previous) => ({ ...previous, dueDate: event.target.value }))
+              }
+            />
+          </div>
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="corrective-description">Descrição *</Label>
+            <textarea
+              id="corrective-description"
+              value={correctiveForm.description}
+              onChange={(event) =>
+                setCorrectiveForm((previous) => ({ ...previous, description: event.target.value }))
+              }
+              rows={3}
+              placeholder="Descreva a correção a ser executada"
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setCorrectiveDialog(false)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => void submitCorrectiveAction()}
+            disabled={
+              busy ||
+              !correctiveForm.title.trim() ||
+              !correctiveForm.description.trim() ||
+              (!editingCorrectiveId && !correctiveForm.nonConformityId)
+            }
+          >
+            {busy ? "Salvando…" : "Salvar"}
+          </Button>
+        </div>
+      </Dialog>
+
       {/* Transição de status */}
       <Dialog
         open={transition !== null}
@@ -1233,15 +1852,15 @@ export function QualityView({
               </select>
             </div>
 
-            {transition.kind === "inspection" && transition.action === "FAIL" && (
+            {transitionNotesLabel && transition.kind !== "execution" && (
               <div className="grid gap-2">
-                <Label htmlFor="transition-result">Não conformidade observada *</Label>
+                <Label htmlFor="transition-notes">{transitionNotesLabel}</Label>
                 <textarea
-                  id="transition-result"
+                  id="transition-notes"
                   value={transition.resultNotes}
                   onChange={(event) => setTransitionField("resultNotes", event.target.value)}
                   rows={3}
-                  placeholder="Descreva o desvio — NCR/ação corretiva entram na próxima etapa (§33)"
+                  placeholder="Registre o que foi feito ou constatado (§33)"
                   className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
                 />
               </div>
@@ -1266,7 +1885,12 @@ export function QualityView({
               </Button>
               <Button
                 onClick={() => void submitTransition()}
-                disabled={busy || !transition.action}
+                disabled={
+                  busy ||
+                  !transition.action ||
+                  (transitionNotesRequired && !transition.resultNotes.trim()) ||
+                  (transition.action === "CANCEL" && !transition.reason.trim())
+                }
               >
                 {busy ? "Aplicando…" : "Aplicar"}
               </Button>

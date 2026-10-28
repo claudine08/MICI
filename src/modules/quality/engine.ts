@@ -218,6 +218,167 @@ export function inspectionHasEvidence(input: {
 }
 
 // ---------------------------------------------------------------------------
+// Não conformidade — NCR (E13-US03, §33)
+// ---------------------------------------------------------------------------
+
+// Nascido de inspeção reprovada (FAIL). Fluxo da spec: Failed → Corrective
+// Action → Verification → Closed. O NCR gateia o encerramento da inspeção.
+export const NON_CONFORMITY_STATUSES = [
+  "OPEN",
+  "CORRECTION",
+  "VERIFICATION",
+  "CLOSED",
+  "CANCELLED",
+] as const;
+
+export type NonConformityStatus = (typeof NON_CONFORMITY_STATUSES)[number];
+
+export const NON_CONFORMITY_STATUS_LABELS_PT: Record<NonConformityStatus, string> = {
+  OPEN: "Aberta",
+  CORRECTION: "Em correção",
+  VERIFICATION: "Em verificação",
+  CLOSED: "Encerrada",
+  CANCELLED: "Cancelada",
+};
+
+export const NON_CONFORMITY_ACTIONS = [
+  "START",
+  "SUBMIT",
+  "VERIFY",
+  "REJECT",
+  "CANCEL",
+  "REOPEN",
+] as const;
+
+export type NonConformityAction = (typeof NON_CONFORMITY_ACTIONS)[number];
+
+export const NON_CONFORMITY_ACTION_LABELS_PT: Record<NonConformityAction, string> = {
+  START: "Iniciar correção",
+  SUBMIT: "Enviar para verificação",
+  VERIFY: "Verificar (efetiva)",
+  REJECT: "Reprovar verificação",
+  CANCEL: "Cancelar",
+  REOPEN: "Reabrir",
+};
+
+export const NON_CONFORMITY_TRANSITIONS: Record<
+  NonConformityStatus,
+  Partial<Record<NonConformityAction, NonConformityStatus>>
+> = {
+  OPEN: { START: "CORRECTION", CANCEL: "CANCELLED" },
+  CORRECTION: { SUBMIT: "VERIFICATION", CANCEL: "CANCELLED" },
+  VERIFICATION: { VERIFY: "CLOSED", REJECT: "CORRECTION", CANCEL: "CANCELLED" },
+  CLOSED: { REOPEN: "VERIFICATION" },
+  CANCELLED: { REOPEN: "OPEN" },
+};
+
+export function nextNonConformityStatus(
+  current: NonConformityStatus,
+  action: NonConformityAction
+): NonConformityStatus | null {
+  return NON_CONFORMITY_TRANSITIONS[current]?.[action] ?? null;
+}
+
+export function availableNonConformityActions(
+  current: NonConformityStatus
+): NonConformityAction[] {
+  return Object.keys(NON_CONFORMITY_TRANSITIONS[current] ?? {}) as NonConformityAction[];
+}
+
+export function isNonConformityEditable(status: NonConformityStatus): boolean {
+  return status === "OPEN" || status === "CORRECTION";
+}
+
+export function isNonConformityOpen(status: NonConformityStatus): boolean {
+  return status !== "CLOSED" && status !== "CANCELLED";
+}
+
+// Encerramento gateia a inspeção reprovada: só se considera "resolvida" um NCR
+// que está CLOSED ou CANCELLED — ação corretiva pendente segura o CLOSE.
+export function isNonConformityResolved(status: NonConformityStatus): boolean {
+  return status === "CLOSED" || status === "CANCELLED";
+}
+
+// ---------------------------------------------------------------------------
+// Ação corretiva (E13-US04)
+// ---------------------------------------------------------------------------
+
+export const CORRECTIVE_ACTION_STATUSES = [
+  "OPEN",
+  "IN_PROGRESS",
+  "DONE",
+  "VERIFIED",
+  "CLOSED",
+  "CANCELLED",
+] as const;
+
+export type CorrectiveActionStatus = (typeof CORRECTIVE_ACTION_STATUSES)[number];
+
+export const CORRECTIVE_ACTION_STATUS_LABELS_PT: Record<CorrectiveActionStatus, string> = {
+  OPEN: "Aberta",
+  IN_PROGRESS: "Em andamento",
+  DONE: "Concluída",
+  VERIFIED: "Verificada",
+  CLOSED: "Encerrada",
+  CANCELLED: "Cancelada",
+};
+
+export const CORRECTIVE_ACTION_ACTIONS = [
+  "START",
+  "COMPLETE",
+  "VERIFY",
+  "REJECT",
+  "CLOSE",
+  "CANCEL",
+  "REOPEN",
+] as const;
+
+export type CorrectiveActionAction = (typeof CORRECTIVE_ACTION_ACTIONS)[number];
+
+export const CORRECTIVE_ACTION_ACTION_LABELS_PT: Record<CorrectiveActionAction, string> = {
+  START: "Iniciar",
+  COMPLETE: "Concluir correção",
+  VERIFY: "Verificar",
+  REJECT: "Reprovar",
+  CLOSE: "Encerrar",
+  CANCEL: "Cancelar",
+  REOPEN: "Reabrir",
+};
+
+export const CORRECTIVE_ACTION_TRANSITIONS: Record<
+  CorrectiveActionStatus,
+  Partial<Record<CorrectiveActionAction, CorrectiveActionStatus>>
+> = {
+  OPEN: { START: "IN_PROGRESS", CANCEL: "CANCELLED" },
+  IN_PROGRESS: { COMPLETE: "DONE", CANCEL: "CANCELLED" },
+  DONE: { VERIFY: "VERIFIED", REJECT: "IN_PROGRESS" },
+  VERIFIED: { CLOSE: "CLOSED", REJECT: "IN_PROGRESS" },
+  CLOSED: { REOPEN: "VERIFIED" },
+  CANCELLED: { REOPEN: "OPEN" },
+};
+
+export function nextCorrectiveActionStatus(
+  current: CorrectiveActionStatus,
+  action: CorrectiveActionAction
+): CorrectiveActionStatus | null {
+  return CORRECTIVE_ACTION_TRANSITIONS[current]?.[action] ?? null;
+}
+
+export function availableCorrectiveActionActions(
+  current: CorrectiveActionStatus
+): CorrectiveActionAction[] {
+  return Object.keys(CORRECTIVE_ACTION_TRANSITIONS[current] ?? {}) as CorrectiveActionAction[];
+}
+
+export function isCorrectiveActionEditable(status: CorrectiveActionStatus): boolean {
+  return status === "OPEN" || status === "IN_PROGRESS";
+}
+
+export function isCorrectiveActionOpen(status: CorrectiveActionStatus): boolean {
+  return status !== "CLOSED" && status !== "CANCELLED";
+}
+
+// ---------------------------------------------------------------------------
 // Resumo do quadro de qualidade (página portfólio e home do projeto)
 // ---------------------------------------------------------------------------
 
@@ -232,15 +393,23 @@ export interface QualityBoardCounts {
   failed: number;
   closed: number;
   open: number;
+  nonConformities: number;
+  nonConformitiesOpen: number;
+  correctiveActions: number;
+  correctiveActionsOpen: number;
 }
 
 export function summarizeQualityBoard(input: {
   templates: { id: string }[];
   executions: { status: ChecklistExecutionStatus }[];
   inspections: { status: InspectionStatus }[];
+  nonConformities?: { status: NonConformityStatus }[];
+  correctiveActions?: { status: CorrectiveActionStatus }[];
 }): QualityBoardCounts {
   const byStatus = (status: InspectionStatus) =>
     input.inspections.filter((inspection) => inspection.status === status).length;
+  const ncrs = input.nonConformities ?? [];
+  const actions = input.correctiveActions ?? [];
 
   return {
     templates: input.templates.length,
@@ -254,5 +423,10 @@ export function summarizeQualityBoard(input: {
     failed: byStatus("FAILED"),
     closed: byStatus("CLOSED"),
     open: input.inspections.filter((inspection) => isInspectionOpen(inspection.status)).length,
+    nonConformities: ncrs.length,
+    nonConformitiesOpen: ncrs.filter((ncr) => isNonConformityOpen(ncr.status)).length,
+    correctiveActions: actions.length,
+    correctiveActionsOpen: actions.filter((action) => isCorrectiveActionOpen(action.status))
+      .length,
   };
 }

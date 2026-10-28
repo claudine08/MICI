@@ -2,10 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
 import {
   availableChecklistExecutionActions,
+  availableCorrectiveActionActions,
   availableInspectionActions,
+  availableNonConformityActions,
   isChecklistExecutionEditable,
+  isCorrectiveActionEditable,
+  isCorrectiveActionOpen,
   isInspectionEditable,
   isInspectionOpen,
+  isNonConformityEditable,
+  isNonConformityOpen,
   parseChecklistItems,
   summarizeChecklistItems,
   summarizeQualityBoard,
@@ -13,8 +19,12 @@ import {
   type ChecklistExecutionStatus,
   type ChecklistItem,
   type ChecklistSummary,
+  type CorrectiveActionAction,
+  type CorrectiveActionStatus,
   type InspectionAction,
   type InspectionStatus,
+  type NonConformityAction,
+  type NonConformityStatus,
   type QualityBoardCounts,
 } from "@/modules/quality/engine";
 import { assertQualityProject } from "@/modules/quality/common";
@@ -374,24 +384,33 @@ export interface QualitySummaryRow {
 export async function listQualitySummaries(
   organizationId: string
 ): Promise<QualitySummaryRow[]> {
-  const [projects, templates, executions, inspections] = await Promise.all([
-    prisma.project.findMany({
-      where: { organizationId, deletedAt: null },
-      select: { id: true, code: true, name: true },
-    }),
-    prisma.checklistTemplate.findMany({
-      where: { organizationId, deletedAt: null },
-      select: { id: true, projectId: true },
-    }),
-    prisma.checklistExecution.findMany({
-      where: { organizationId, deletedAt: null },
-      select: { id: true, projectId: true, status: true },
-    }),
-    prisma.inspection.findMany({
-      where: { organizationId, deletedAt: null },
-      select: { id: true, projectId: true, status: true },
-    }),
-  ]);
+  const [projects, templates, executions, inspections, nonConformities, correctiveActions] =
+    await Promise.all([
+      prisma.project.findMany({
+        where: { organizationId, deletedAt: null },
+        select: { id: true, code: true, name: true },
+      }),
+      prisma.checklistTemplate.findMany({
+        where: { organizationId, deletedAt: null },
+        select: { id: true, projectId: true },
+      }),
+      prisma.checklistExecution.findMany({
+        where: { organizationId, deletedAt: null },
+        select: { id: true, projectId: true, status: true },
+      }),
+      prisma.inspection.findMany({
+        where: { organizationId, deletedAt: null },
+        select: { id: true, projectId: true, status: true },
+      }),
+      prisma.nonConformity.findMany({
+        where: { organizationId, deletedAt: null },
+        select: { id: true, projectId: true, status: true },
+      }),
+      prisma.correctiveAction.findMany({
+        where: { organizationId, deletedAt: null },
+        select: { id: true, projectId: true, status: true },
+      }),
+    ]);
 
   return projects.map((project) => ({
     projectId: project.id,
@@ -401,6 +420,241 @@ export async function listQualitySummaries(
       templates: templates.filter((item) => item.projectId === project.id),
       executions: executions.filter((item) => item.projectId === project.id),
       inspections: inspections.filter((item) => item.projectId === project.id),
+      nonConformities: nonConformities.filter((item) => item.projectId === project.id),
+      correctiveActions: correctiveActions.filter((item) => item.projectId === project.id),
     }),
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Não conformidade — NCR (E13-US03, §33)
+// ---------------------------------------------------------------------------
+
+export interface NonConformityRow {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  status: NonConformityStatus;
+  inspectionId: string | null;
+  inspectionCode: string | null;
+  inspectionTitle: string | null;
+  correctionNotes: string | null;
+  verificationNotes: string | null;
+  cancelReason: string | null;
+  correctedAt: string | null;
+  verifiedAt: string | null;
+  closedAt: string | null;
+  correctiveActionCount: number;
+  openCorrectiveActionCount: number;
+  actions: NonConformityAction[];
+  editable: boolean;
+  isOpen: boolean;
+  version: number;
+  createdAt: string;
+}
+
+interface NonConformityRecord {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  status: NonConformityStatus;
+  inspectionId: string | null;
+  inspection: { code: string; title: string } | null;
+  correctionNotes: string | null;
+  verificationNotes: string | null;
+  cancelReason: string | null;
+  correctedAt: Date | null;
+  verifiedAt: Date | null;
+  closedAt: Date | null;
+  version: number;
+  createdAt: Date;
+  correctiveActions: { id: string; status: CorrectiveActionStatus }[];
+}
+
+const nonConformityInclude = {
+  inspection: { select: { code: true, title: true } },
+  correctiveActions: { where: { deletedAt: null }, select: { id: true, status: true } },
+} as const;
+
+function toNonConformityRow(row: NonConformityRecord): NonConformityRow {
+  return {
+    id: row.id,
+    code: row.code,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    inspectionId: row.inspectionId,
+    inspectionCode: row.inspection?.code ?? null,
+    inspectionTitle: row.inspection?.title ?? null,
+    correctionNotes: row.correctionNotes,
+    verificationNotes: row.verificationNotes,
+    cancelReason: row.cancelReason,
+    correctedAt: isoDateTime(row.correctedAt),
+    verifiedAt: isoDateTime(row.verifiedAt),
+    closedAt: isoDateTime(row.closedAt),
+    correctiveActionCount: row.correctiveActions.length,
+    openCorrectiveActionCount: row.correctiveActions.filter((action) =>
+      isCorrectiveActionOpen(action.status)
+    ).length,
+    actions: availableNonConformityActions(row.status),
+    editable: isNonConformityEditable(row.status),
+    isOpen: isNonConformityOpen(row.status),
+    version: row.version,
+    createdAt: isoDateTime(row.createdAt)!,
+  };
+}
+
+export async function listNonConformities(
+  organizationId: string,
+  projectId: string,
+  filters?: { status?: string; inspectionId?: string }
+): Promise<NonConformityRow[]> {
+  await assertQualityProject(organizationId, projectId);
+  const rows = await prisma.nonConformity.findMany({
+    where: {
+      organizationId,
+      projectId,
+      deletedAt: null,
+      ...(filters?.status ? { status: filters.status as NonConformityStatus } : {}),
+      ...(filters?.inspectionId ? { inspectionId: filters.inspectionId } : {}),
+    },
+    include: nonConformityInclude,
+    orderBy: [{ code: "desc" }],
+  });
+  return rows.map(toNonConformityRow);
+}
+
+export async function getNonConformityRow(
+  organizationId: string,
+  nonConformityId: string
+): Promise<NonConformityRow> {
+  const row = await prisma.nonConformity.findFirst({
+    where: { id: nonConformityId, organizationId, deletedAt: null },
+    include: nonConformityInclude,
+  });
+  if (!row) {
+    throw new AppError("NOT_FOUND", "Não conformidade não encontrada nesta organização.");
+  }
+  return toNonConformityRow(row);
+}
+
+// ---------------------------------------------------------------------------
+// Ação corretiva (E13-US04)
+// ---------------------------------------------------------------------------
+
+export interface CorrectiveActionRow {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  status: CorrectiveActionStatus;
+  nonConformityId: string;
+  nonConformityCode: string;
+  nonConformityTitle: string;
+  responsibleId: string | null;
+  responsibleName: string | null;
+  dueDate: string | null;
+  actionNotes: string | null;
+  verificationNotes: string | null;
+  cancelReason: string | null;
+  completedAt: string | null;
+  verifiedAt: string | null;
+  closedAt: string | null;
+  actions: CorrectiveActionAction[];
+  editable: boolean;
+  isOpen: boolean;
+  version: number;
+  createdAt: string;
+}
+
+interface CorrectiveActionRecord {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  status: CorrectiveActionStatus;
+  nonConformityId: string;
+  nonConformity: { code: string; title: string };
+  responsibleId: string | null;
+  dueDate: Date | null;
+  actionNotes: string | null;
+  verificationNotes: string | null;
+  cancelReason: string | null;
+  completedAt: Date | null;
+  verifiedAt: Date | null;
+  closedAt: Date | null;
+  version: number;
+  createdAt: Date;
+}
+
+const correctiveActionInclude = {
+  nonConformity: { select: { code: true, title: true } },
+} as const;
+
+async function toCorrectiveActionRows(
+  rows: CorrectiveActionRecord[]
+): Promise<CorrectiveActionRow[]> {
+  const names = await resolveUserNames(
+    new Set(rows.map((row) => row.responsibleId).filter((id): id is string => Boolean(id)))
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    code: row.code,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    nonConformityId: row.nonConformityId,
+    nonConformityCode: row.nonConformity.code,
+    nonConformityTitle: row.nonConformity.title,
+    responsibleId: row.responsibleId,
+    responsibleName: row.responsibleId ? names.get(row.responsibleId) ?? null : null,
+    dueDate: isoDate(row.dueDate),
+    actionNotes: row.actionNotes,
+    verificationNotes: row.verificationNotes,
+    cancelReason: row.cancelReason,
+    completedAt: isoDateTime(row.completedAt),
+    verifiedAt: isoDateTime(row.verifiedAt),
+    closedAt: isoDateTime(row.closedAt),
+    actions: availableCorrectiveActionActions(row.status),
+    editable: isCorrectiveActionEditable(row.status),
+    isOpen: isCorrectiveActionOpen(row.status),
+    version: row.version,
+    createdAt: isoDateTime(row.createdAt)!,
+  }));
+}
+
+export async function listCorrectiveActions(
+  organizationId: string,
+  projectId: string,
+  filters?: { status?: string; nonConformityId?: string }
+): Promise<CorrectiveActionRow[]> {
+  await assertQualityProject(organizationId, projectId);
+  const rows = await prisma.correctiveAction.findMany({
+    where: {
+      organizationId,
+      projectId,
+      deletedAt: null,
+      ...(filters?.status ? { status: filters.status as CorrectiveActionStatus } : {}),
+      ...(filters?.nonConformityId ? { nonConformityId: filters.nonConformityId } : {}),
+    },
+    include: correctiveActionInclude,
+    orderBy: [{ code: "desc" }],
+  });
+  return toCorrectiveActionRows(rows);
+}
+
+export async function getCorrectiveActionRow(
+  organizationId: string,
+  correctiveActionId: string
+): Promise<CorrectiveActionRow> {
+  const row = await prisma.correctiveAction.findFirst({
+    where: { id: correctiveActionId, organizationId, deletedAt: null },
+    include: correctiveActionInclude,
+  });
+  if (!row) {
+    throw new AppError("NOT_FOUND", "Ação corretiva não encontrada nesta organização.");
+  }
+  return (await toCorrectiveActionRows([row]))[0];
 }

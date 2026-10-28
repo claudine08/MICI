@@ -4,7 +4,9 @@ import { getProjectDetail } from "@/modules/portfolio/selectors";
 import {
   listChecklistExecutions,
   listChecklistTemplates,
+  listCorrectiveActions,
   listInspections,
+  listNonConformities,
 } from "@/modules/quality/selectors";
 import { summarizeQualityBoard } from "@/modules/quality/engine";
 import { listMembers } from "@/modules/identity/selectors";
@@ -16,8 +18,9 @@ import { NoPermission } from "@/components/shell/no-permission";
 
 export const metadata = { title: "Qualidade do projeto" };
 
-// Operação de qualidade do projeto (E13-US01/US02, §33): modelos de
-// checklist, execuções com resposta de itens e inspeções com critério.
+// Operação de qualidade do projeto (E13-US01..US04, §33): modelos de
+// checklist, execuções com resposta de itens, inspeções com critério, NCR e
+// ações corretivas.
 export default async function ProjetoQualidadePage({
   params,
 }: {
@@ -33,14 +36,17 @@ export default async function ProjetoQualidadePage({
 
   const project = await getProjectDetail(context.organizationId, id);
 
-  const [templates, executions, inspections, members, tree, activityRows] = await Promise.all([
-    listChecklistTemplates(context.organizationId, id),
-    listChecklistExecutions(context.organizationId, id),
-    listInspections(context.organizationId, id),
-    listMembers(context.organizationId),
-    getWbsTree(context.organizationId, id),
-    listActivities(context.organizationId, id),
-  ]);
+  const [templates, executions, inspections, nonConformities, correctiveActions, members, tree, activityRows] =
+    await Promise.all([
+      listChecklistTemplates(context.organizationId, id),
+      listChecklistExecutions(context.organizationId, id),
+      listInspections(context.organizationId, id),
+      listNonConformities(context.organizationId, id),
+      listCorrectiveActions(context.organizationId, id),
+      listMembers(context.organizationId),
+      getWbsTree(context.organizationId, id),
+      listActivities(context.organizationId, id),
+    ]);
 
   const wbsNodes = flattenWbsTree(tree).map((node) => ({
     id: node.id,
@@ -59,6 +65,8 @@ export default async function ProjetoQualidadePage({
     templates: templates.map((template) => ({ id: template.id })),
     executions: executions.map((execution) => ({ status: execution.status })),
     inspections: inspections.map((inspection) => ({ status: inspection.status })),
+    nonConformities: nonConformities.map((ncr) => ({ status: ncr.status })),
+    correctiveActions: correctiveActions.map((action) => ({ status: action.status })),
   });
 
   return (
@@ -68,8 +76,8 @@ export default async function ProjetoQualidadePage({
           Qualidade — {project.code} {project.name}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Modelos e execuções de checklist, inspeções com critério de aceite e evidência (E13-US01 /
-          US02, §33).
+          Checklists, inspeções com critério de aceite, NCR e ações corretivas
+          (E13-US01..US04, §33).
         </p>
       </div>
       <QualityView
@@ -77,6 +85,8 @@ export default async function ProjetoQualidadePage({
         initialTemplates={templates}
         initialExecutions={executions}
         initialInspections={inspections}
+        initialNonConformities={nonConformities}
+        initialCorrectiveActions={correctiveActions}
         board={board}
         members={activeMembers}
         wbsNodes={wbsNodes}

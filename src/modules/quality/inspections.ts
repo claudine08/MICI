@@ -21,9 +21,8 @@ import {
 
 // Inspeção (E13-US02, §33): executa-se o plano de verificação com CRITÉRIO
 // explícito. Sair de EXECUTED para PASSED/FAILED exige evidência adequada —
-// foto vinculada ou checklist concluído. Reprovação exige descrever o não
-// conformidade; a NCR/ação corretiva ligada aqui entra na Fatia 2 (em
-// FAILED, o CLOSE passará a exigir o NCR encerrado).
+// foto vinculada ou checklist concluído. Reprovação gera NCR automaticamente
+// (E13-US03) e, em FAILED, o CLOSE passa a exigir o NCR encerrado.
 
 export interface CreateInspectionInput {
   projectId: string;
@@ -224,6 +223,24 @@ export async function transitionInspection(input: ActorContext & InspectionTrans
     }
   }
 
+  // E13-US03: em FAILED, encerrar exige o NCR da inspeção resolvido
+  // (encerrado ou cancelado) — ação corretiva pendente segura o CLOSE.
+  if (input.action === "CLOSE" && inspection.status === "FAILED") {
+    const unresolved = await prisma.nonConformity.count({
+      where: {
+        inspectionId: inspection.id,
+        deletedAt: null,
+        status: { notIn: ["CLOSED", "CANCELLED"] },
+      },
+    });
+    if (unresolved > 0) {
+      throw new AppError(
+        "CONFLICT",
+        "Encerrar inspeção reprovada exige a não conformidade encerrada — conclua a correção e a verificação do NCR."
+      );
+    }
+  }
+
   const now = new Date();
   const data: Record<string, unknown> = {
     status: next,
@@ -257,7 +274,51 @@ export async function transitionInspection(input: ActorContext & InspectionTrans
     { code: inspection.code, from: inspection.status, to: updated.status }
   );
 
+  // E13-US03: reprovação gera NCR automaticamente (§33 — Failed → Corrective
+  // Action). A descrição da não conformidade vem do resultNotes da inspeção.
+  if (input.action === "FAIL") {
+    const description = (resultNotes || inspection.resultNotes || "").trim();
+    await createNonConformityFromInspection(input, inspection, description);
+  }
+
   return updated;
+}
+
+// NCR automático da reprovação — separado para manter a transição legível.
+async function createNonConformityFromInspection(
+  input: ActorContext,
+  inspection: { id: string; projectId: string; code: string; title: string },
+  description: string
+) {
+  const code = await nextQualityCode(inspection.projectId, "NC");
+  const ncr = await prisma.nonConformity.create({
+    data: {
+      organizationId: input.organizationId,
+      projectId: inspection.projectId,
+      code,
+      title: `Não conformidade — ${inspection.title}`.slice(0, 200),
+      description: description || `Reprovação da inspeção ${inspection.code}.`,
+      status: "OPEN",
+      inspectionId: inspection.id,
+      createdBy: input.actorId,
+      updatedBy: input.actorId,
+    },
+  });
+
+  await audit(input, inspection.projectId, "NonConformity", "CREATE", {
+    objectId: ncr.id,
+    newValue: { code: ncr.code, title: ncr.title, inspectionId: inspection.id, auto: true },
+  });
+  await emitDomainEvent(
+    input,
+    inspection.projectId,
+    "Quality.NonConformity.Created",
+    "NonConformity",
+    ncr.id,
+    { code: ncr.code, inspectionId: inspection.id, auto: true }
+  );
+
+  return ncr;
 }
 
 export async function deleteInspection(input: ActorContext & { inspectionId: string }) {

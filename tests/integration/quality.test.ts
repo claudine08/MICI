@@ -1,6 +1,7 @@
 // Qualidade (E13, §33): modelos de checklist, execues com snapshot e
-// respostas, inspees com critrio de aceite e evidncia obrigatria para
-// PASS/FAIL. Estados reais em Postgres + isolamento de tenant.
+// respostas, inspees com critrio de aceite e evidncia obrigatoria para
+// PASS/FAIL; NCR automtico na reprovao e acao corretiva (E13-US03/US04).
+// Estados reais em Postgres + isolamento de tenant.
 
 import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -26,14 +27,30 @@ import {
   transitionInspection,
   deleteInspection,
 } from "@/modules/quality/inspections";
+import {
+  createNonConformity,
+  updateNonConformity,
+  transitionNonConformity,
+  deleteNonConformity,
+} from "@/modules/quality/nonconformities";
+import {
+  createCorrectiveAction,
+  updateCorrectiveAction,
+  transitionCorrectiveAction,
+  deleteCorrectiveAction,
+} from "@/modules/quality/corrective-actions";
 import { createPhoto, preparePhotoUpload } from "@/modules/field/photos";
 import {
   getChecklistExecutionRow,
   getChecklistTemplateRow,
+  getCorrectiveActionRow,
   getInspectionRow,
+  getNonConformityRow,
   listChecklistExecutions,
   listChecklistTemplates,
+  listCorrectiveActions,
   listInspections,
+  listNonConformities,
   listQualitySummaries,
 } from "@/modules/quality/selectors";
 
@@ -45,6 +62,7 @@ let userA: { id: string; email: string };
 let userB: { id: string; email: string };
 let projectId: string;
 let otherProjectId: string;
+let manualNcrId: string;
 
 function actorA() {
   return { organizationId: orgA.id, actorId: userA.id, actorLabel: userA.email };
@@ -506,6 +524,324 @@ describe("inspeo (E13-US02, §33)", () => {
     const row = await getInspectionRow(orgA.id, inspectionId);
     expect(row.photoCount).toBe(1);
     expect(row.hasEvidence).toBe(true);
+  });
+});
+
+describe("NCR automtico e encerramento gateado (E13-US03, §33)", () => {
+  let failedInspectionId: string;
+  let autoNcrId: string;
+
+  it("FAIL da inspeo cria NCR vinculado com as notas do desvio", async () => {
+    const inspection = await createInspection({
+      ...actorA(),
+      projectId,
+      title: "Inspeo de contrapiso",
+      inspectionDate: "2026-03-25",
+      criterion: "Planimetria dentro da tolerncia de 5 mm",
+    });
+    failedInspectionId = inspection.id;
+    await transitionInspection({ ...actorA(), inspectionId: failedInspectionId, action: "EXECUTE" });
+
+    // evidncia: checklist concludo vinculado  inspeo
+    const template = await createChecklistTemplate({
+      ...actorA(),
+      projectId,
+      name: "Checklist de contrapiso",
+      items: baseItems,
+    });
+    const execution = await createChecklistExecution({
+      ...actorA(),
+      projectId,
+      templateId: template.id,
+      inspectionId: failedInspectionId,
+    });
+    await updateChecklistExecution({
+      ...actorA(),
+      executionId: execution.id,
+      items: [{ key: "i1", text: baseItems[0].text, required: true, result: "PASS", note: null }],
+    });
+    await transitionChecklistExecution({ ...actorA(), executionId: execution.id, action: "COMPLETE" });
+
+    const failed = await transitionInspection({
+      ...actorA(),
+      inspectionId: failedInspectionId,
+      action: "FAIL",
+      resultNotes: "Planimetria com desvio de 8 mm no eixo B.",
+    });
+    expect(failed.status).toBe("FAILED");
+
+    const rows = await listNonConformities(orgA.id, projectId, {
+      inspectionId: failedInspectionId,
+    });
+    expect(rows).toHaveLength(1);
+    const ncr = rows[0];
+    autoNcrId = ncr.id;
+    expect(ncr.code).toMatch(/^NC\d{3}$/);
+    expect(ncr.status).toBe("OPEN");
+    expect(ncr.title).toContain("Inspeo de contrapiso");
+    expect(ncr.description).toContain("8 mm");
+    expect(ncr.inspectionCode).toBe(inspection.code);
+    expect(ncr.isOpen).toBe(true);
+  });
+
+  it("CLOSE da inspeo reprovada fica bloqueado enquanto o NCR no fecha", async () => {
+    await expectAppError(
+      transitionInspection({ ...actorA(), inspectionId: failedInspectionId, action: "CLOSE" }),
+      "CONFLICT"
+    );
+  });
+
+  it("viradas do NCR exigem correctionNotes e verificationNotes", async () => {
+    const started = await transitionNonConformity({
+      ...actorA(),
+      nonConformityId: autoNcrId,
+      action: "START",
+    });
+    expect(started.status).toBe("CORRECTION");
+
+    // SUBMIT sem nota de correo
+    await expectAppError(
+      transitionNonConformity({ ...actorA(), nonConformityId: autoNcrId, action: "SUBMIT" }),
+      "VALIDATION_ERROR"
+    );
+    const submitted = await transitionNonConformity({
+      ...actorA(),
+      nonConformityId: autoNcrId,
+      action: "SUBMIT",
+      correctionNotes: "Sub-base recompactada e refeita a planimetria do trecho.",
+    });
+    expect(submitted.status).toBe("VERIFICATION");
+    expect(submitted.correctedAt).not.toBeNull();
+
+    // fora de OPEN/CORRECTION o NCR no edita
+    await expectAppError(
+      updateNonConformity({ ...actorA(), nonConformityId: autoNcrId, title: "no pode" }),
+      "CONFLICT"
+    );
+
+    // VERIFY sem nota de verificao
+    await expectAppError(
+      transitionNonConformity({ ...actorA(), nonConformityId: autoNcrId, action: "VERIFY" }),
+      "VALIDATION_ERROR"
+    );
+    const closed = await transitionNonConformity({
+      ...actorA(),
+      nonConformityId: autoNcrId,
+      action: "VERIFY",
+      verificationNotes: "Reaferido: desvio de 1 mm, dentro do tolerado.",
+    });
+    expect(closed.status).toBe("CLOSED");
+    expect(closed.verifiedAt).not.toBeNull();
+    expect(closed.closedAt).not.toBeNull();
+
+    // encerrado vira histrico: no edita nem exclui
+    await expectAppError(
+      deleteNonConformity({ ...actorA(), nonConformityId: autoNcrId }),
+      "CONFLICT"
+    );
+  });
+
+  it("com o NCR resolvido o CLOSE da inspeo passa", async () => {
+    const closed = await transitionInspection({
+      ...actorA(),
+      inspectionId: failedInspectionId,
+      action: "CLOSE",
+    });
+    expect(closed.status).toBe("CLOSED");
+    expect(closed.closedAt).not.toBeNull();
+  });
+
+  it("CANCEL do NCR exige motivo e REOPEN volta a aberta", async () => {
+    const ncr = await createNonConformity({
+      ...actorA(),
+      projectId,
+      title: "NCR para cancelar",
+      description: "Registrado por engano.",
+      clientUuid: randomUUID(),
+    });
+    await expectAppError(
+      transitionNonConformity({ ...actorA(), nonConformityId: ncr.id, action: "CANCEL" }),
+      "VALIDATION_ERROR"
+    );
+    const cancelled = await transitionNonConformity({
+      ...actorA(),
+      nonConformityId: ncr.id,
+      action: "CANCEL",
+      reason: "registro duplicado",
+    });
+    expect(cancelled.status).toBe("CANCELLED");
+    expect(cancelled.cancelReason).toBe("registro duplicado");
+
+    const reopened = await transitionNonConformity({
+      ...actorA(),
+      nonConformityId: ncr.id,
+      action: "REOPEN",
+    });
+    expect(reopened.status).toBe("OPEN");
+  });
+});
+
+describe("ao corretiva (E13-US04, §33)", () => {
+  let actionId: string;
+
+  it("cria com cdigo CA001, responsvel do projeto e idempotncia", async () => {
+    const ncr = await createNonConformity({
+      ...actorA(),
+      projectId,
+      title: "Vao de alvenaria fora de esquadro",
+      description: "Desvio de 3 cm na vertical do vao da garagem.",
+      clientUuid: randomUUID(),
+    });
+    manualNcrId = ncr.id;
+
+    const clientUuid = randomUUID();
+    const action = await createCorrectiveAction({
+      ...actorA(),
+      projectId,
+      nonConformityId: ncr.id,
+      title: "Refazer o vao da garagem",
+      description: "Demolir e reassentar a alvenaria respeitando o esquadro.",
+      responsibleId: userA.id,
+      dueDate: "2026-04-30",
+      clientUuid,
+    });
+    actionId = action.id;
+    expect(action.code).toBe("CA001");
+    expect(action.status).toBe("OPEN");
+
+    const replay = await createCorrectiveAction({
+      ...actorA(),
+      projectId,
+      nonConformityId: ncr.id,
+      title: "Refazer o vao da garagem",
+      description: "Demolir e reassentar a alvenaria respeitando o esquadro.",
+      responsibleId: userA.id,
+      dueDate: "2026-04-30",
+      clientUuid,
+    });
+    expect(replay.id).toBe(action.id);
+
+    const row = await getCorrectiveActionRow(orgA.id, action.id);
+    expect(row.responsibleName).toBe("Quality A");
+    expect(row.dueDate).toBe("2026-04-30");
+    expect(row.nonConformityCode).toBe(ncr.code);
+  });
+
+  it("no aceita NCR de outro projeto nem NCR cancelado", async () => {
+    const foreignNcr = await createNonConformity({
+      ...actorA(),
+      projectId: otherProjectId,
+      title: "NCR de outro projeto",
+      description: "Isolamento de projeto.",
+      clientUuid: randomUUID(),
+    });
+    await expectAppError(
+      createCorrectiveAction({
+        ...actorA(),
+        projectId,
+        nonConformityId: foreignNcr.id,
+        title: "No pode",
+        description: "NCR pertence a outro projeto.",
+        clientUuid: randomUUID(),
+      }),
+      "VALIDATION_ERROR"
+    );
+
+    const cancelled = await createNonConformity({
+      ...actorA(),
+      projectId,
+      title: "NCR cancelado",
+      description: "Cancelado antes da ao corretiva.",
+      clientUuid: randomUUID(),
+    });
+    await transitionNonConformity({
+      ...actorA(),
+      nonConformityId: cancelled.id,
+      action: "CANCEL",
+      reason: "sem efeito pratico",
+    });
+    await expectAppError(
+      createCorrectiveAction({
+        ...actorA(),
+        projectId,
+        nonConformityId: cancelled.id,
+        title: "No pode",
+        description: "NCR cancelado no aceita ao.",
+        clientUuid: randomUUID(),
+      }),
+      "CONFLICT"
+    );
+  });
+
+  it("fluxo OPEN → IN_PROGRESS → DONE → VERIFIED → CLOSED com notas", async () => {
+    const started = await transitionCorrectiveAction({
+      ...actorA(),
+      correctiveActionId: actionId,
+      action: "START",
+    });
+    expect(started.status).toBe("IN_PROGRESS");
+
+    await expectAppError(
+      transitionCorrectiveAction({ ...actorA(), correctiveActionId: actionId, action: "COMPLETE" }),
+      "VALIDATION_ERROR"
+    );
+    const done = await transitionCorrectiveAction({
+      ...actorA(),
+      correctiveActionId: actionId,
+      action: "COMPLETE",
+      actionNotes: "Vao demolido e reassentado com prumo conferido.",
+    });
+    expect(done.status).toBe("DONE");
+    expect(done.completedAt).not.toBeNull();
+
+    // concluda no edita
+    await expectAppError(
+      updateCorrectiveAction({ ...actorA(), correctiveActionId: actionId, title: "no pode" }),
+      "CONFLICT"
+    );
+
+    await expectAppError(
+      transitionCorrectiveAction({ ...actorA(), correctiveActionId: actionId, action: "VERIFY" }),
+      "VALIDATION_ERROR"
+    );
+    const verified = await transitionCorrectiveAction({
+      ...actorA(),
+      correctiveActionId: actionId,
+      action: "VERIFY",
+      verificationNotes: "Georreferenciamento: esquadro dentro de 5 mm.",
+    });
+    expect(verified.status).toBe("VERIFIED");
+    expect(verified.verifiedAt).not.toBeNull();
+
+    const closed = await transitionCorrectiveAction({
+      ...actorA(),
+      correctiveActionId: actionId,
+      action: "CLOSE",
+    });
+    expect(closed.status).toBe("CLOSED");
+    expect(closed.closedAt).not.toBeNull();
+
+    await expectAppError(
+      deleteCorrectiveAction({ ...actorA(), correctiveActionId: actionId }),
+      "CONFLICT"
+    );
+  });
+
+  it("filtros por status/NCR e isolamento de tenant", async () => {
+    const closed = await listCorrectiveActions(orgA.id, projectId, { status: "CLOSED" });
+    expect(closed.some((row) => row.id === actionId)).toBe(true);
+
+    const open = await listCorrectiveActions(orgA.id, projectId, { status: "OPEN" });
+    expect(open.some((row) => row.id === actionId)).toBe(false);
+
+    const byNcr = await listCorrectiveActions(orgA.id, projectId, {
+      nonConformityId: manualNcrId,
+    });
+    expect(byNcr.some((row) => row.id === actionId)).toBe(true);
+
+    await expectAppError(getCorrectiveActionRow(orgB.id, actionId), "NOT_FOUND");
+    await expectAppError(getNonConformityRow(orgB.id, manualNcrId), "NOT_FOUND");
+    await expectAppError(listNonConformities(orgB.id, projectId), "NOT_FOUND");
   });
 });
 

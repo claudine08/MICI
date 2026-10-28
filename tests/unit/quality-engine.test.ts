@@ -6,19 +6,32 @@ import { describe, expect, it } from "vitest";
 import {
   CHECKLIST_EXECUTION_STATUSES,
   CHECKLIST_EXECUTION_TRANSITIONS,
+  CORRECTIVE_ACTION_STATUSES,
+  CORRECTIVE_ACTION_TRANSITIONS,
   INSPECTION_STATUSES,
   INSPECTION_TRANSITIONS,
+  NON_CONFORMITY_STATUSES,
+  NON_CONFORMITY_TRANSITIONS,
   availableChecklistExecutionActions,
+  availableCorrectiveActionActions,
   availableInspectionActions,
+  availableNonConformityActions,
   inspectionHasEvidence,
   isChecklistExecutionEditable,
   isChecklistExecutionTerminal,
+  isCorrectiveActionEditable,
+  isCorrectiveActionOpen,
   isInspectionEditable,
   isInspectionOpen,
   isInspectionTerminal,
+  isNonConformityEditable,
+  isNonConformityOpen,
+  isNonConformityResolved,
   isValidTemplateItems,
   nextChecklistExecutionStatus,
+  nextCorrectiveActionStatus,
   nextInspectionStatus,
+  nextNonConformityStatus,
   parseChecklistItems,
   summarizeChecklistItems,
   summarizeQualityBoard,
@@ -94,6 +107,96 @@ describe("maquina de estados da execucao de checklist (E13-US01)", () => {
     for (const status of CHECKLIST_EXECUTION_STATUSES) {
       expect(CHECKLIST_EXECUTION_TRANSITIONS[status]).toBeDefined();
     }
+  });
+});
+
+describe("maquina de estados da nao conformidade - NCR (E13-US03, §33)", () => {
+  it("fluxo feliz OPEN → CORRECTION → VERIFICATION → CLOSED", () => {
+    expect(nextNonConformityStatus("OPEN", "START")).toBe("CORRECTION");
+    expect(nextNonConformityStatus("CORRECTION", "SUBMIT")).toBe("VERIFICATION");
+    expect(nextNonConformityStatus("VERIFICATION", "VERIFY")).toBe("CLOSED");
+    expect(availableNonConformityActions("OPEN")).toEqual(["START", "CANCEL"]);
+    expect(availableNonConformityActions("CORRECTION")).toEqual(["SUBMIT", "CANCEL"]);
+    expect(availableNonConformityActions("VERIFICATION")).toEqual(["VERIFY", "REJECT", "CANCEL"]);
+  });
+
+  it("reprovacao da verificacao volta para correcao", () => {
+    expect(nextNonConformityStatus("VERIFICATION", "REJECT")).toBe("CORRECTION");
+    expect(nextNonConformityStatus("CORRECTION", "REJECT")).toBeNull();
+    expect(nextNonConformityStatus("OPEN", "VERIFY")).toBeNull();
+  });
+
+  it("REOPEN reabre encerrada em verificacao e cancelada em aberta", () => {
+    expect(nextNonConformityStatus("CLOSED", "REOPEN")).toBe("VERIFICATION");
+    expect(nextNonConformityStatus("CANCELLED", "REOPEN")).toBe("OPEN");
+    expect(availableNonConformityActions("CLOSED")).toEqual(["REOPEN"]);
+  });
+
+  it("CANCEL so existe antes do encerramento", () => {
+    expect(nextNonConformityStatus("OPEN", "CANCEL")).toBe("CANCELLED");
+    expect(nextNonConformityStatus("CORRECTION", "CANCEL")).toBe("CANCELLED");
+    expect(nextNonConformityStatus("VERIFICATION", "CANCEL")).toBe("CANCELLED");
+    expect(nextNonConformityStatus("CLOSED", "CANCEL")).toBeNull();
+  });
+
+  it("edita em OPEN/CORRECTION; aberta exclui CLOSED/CANCELLED; resolvida exige terminal", () => {
+    expect(isNonConformityEditable("OPEN")).toBe(true);
+    expect(isNonConformityEditable("CORRECTION")).toBe(true);
+    expect(isNonConformityEditable("VERIFICATION")).toBe(false);
+    expect(isNonConformityOpen("VERIFICATION")).toBe(true);
+    expect(isNonConformityOpen("CLOSED")).toBe(false);
+    expect(isNonConformityOpen("CANCELLED")).toBe(false);
+    expect(isNonConformityResolved("CLOSED")).toBe(true);
+    expect(isNonConformityResolved("CANCELLED")).toBe(true);
+    expect(isNonConformityResolved("VERIFICATION")).toBe(false);
+  });
+
+  it("toda entrada da tabela tem transies declaradas", () => {
+    for (const status of NON_CONFORMITY_STATUSES) {
+      expect(NON_CONFORMITY_TRANSITIONS[status]).toBeDefined();
+    }
+    expect(Object.keys(NON_CONFORMITY_TRANSITIONS.CLOSED)).toEqual(["REOPEN"]);
+  });
+});
+
+describe("maquina de estados da acao corretiva (E13-US04, §33)", () => {
+  it("fluxo feliz OPEN → IN_PROGRESS → DONE → VERIFIED → CLOSED", () => {
+    expect(nextCorrectiveActionStatus("OPEN", "START")).toBe("IN_PROGRESS");
+    expect(nextCorrectiveActionStatus("IN_PROGRESS", "COMPLETE")).toBe("DONE");
+    expect(nextCorrectiveActionStatus("DONE", "VERIFY")).toBe("VERIFIED");
+    expect(nextCorrectiveActionStatus("VERIFIED", "CLOSE")).toBe("CLOSED");
+    expect(availableCorrectiveActionActions("OPEN")).toEqual(["START", "CANCEL"]);
+    expect(availableCorrectiveActionActions("IN_PROGRESS")).toEqual(["COMPLETE", "CANCEL"]);
+  });
+
+  it("reprovacao volta de DONE e de VERIFIED para IN_PROGRESS", () => {
+    expect(nextCorrectiveActionStatus("DONE", "REJECT")).toBe("IN_PROGRESS");
+    expect(nextCorrectiveActionStatus("VERIFIED", "REJECT")).toBe("IN_PROGRESS");
+    expect(nextCorrectiveActionStatus("IN_PROGRESS", "VERIFY")).toBeNull();
+    expect(nextCorrectiveActionStatus("OPEN", "CLOSE")).toBeNull();
+  });
+
+  it("REOPEN volta encerrada para verificacao e cancelada para aberta", () => {
+    expect(nextCorrectiveActionStatus("CLOSED", "REOPEN")).toBe("VERIFIED");
+    expect(nextCorrectiveActionStatus("CANCELLED", "REOPEN")).toBe("OPEN");
+    expect(availableCorrectiveActionActions("CLOSED")).toEqual(["REOPEN"]);
+  });
+
+  it("edita em OPEN/IN_PROGRESS; aberta no terminal", () => {
+    expect(isCorrectiveActionEditable("OPEN")).toBe(true);
+    expect(isCorrectiveActionEditable("IN_PROGRESS")).toBe(true);
+    expect(isCorrectiveActionEditable("DONE")).toBe(false);
+    expect(isCorrectiveActionOpen("DONE")).toBe(true);
+    expect(isCorrectiveActionOpen("VERIFIED")).toBe(true);
+    expect(isCorrectiveActionOpen("CLOSED")).toBe(false);
+    expect(isCorrectiveActionOpen("CANCELLED")).toBe(false);
+  });
+
+  it("toda entrada da tabela tem transies declaradas", () => {
+    for (const status of CORRECTIVE_ACTION_STATUSES) {
+      expect(CORRECTIVE_ACTION_TRANSITIONS[status]).toBeDefined();
+    }
+    expect(Object.keys(CORRECTIVE_ACTION_TRANSITIONS.CLOSED)).toEqual(["REOPEN"]);
   });
 });
 
@@ -184,5 +287,32 @@ describe("quadro de qualidade", () => {
     expect(board.failed).toBe(1);
     expect(board.closed).toBe(1);
     expect(board.open).toBe(4);
+    expect(board.nonConformities).toBe(0);
+    expect(board.correctiveActions).toBe(0);
+  });
+
+  it("conta NCR e acoes corretivas, abertas fora de CLOSED/CANCELLED", () => {
+    const board = summarizeQualityBoard({
+      templates: [],
+      executions: [],
+      inspections: [],
+      nonConformities: [
+        { status: "OPEN" },
+        { status: "CORRECTION" },
+        { status: "VERIFICATION" },
+        { status: "CLOSED" },
+        { status: "CANCELLED" },
+      ],
+      correctiveActions: [
+        { status: "OPEN" },
+        { status: "DONE" },
+        { status: "CLOSED" },
+      ],
+    });
+
+    expect(board.nonConformities).toBe(5);
+    expect(board.nonConformitiesOpen).toBe(3);
+    expect(board.correctiveActions).toBe(3);
+    expect(board.correctiveActionsOpen).toBe(2);
   });
 });

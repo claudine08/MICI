@@ -530,6 +530,8 @@ model Project {
   checklistTemplates ChecklistTemplate[]
   checklistExecutions ChecklistExecution[]
   inspections     Inspection[]
+  nonConformities NonConformity[]
+  correctiveActions CorrectiveAction[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -1953,6 +1955,7 @@ model Inspection {
   activity   ScheduleActivity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
   photos     PhotoEvidence[]
   executions ChecklistExecution[]
+  nonConformities NonConformity[]
 
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])
@@ -1960,4 +1963,114 @@ model Inspection {
   @@index([organizationId, projectId, status])
   @@index([organizationId, projectId, inspectionDate])
   @@map("inspections")
+}
+
+// ---------------------------------------------------------------------------
+// E13 Fatia 2 (§33): Não conformidade (NCR) e ação corretiva. O NCR nasce
+// automaticamente quando a inspeção é REPROVADA (FAIL) e gateia o encerramento
+// da inspeção: em FAILED, o CLOSE exige o(s) NCR(s) encerrado(s). Fluxo da
+// spec: Failed → Corrective Action → Verification → Closed.
+// ---------------------------------------------------------------------------
+
+enum NonConformityStatus {
+  OPEN
+  CORRECTION
+  VERIFICATION
+  CLOSED
+  CANCELLED
+
+  @@map("non_conformity_status")
+}
+
+model NonConformity {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  projectId      String              @map("project_id") @db.Uuid
+  code           String              @db.VarChar(32)
+  title          String              @db.VarChar(200)
+  description    String              @db.Text
+  status         NonConformityStatus @default(OPEN)
+
+  // Nascido de inspeção reprovada (auto) ou registrado manualmente.
+  inspectionId String? @map("inspection_id") @db.Uuid
+
+  correctionNotes String? @map("correction_notes") @db.Text
+  verificationNotes String? @map("verification_notes") @db.Text
+  cancelReason    String? @map("cancel_reason") @db.VarChar(1000)
+
+  correctedAt  DateTime?  @map("corrected_at")
+  verifiedAt   DateTime?  @map("verified_at")
+  closedAt     DateTime?  @map("closed_at")
+  clientUuid   String?    @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project          Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inspection       Inspection?         @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
+  correctiveActions CorrectiveAction[]
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@index([organizationId, inspectionId])
+  @@map("non_conformities")
+}
+
+enum CorrectiveActionStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  VERIFIED
+  CLOSED
+  CANCELLED
+
+  @@map("corrective_action_status")
+}
+
+model CorrectiveAction {
+  id             String               @id @default(uuid()) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  projectId      String               @map("project_id") @db.Uuid
+  code           String               @db.VarChar(32)
+  title          String               @db.VarChar(200)
+  description    String               @db.Text
+  status         CorrectiveActionStatus @default(OPEN)
+
+  nonConformityId String @map("non_conformity_id") @db.Uuid
+  responsibleId   String? @map("responsible_id") @db.Uuid
+  dueDate         DateTime? @map("due_date") @db.Date
+
+  actionNotes       String? @map("action_notes") @db.Text
+  verificationNotes String? @map("verification_notes") @db.Text
+  cancelReason      String? @map("cancel_reason") @db.VarChar(1000)
+
+  completedAt DateTime? @map("completed_at")
+  verifiedAt  DateTime? @map("verified_at")
+  closedAt    DateTime? @map("closed_at")
+  clientUuid  String?   @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  nonConformity  NonConformity   @relation(fields: [nonConformityId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@index([organizationId, nonConformityId])
+  @@map("corrective_actions")
 }
