@@ -1437,3 +1437,9 @@ UsuÃ¡rio pediu para seguir direto para a **Fatia 2** do backlog E12.
 - **Backlog E12 (PWA/fila offline) fechado de ponta a ponta** â€” Fatia 1 +
   Fatia 2 em produÃ§Ã£o; working tree limpa, `main` pushada. **PrÃ³ximo Ã©pico:
   E14 Procurement** (decisÃ£o do usuÃ¡rio).
+
+## 30/10/2026 — E14 Procurement, Fatia 1
+
+- Fornecedores (SP), Requisições de Compra (PR), Cotações (QT) e Mapa Comparativo (BC) em produção.
+- Commit feat 2ea90bb, migration phase15_procurement no Neon, deploy mici-5w7tzxsmi-homeland1, smoke verde.
+- Gate: lint, typecheck, 263 unit, 285 integração, build OK.

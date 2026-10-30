@@ -8,17 +8,18 @@
 > por sessão, mas apenas para consulta histórica — não são mais a fonte de
 > retomada. Profundidade de um módulo: `qualidade.md` etc.
 
-**Última atualização:** 29/10/2026 (E12-backlog Fatia 2 — fotos offline + conflito em produção, smoke verde)
+**Última atualização:** 30/10/2026 (E14 Procurement Fatia 1 — fornecedores, requisições, cotações e mapa comparativo em produção, commit 2ea90bb, deploy mici-5w7tzxsmi-homeland1, smoke verde)
 
 ---
 
 ## 1. Estado atual (resumo de 1 linha)
 
-E01–E13 completos e em produção; **E12-backlog COMPLETO em produção**
-(Fatia 1 commit `116bd7a` + Fatia 2 commit `dec1951`, deployment
-`mici-lnuvwqksg-homeland1`, smoke verde). Backlog de PWA/fila offline
-**fechado** (fotos offline + regra de conflito incluídas). **Próxima frente:
-E14 Procurement** (ou o que o usuário decidir).
+E01–E13 completos e em produção; **E12-backlog COMPLETO em produção**.
+**E14 Procurement Fatia 1 em produção** (commit `2ea90bb`, deployment
+`mici-5w7tzxsmi-homeland1`, smoke verde): fornecedores (SP), requisições de
+compra (PR), cotações (QT) e mapa comparativo (BC), com migration
+`phase15_procurement` aplicada no Neon. **Próxima frente: E14 Fatia 2 (PO e
+recebimento)** (ou o que o usuário decidir).
 
 Working tree limpa, `main` pushada.
 
