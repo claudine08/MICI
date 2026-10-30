@@ -4,6 +4,10 @@
 Fonte: spec §§99–101 (Releases, Backlog de Implementação, Critérios de Aceite do MVP).
 Status: ⬜ não iniciado · 🟦 em andamento · ✅ concluído.
 
+> **Visão de produto/histórica** — para retomar o desenvolvimento use
+> **`devcurrent.md`** (próxima frente, ambiente e comandos); este arquivo
+> registra o status dos épicos para consulta.
+
 ## Gate de verificação entre fases
 
 Antes de iniciar uma fase, a fase anterior deve passar na suíte completa:

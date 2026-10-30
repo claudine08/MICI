@@ -1,10 +1,12 @@
 # DEVCURRENT — ponto de retomada do desenvolvimento
 
-> **Arquivo vivo de estado.** Objetivo: retomar o desenvolvimento sem
-> reler DIARIO/ROADMAP inteiros. **Atualize este arquivo a cada sessão
-> relevante** (fim de fase, deploy, mudança de ambiente, novo backlog).
-> Profundidade histórica: `DIARIO.md` · visão de produto: `ROADMAP.md` ·
-> módulo atual: `qualidade.md`.
+> **Arquivo vivo de estado — fonte oficial de retomada do desenvolvimento**
+> (decisão de 29/10/2026). Objetivo: retomar sem reler DIARIO/ROADMAP
+> inteiros. **Atualize este arquivo a cada sessão relevante** (fim de fase,
+> deploy, mudança de ambiente, novo backlog). `DIARIO.md` (histórico
+> cronológico) e `ROADMAP.md` (status de épicos) continuam sendo atualizados
+> por sessão, mas apenas para consulta histórica — não são mais a fonte de
+> retomada. Profundidade de um módulo: `qualidade.md` etc.
 
 **Última atualização:** 29/10/2026 (pós-deploy E13 Fatia 2b)
 

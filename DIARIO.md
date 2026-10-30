@@ -1,7 +1,11 @@
 # DIÁRIO DE DESENVOLVIMENTO — MICI SaaS
 
-Registro cronológico do que foi feito. Fontes: este arquivo, `ROADMAP.md`,
-histórico git e ADRs. Datas em DD/MM/AAAA.
+Registro cronológico do que foi feito — **fim histórico, não é fonte de
+retomada** (desde 29/10/2026). Para voltar ao desenvolvimento, usar
+**`devcurrent.md`** (estado atual, ambiente, comandos e próxima frente).
+Este arquivo continua sendo atualizado por sessão para memória futura.
+Fontes: este arquivo, `ROADMAP.md`, histórico git e ADRs. Datas em
+DD/MM/AAAA.
 
 ---
 
