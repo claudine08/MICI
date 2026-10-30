@@ -8,18 +8,20 @@
 > por sessão, mas apenas para consulta histórica — não são mais a fonte de
 > retomada. Profundidade de um módulo: `qualidade.md` etc.
 
-**Última atualização:** 29/10/2026 (E12-backlog Fatia 1 — PWA/fila offline, gate verde, não commitado)
+**Última atualização:** 29/10/2026 (E12-backlog Fatia 1 — PWA/fila offline em produção, smoke verde)
 
 ---
 
 ## 1. Estado atual (resumo de 1 linha)
 
-E01–E13 **completos e em produção** (último deploy 29/10, commit
-`accf167`/feat `01a0966`, punch list). **E12-backlog Fatia 1 (manifest + SW +
-fila offline de criações + indicador de pendências) implementada e gate
-completo verde** (lint/typecheck/238 unit/266 integração/build) — **ainda não
-commitada nem deployada** (commit só sob pedido). Próxima: Fatia 2 (fotos
-offline) ou E14+.
+E01–E13 completos e em produção; **E12-backlog Fatia 1 (manifest + SW +
+fila offline de criações + indicador de pendências) DEPLOYADA em 29/10**
+(commit feat `116bd7a`, deployment `mici-a2yyxu4dd-homeland1`, smoke verde:
+`/manifest.webmanifest` e `/sw.js` → 200). Gate completo: lint/typecheck/238
+unit/266 integração/build. **Próxima frente: Fatia 2 do backlog E12 (fotos
+offline + conflito + testes)** ou E14+.
+
+Working tree limpa, `main` pushada (`0f13e2d`).
 
 ## 2. Ambiente e comandos (não precisa rediscover)
 
@@ -54,7 +56,10 @@ Contexto: E12 (Campo) está em produção mas **só a idempotência
 server-side entrou**. O offline real (PWA + fila local) ficou em backlog
 "quando houver demanda" — usuário decidiu retomar agora.
 
-**STATUS 29/10/2026 — Fatia 1 CONCLUÍDA (gate verde, pendente de commit+deploy):**
+**STATUS 29/10/2026 — Fatia 1 ENTREGUE EM PRODUÇÃO** (commit feat `116bd7a`,
+docs na sequência; deployment `mici-a2yyxu4dd-homeland1`, alias
+`mici-theta.vercel.app`, smoke verde: health/projects/manifest/sw/projetos →
+200, sem sessão → 401. Sem migration — é só front-end.):
 
 Arquivos criados/alterados:
 - `src/lib/offline-queue.ts` (novo): tipos `OfflineEntity`/`OfflineQueueItem`;
@@ -84,7 +89,8 @@ Arquivos criados/alterados:
   `clientUuid` adicionada (lacuna fechada; era a única das 4 sem teste).
 
 Gate 29/10: lint ✓ · typecheck ✓ · 238 unit/17 arquivos ✓ · 266 integração/14
-arquivos ✓ · build ✓ (`/manifest.webmanifest` gerado). **Nada commitado.**
+arquivos ✓ · build ✓ (`/manifest.webmanifest` gerado). Deploy posterior:
+`vercel --prod` sem migration (só front-end) + smoke verde.
 
 ### 4.1 O que já existe (base pronta — reaproveitar)
 
@@ -119,7 +125,7 @@ arquivos ✓ · build ✓ (`/manifest.webmanifest` gerado). **Nada commitado.**
 
 ### 4.4 Fatia sugerida (mesmo padrão de fases anteriores)
 
-- **Fatia 1**: manifest + SW (cache de shell) + fila IndexedDB de creates simples (diário/tarefa/restrição/medição) + indicador de pendências. **✅ FEITA 29/10 (ver STATUS acima) — falta commitar/deployar.**
+- **Fatia 1**: manifest + SW (cache de shell) + fila IndexedDB de creates simples (diário/tarefa/restrição/medição) + indicador de pendências. **✅ EM PRODUÇÃO 29/10 (commit `116bd7a`, smoke verde).**
 - **Fatia 2**: fotos offline + tratamento de conflito + "sincronizar agora" + testes (mock de offline no Vitest/Playwright — `@playwright/test` já está em devDependencies). Obs.: "sincronizar agora" já entrou na Fatia 1; resto segue pendente. Conflito de conteúdo (2 dispositivos no mesmo diário) ainda sem regra — último-wins em DRAFT é a candidata.
 
 ## 5. Restante do roadmap (após E12-backlog)

@@ -1341,7 +1341,24 @@ do E12 — PWA/fila offline, Fatia 1** (`devcurrent.md` §4.4).
 
 ### Estado
 
-- **Código pronto, gate verde, nada commitado** (commits só sob pedido).
-- Próximos passos: commit `feat:` + deploy (`vercel --prod`, sem migration —
-  é só front-end) + smoke; depois **Fatia 2** (fotos offline, regra de
-  conflito, Playwright) ou abrir **E14 Procurement**.
+- **Código pronto + gate verde** ao fim do desenvolvimento; na sequência,
+  sob pedido do usuário: **commit + push + deploy + smoke** (abaixo).
+
+### Commit e deploy (29/10, 23h)
+
+- Commits: **`116bd7a`** `feat: campo - pwa e fila offline de criacoes - E12 US06`
+  (9 arquivos) + **`0f13e2d`** `docs: registra fatia 1 do backlog E12 (pwa e
+  fila offline)` — push em `main`.
+- **Sem migration** (é só front-end) — deploy direto: `npx vercel --prod` →
+  deployment **`mici-a2yyxu4dd-homeland1`** (alias `mici-theta.vercel.app`),
+  build em ~47s, `/manifest.webmanifest` presente nas rotas estáticas.
+- Smoke autenticado (`admin@mici.demo` / `Demo@1234`): login 200 ·
+  `/api/v1/health` 200 · `/api/v1/projects` 200 · **`/manifest.webmanifest`
+  200 (545 bytes)** · **`/sw.js` 200 (2275 bytes)** · `/projetos` 200 ·
+  rota sem sessão → 401.
+
+### Estado
+
+- **Fatia 1 do backlog E12 em produção**; working tree limpa, `main` pushada
+  (`0f13e2d`). Próximo passo decidido com o usuário: **Fatia 2** (fotos
+  offline + regra de conflito + testes) ou **E14 Procurement**.
