@@ -1416,6 +1416,24 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
 
 ### Estado
 
-- **Fatia 2 pronta, gate verde, não commitada** (commits só sob pedido do
-  usuário, como sempre). Próximo: commit `feat:` + deploy (sem migration) +
-  smoke, depois E14+ ou o que o usuário decidir.
+- **Fatia 2 pronta, gate verde, não commitada** ao fim do desenvolvimento;
+  na sequência, sob pedido do usuário: **commit + push + deploy + smoke**
+  (abaixo).
+
+### Commit e deploy (29/10, 23h40)
+
+- Commits: **`dec1951`** `feat: campo - fotos offline e regra de conflito de
+  edicao - E12 US02` (6 arquivos) + **`583496c`** `docs: registra fatia 2 do
+  backlog E12 (fotos offline e conflito)` — push em `main`.
+- **Sem migration** — deploy direto: `npx vercel --prod` → deployment
+  **`mici-lnuvwqksg-homeland1`** (alias `mici-theta.vercel.app`), build ~39s.
+- Smoke autenticado (`admin@mici.demo` / `Demo@1234`): login 200 ·
+  `/api/v1/health` 200 · **`/field/photos` 200** · `/manifest.webmanifest`
+  200 · `/sw.js` 200 · página `/projetos/[id]/campo` 200 (35 KB) · rota sem
+  sessão → 401.
+
+### Estado
+
+- **Backlog E12 (PWA/fila offline) fechado de ponta a ponta** — Fatia 1 +
+  Fatia 2 em produção; working tree limpa, `main` pushada. **Próximo épico:
+  E14 Procurement** (decisão do usuário).

@@ -8,20 +8,19 @@
 > por sessão, mas apenas para consulta histórica — não são mais a fonte de
 > retomada. Profundidade de um módulo: `qualidade.md` etc.
 
-**Última atualização:** 29/10/2026 (E12-backlog Fatia 2 — fotos offline + regra de conflito, gate verde, não commitada)
+**Última atualização:** 29/10/2026 (E12-backlog Fatia 2 — fotos offline + conflito em produção, smoke verde)
 
 ---
 
 ## 1. Estado atual (resumo de 1 linha)
 
-E01–E13 completos e em produção; **E12-backlog Fatia 1 DEPLOYADA** (commit
-`116bd7a`, deployment `mici-a2yyxu4dd-homeland1`, smoke verde). **Fatia 2
-(fotos offline + regra de conflito de edição) com código pronto e gate
-completo verde** (lint/typecheck/251 unit/267 integração/build) — **ainda não
-commitada nem deployada** (commit só sob pedido). Próximos: commit+deploy da
-Fatia 2, depois E14+.
+E01–E13 completos e em produção; **E12-backlog COMPLETO em produção**
+(Fatia 1 commit `116bd7a` + Fatia 2 commit `dec1951`, deployment
+`mici-lnuvwqksg-homeland1`, smoke verde). Backlog de PWA/fila offline
+**fechado** (fotos offline + regra de conflito incluídas). **Próxima frente:
+E14 Procurement** (ou o que o usuário decidir).
 
-Working tree limpa menos a Fatia 2; `main` pushada até `4fd591b`.
+Working tree limpa, `main` pushada.
 
 ## 2. Ambiente e comandos (não precisa rediscover)
 
@@ -50,11 +49,12 @@ Working tree limpa menos a Fatia 2; `main` pushada até `4fd591b`.
 - **Testes**: unit puro no engine; integração com seed + tenant isolation; idempotência testada com `clientUuid` repetido.
 - **Docs de fase**: entrada no `DIARIO.md` (append), status no `ROADMAP.md` (tabela), doc do módulo (`qualidade.md`, `campo.md`…) e este `devcurrent.md`.
 
-## 4. PRÓXIMA FRENTE — Backlog E12: PWA/fila offline completa
+## 4. Backlog E12: PWA/fila offline completa — ✅ FECHADO (29/10)
 
 Contexto: E12 (Campo) está em produção mas **só a idempotência
 server-side entrou**. O offline real (PWA + fila local) ficou em backlog
-"quando houver demanda" — usuário decidiu retomar agora.
+"quando houver demanda" — usuário decidiu retomar agora (29/10). **Backlog
+entregue por completo nas duas fatias, em produção.**
 
 **STATUS 29/10/2026 — Fatia 1 ENTREGUE EM PRODUÇÃO** (commit feat `116bd7a`,
 docs na sequência; deployment `mici-a2yyxu4dd-homeland1`, alias
@@ -92,8 +92,10 @@ Gate 29/10: lint ✓ · typecheck ✓ · 238 unit/17 arquivos ✓ · 266 integra
 arquivos ✓ · build ✓ (`/manifest.webmanifest` gerado). Deploy posterior:
 `vercel --prod` sem migration (só front-end) + smoke verde.
 
-**STATUS 29/10/2026 (noite) — Fatia 2 PRONTA, NÃO COMMITADA** (gate verde,
-sem migration — é só front-end/app):
+**STATUS 29/10/2026 (noite) — Fatia 2 ENTREGUE EM PRODUÇÃO** (commit feat
+`dec1951` + docs `583496c`; deployment `mici-lnuvwqksg-homeland1`, alias
+`mici-theta.vercel.app`, smoke verde: health/field/photos/manifest/sw/página
+de campo → 200, sem sessão → 401. Sem migration — é só front-end/app.):
 
 - `src/lib/offline-queue.ts` (estendido): `OfflineEntity += "photo"`;
   `method?: "POST"|"PATCH"` no item (legado sem method → POST);
@@ -144,14 +146,14 @@ injetável + `navigator.onLine` stub); e2e real fica opcional/futuro.
 - **Idempotência server-side**: reenvio do mesmo `clientUuid` devolve o registro já criado (testado em `tests/integration/field.test.ts`).
 - **Fila/infra de jobs** (se optar por sync server-side assíncrono): `job_queue`/`domain_events` + Vercel Cron (ADR-015, `docs/adr/ADR-015-filas-postgres-vercel-cron.md`).
 
-### 4.2 O que falta construir (escopo do backlog)
+### 4.2 O que falta construir (escopo do backlog) — ✅ tudo feito nas 2 fatias
 
-1. **PWA instalável**: `manifest` + ícones + registro de **service worker** (Next 16 — checar docs locais; provavelmente route handler + build de SW).
-2. **Fila local offline (IndexedDB)**: capturar mutations de criação (diário/tarefa/restrição/foto/medição) quando offline; gerar `clientUuid` no momento da captura; retry automático com backoff ao voltar.
-3. **Sync engine no cliente**: enviar fila em ordem FIFO por entidade; tratar 4xx (erro de negócio → marcar como falha definitiva e mostrar ao usuário) vs 5xx/timeout (repetir).
-4. **Upload de fotos offline**: enfileirar Blob/FormData e reenviar (atenção ao teto de 4 MB e SHA-256).
-5. **UI de status**: indicador "N pendentes de sincronizar", fila visível (erros reenviáveis vs definitivos), ação "sincronizar agora".
-6. **Conflitos**: ✅ **regra definida e implementada na Fatia 2** —
+1. **PWA instalável** ✅ (Fatia 1): manifest + ícones + SW.
+2. **Fila local offline (IndexedDB)** ✅ (Fatia 1 criações / Fatia 2 fotos com Blob); `clientUuid` gerado no formulário (sem duplicar no replay).
+3. **Sync engine no cliente** ✅ (Fatia 1): FIFO, 4xx → falha visível, 5xx/rede → repete.
+4. **Upload de fotos offline** ✅ (Fatia 2): Blob no IndexedDB, validação MIME+4 MB antes de enfileirar, multipart no replay; bug da rota (`clientUuid` ignorado) corrigido.
+5. **UI de status** ✅ (Fatia 1): banner "N pendentes", "Sincronizar agora", "Descartar falhas".
+6. **Conflitos** ✅ (Fatia 2): ver regra abaixo.
    (a) creates são idempotentes por `clientUuid` (replay devolve o original);
    (b) **edição offline só de entidade editável na hora** (rascunho DRAFT/
    REJECTED, tarefa/restrição abertas) com **último-wins no conteúdo**; no
@@ -169,9 +171,9 @@ injetável + `navigator.onLine` stub); e2e real fica opcional/futuro.
 ### 4.4 Fatia sugerida (mesmo padrão de fases anteriores)
 
 - **Fatia 1**: manifest + SW (cache de shell) + fila IndexedDB de creates simples (diário/tarefa/restrição/medição) + indicador de pendências. **✅ EM PRODUÇÃO 29/10 (commit `116bd7a`, smoke verde).**
-- **Fatia 2**: fotos offline + tratamento de conflito + "sincronizar agora" + testes (mock de offline no Vitest/Playwright). **✅ PRONTA 29/10 (gate verde; falta commitar/deployar).** "Sincronizar agora" entrou na Fatia 1; conflito resolvido no §4.2.6; testes no Vitest (Playwright: sem infra e2e no repo, ficou de fora — ver STATUS Fatia 2).
+- **Fatia 2**: fotos offline + tratamento de conflito + "sincronizar agora" + testes (mock de offline no Vitest/Playwright). **✅ EM PRODUÇÃO 29/10 (commit `dec1951`, smoke verde).** "Sincronizar agora" entrou na Fatia 1; conflito resolvido no §4.2.6; testes no Vitest (Playwright: sem infra e2e no repo, ficou de fora — ver STATUS Fatia 2).
 
-## 5. Restante do roadmap (após E12-backlog)
+## 5. Restante do roadmap (após o backlog E12)
 
 | Épico | Escopo curto |
 |---|---|
