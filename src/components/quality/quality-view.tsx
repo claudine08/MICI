@@ -21,24 +21,30 @@ import {
   INSPECTION_STATUS_LABELS_PT,
   NON_CONFORMITY_ACTION_LABELS_PT,
   NON_CONFORMITY_STATUS_LABELS_PT,
+  PUNCH_ITEM_ACTION_LABELS_PT,
+  PUNCH_ITEM_STATUS_LABELS_PT,
   type ChecklistExecutionStatus,
   type ChecklistItemResult,
   type CorrectiveActionStatus,
   type InspectionStatus,
   type NonConformityStatus,
+  type PunchItemStatus,
   type QualityBoardCounts,
 } from "@/modules/quality/engine";
+import { FIELD_PRIORITIES, FIELD_PRIORITY_LABELS_PT } from "@/modules/field/engine";
 import type {
   ChecklistExecutionRow,
   ChecklistTemplateRow,
   CorrectiveActionRow,
   InspectionRow,
   NonConformityRow,
+  PunchItemRow,
 } from "@/modules/quality/selectors";
 
 // Qualidade (E13, §33/§34): modelo de checklist → execução → inspeção com
 // critério de aceite e evidência; NCR e ação corretiva fecham o ciclo de
-// reprovado (E13-US03/US04). Cinco blocos operacionais em abas.
+// reprovado (E13-US03/US04); punch list formaliza as correções menores da
+// vistoria/entrega (E13-US05, §34). Seis blocos operacionais em abas.
 
 interface OptionLite {
   id: string;
@@ -52,16 +58,24 @@ interface Props {
   initialInspections: InspectionRow[];
   initialNonConformities: NonConformityRow[];
   initialCorrectiveActions: CorrectiveActionRow[];
+  initialPunchItems: PunchItemRow[];
   board: QualityBoardCounts;
   members: OptionLite[];
   wbsNodes: OptionLite[];
   activities: OptionLite[];
+  photos: OptionLite[];
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
 }
 
-type Tab = "modelos" | "execucoes" | "inspecoes" | "ncrs" | "acoes";
+type Tab =
+  | "modelos"
+  | "execucoes"
+  | "inspecoes"
+  | "ncrs"
+  | "acoes"
+  | "punch";
 
 const EXECUTION_STATUS_VARIANT: Record<
   ChecklistExecutionStatus,
@@ -107,6 +121,19 @@ const CORRECTIVE_ACTION_STATUS_VARIANT: Record<
   CANCELLED: "secondary",
 };
 
+const PUNCH_ITEM_STATUS_VARIANT: Record<
+  PunchItemStatus,
+  "secondary" | "default" | "warning" | "destructive" | "success"
+> = {
+  OPEN: "destructive",
+  ASSIGNED: "secondary",
+  IN_PROGRESS: "warning",
+  READY_FOR_VERIFICATION: "default",
+  VERIFIED: "default",
+  REJECTED: "destructive",
+  CLOSED: "success",
+};
+
 function ErrorBox({ message }: { message: string | null }) {
   if (!message) return null;
   return (
@@ -147,6 +174,16 @@ const emptyCorrectiveActionForm = {
   responsibleId: "",
   dueDate: "",
 };
+const emptyPunchItemForm = {
+  location: "",
+  description: "",
+  priority: "MEDIUM",
+  ownerId: "",
+  dueDate: "",
+  wbsNodeId: "",
+  activityId: "",
+  photoEvidenceId: "",
+};
 
 function toItemDraft(item: {
   key: string;
@@ -171,10 +208,12 @@ export function QualityView({
   initialInspections,
   initialNonConformities,
   initialCorrectiveActions,
+  initialPunchItems,
   board,
   members,
   wbsNodes,
   activities,
+  photos,
   canCreate,
   canEdit,
   canDelete,
@@ -185,6 +224,7 @@ export function QualityView({
   const inspectionBase = `/api/v1/projects/${projectId}/quality/inspections`;
   const nonConformityBase = `/api/v1/projects/${projectId}/quality/non-conformities`;
   const correctiveActionBase = `/api/v1/projects/${projectId}/quality/corrective-actions`;
+  const punchItemBase = `/api/v1/projects/${projectId}/quality/punch-items`;
 
   const [tab, setTab] = useState<Tab>("modelos");
   const [templates, setTemplates] = useState<ChecklistTemplateRow[]>(initialTemplates);
@@ -196,6 +236,7 @@ export function QualityView({
   const [correctiveActions, setCorrectiveActions] = useState<CorrectiveActionRow[]>(
     initialCorrectiveActions
   );
+  const [punchItems, setPunchItems] = useState<PunchItemRow[]>(initialPunchItems);
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -223,31 +264,39 @@ export function QualityView({
   const [editingCorrectiveId, setEditingCorrectiveId] = useState<string | null>(null);
   const [correctiveForm, setCorrectiveForm] = useState(emptyCorrectiveActionForm);
 
+  const [punchDialog, setPunchDialog] = useState(false);
+  const [editingPunchId, setEditingPunchId] = useState<string | null>(null);
+  const [punchForm, setPunchForm] = useState(emptyPunchItemForm);
+
   const [transition, setTransition] = useState<{
-    kind: "execution" | "inspection" | "nonConformity" | "correctiveAction";
+    kind: "execution" | "inspection" | "nonConformity" | "correctiveAction" | "punchItem";
     id: string;
     code: string;
     action: string;
     reason: string;
     resultNotes: string;
+    ownerId: string;
+    correctionEvidenceId: string;
     allowed: string[];
     actionLabels: Record<string, string>;
   } | null>(null);
 
   const loadAll = async () => {
     try {
-      const [t, e, i, n, c] = await Promise.all([
+      const [t, e, i, n, c, p] = await Promise.all([
         apiRequest<{ templates: ChecklistTemplateRow[] }>(templateBase),
         apiRequest<{ executions: ChecklistExecutionRow[] }>(executionBase),
         apiRequest<{ inspections: InspectionRow[] }>(inspectionBase),
         apiRequest<{ nonConformities: NonConformityRow[] }>(nonConformityBase),
         apiRequest<{ correctiveActions: CorrectiveActionRow[] }>(correctiveActionBase),
+        apiRequest<{ punchItems: PunchItemRow[] }>(punchItemBase),
       ]);
       setTemplates(t.templates);
       setExecutions(e.executions);
       setInspections(i.inspections);
       setNonConformities(n.nonConformities);
       setCorrectiveActions(c.correctiveActions);
+      setPunchItems(p.punchItems);
       setError(null);
       router.refresh();
     } catch (caught) {
@@ -588,15 +637,89 @@ export function QualityView({
     }
   };
 
+  // --- Punch list (E13-US05, §34) -------------------------------------------
+  const openPunchCreate = () => {
+    setEditingPunchId(null);
+    setPunchForm({ ...emptyPunchItemForm });
+    setError(null);
+    setPunchDialog(true);
+  };
+
+  const openPunchEdit = (item: PunchItemRow) => {
+    setEditingPunchId(item.id);
+    setPunchForm({
+      location: item.location,
+      description: item.description,
+      priority: item.priority,
+      ownerId: item.ownerId ?? "",
+      dueDate: item.dueDate ?? "",
+      wbsNodeId: item.wbsNodeId ?? "",
+      activityId: item.activityId ?? "",
+      photoEvidenceId: item.photoEvidenceId ?? "",
+    });
+    setError(null);
+    setPunchDialog(true);
+  };
+
+  const submitPunchItem = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const payload: Record<string, unknown> = {
+        location: punchForm.location,
+        description: punchForm.description,
+        priority: punchForm.priority,
+        ownerId: punchForm.ownerId || null,
+        dueDate: punchForm.dueDate || undefined,
+        wbsNodeId: punchForm.wbsNodeId || null,
+        activityId: punchForm.activityId || null,
+        photoEvidenceId: punchForm.photoEvidenceId || null,
+      };
+      await apiRequest(editingPunchId ? `${punchItemBase}/${editingPunchId}` : punchItemBase, {
+        method: editingPunchId ? "PATCH" : "POST",
+        body: JSON.stringify(
+          editingPunchId ? payload : { ...payload, clientUuid: crypto.randomUUID() }
+        ),
+      });
+      setPunchDialog(false);
+      await loadAll();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao salvar o item de punch list.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removePunchItem = async (item: PunchItemRow) => {
+    if (!window.confirm(`Excluir o item de punch list ${item.code}?`)) return;
+    try {
+      await apiRequest(`${punchItemBase}/${item.id}`, { method: "DELETE" });
+      await loadAll();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao excluir o item de punch list.");
+    }
+  };
+
   // --- Transições ----------------------------------------------------------
   const openTransition = (
-    kind: "execution" | "inspection" | "nonConformity" | "correctiveAction",
+    kind: "execution" | "inspection" | "nonConformity" | "correctiveAction" | "punchItem",
     id: string,
     code: string,
     allowed: string[],
     actionLabels: Record<string, string>
   ) => {
-    setTransition({ kind, id, code, action: "", reason: "", resultNotes: "", allowed, actionLabels });
+    setTransition({
+      kind,
+      id,
+      code,
+      action: "",
+      reason: "",
+      resultNotes: "",
+      ownerId: "",
+      correctionEvidenceId: "",
+      allowed,
+      actionLabels,
+    });
     setError(null);
   };
 
@@ -610,6 +733,7 @@ export function QualityView({
         inspection: inspectionBase,
         nonConformity: nonConformityBase,
         correctiveAction: correctiveActionBase,
+        punchItem: punchItemBase,
       } as const;
       const notes = transition.resultNotes || undefined;
       const payload: Record<string, unknown> = {
@@ -627,6 +751,12 @@ export function QualityView({
         payload.actionNotes = notes;
       } else if (transition.kind === "correctiveAction" && transition.action === "VERIFY") {
         payload.verificationNotes = notes;
+      } else if (transition.kind === "punchItem" && transition.action === "ASSIGN") {
+        payload.ownerId = transition.ownerId || null;
+      } else if (transition.kind === "punchItem" && transition.action === "SUBMIT") {
+        payload.correctionEvidenceId = transition.correctionEvidenceId || null;
+      } else if (transition.kind === "punchItem" && transition.action === "VERIFY") {
+        payload.verificationNotes = notes;
       }
       await apiRequest(`${baseByKind[transition.kind]}/${transition.id}/status`, {
         method: "POST",
@@ -641,8 +771,10 @@ export function QualityView({
     }
   };
 
-  const setTransitionField = (key: "action" | "reason" | "resultNotes", value: string) =>
-    setTransition((previous) => (previous ? { ...previous, [key]: value } : previous));
+  const setTransitionField = (
+    key: "action" | "reason" | "resultNotes" | "ownerId" | "correctionEvidenceId",
+    value: string
+  ) => setTransition((previous) => (previous ? { ...previous, [key]: value } : previous));
 
   // Rótulo da nota obrigatória por transição (o servidor valida o mesmo).
   const transitionNotesLabel = (() => {
@@ -653,6 +785,7 @@ export function QualityView({
     if (kind === "nonConformity" && action === "VERIFY") return "Verificação da correção *";
     if (kind === "correctiveAction" && action === "COMPLETE") return "Execução da correção *";
     if (kind === "correctiveAction" && action === "VERIFY") return "Verificação da correção *";
+    if (kind === "punchItem" && action === "VERIFY") return "Verificação da correção *";
     return null;
   })();
   const transitionNotesRequired = transitionNotesLabel !== null;
@@ -663,6 +796,7 @@ export function QualityView({
     { id: "inspecoes", label: "Inspeções", count: inspections.filter((item) => item.isOpen).length },
     { id: "ncrs", label: "Não conformidades", count: nonConformities.filter((item) => item.isOpen).length },
     { id: "acoes", label: "Ações corretivas", count: correctiveActions.filter((item) => item.isOpen).length },
+    { id: "punch", label: "Punch list", count: punchItems.filter((item) => item.isOpen).length },
   ];
 
   const inspectionOptions = inspections.filter((item) => item.status !== "CANCELLED");
@@ -686,6 +820,8 @@ export function QualityView({
             { label: "Encerradas", value: board.closed },
             { label: "NCR abertas", value: board.nonConformitiesOpen },
             { label: "Ações corretivas abertas", value: board.correctiveActionsOpen },
+            { label: "Punch list abertos", value: board.punchItemsOpen },
+            { label: "Punch list vencidos", value: board.punchItemsOverdue },
           ].map((cell) => (
             <div key={cell.label} className="rounded-md border border-border bg-surface p-2">
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -743,6 +879,12 @@ export function QualityView({
           <Button onClick={openCorrectiveCreate}>
             <Plus className="h-4 w-4" />
             Nova ação corretiva
+          </Button>
+        )}
+        {canCreate && tab === "punch" && (
+          <Button onClick={openPunchCreate}>
+            <Plus className="h-4 w-4" />
+            Novo item
           </Button>
         )}
       </div>
@@ -1242,6 +1384,119 @@ export function QualityView({
                               size="icon"
                               title="Excluir ação corretiva"
                               onClick={() => void removeCorrectiveAction(action)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {tab === "punch" && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">Punch list (E13-US05, §34)</h2>
+              <p className="text-xs text-muted-foreground">
+                Correções menores da vistoria/entrega — Aberto → Atribuído → Em correção →
+                Pronto para verificação → Verificado → Encerrado; Reprovado volta a Em correção.
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                  <th className="px-4 py-2.5">Código</th>
+                  <th className="px-4 py-2.5">Localização</th>
+                  <th className="px-4 py-2.5">Descrição</th>
+                  <th className="px-4 py-2.5">Prioridade</th>
+                  <th className="px-4 py-2.5">Responsável</th>
+                  <th className="px-4 py-2.5">Prazo</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">Ações</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {punchItems.length === 0 && (
+                  <tr>
+                    <td colSpan={8}>
+                      <Empty text="Nenhum item de punch list registrado." />
+                    </td>
+                  </tr>
+                )}
+                {punchItems.map((item) => (
+                  <tr key={item.id} className="border-b border-border last:border-0">
+                    <td className="px-4 py-2.5 font-mono text-xs">{item.code}</td>
+                    <td className="px-4 py-2.5 font-medium">{item.location}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="text-muted-foreground line-clamp-1">{item.description}</div>
+                      {item.rejectReason && (
+                        <div className="text-xs text-destructive line-clamp-1">
+                          Reprovado: {item.rejectReason}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {FIELD_PRIORITY_LABELS_PT[item.priority]}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {item.ownerName ?? "—"}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className={item.overdue ? "font-medium text-destructive" : "text-muted-foreground"}>
+                        {item.dueDate ?? "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant={PUNCH_ITEM_STATUS_VARIANT[item.status]}>
+                        {PUNCH_ITEM_STATUS_LABELS_PT[item.status]}
+                      </Badge>
+                    </td>
+                    {(canEdit || canDelete) && (
+                      <td className="px-4 py-2.5">
+                        <div className="flex justify-end gap-1">
+                          {item.actions.length > 0 && canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Transição de status"
+                              onClick={() =>
+                                openTransition(
+                                  "punchItem",
+                                  item.id,
+                                  item.code,
+                                  item.actions,
+                                  PUNCH_ITEM_ACTION_LABELS_PT
+                                )
+                              }
+                            >
+                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canEdit && item.editable && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar item"
+                              onClick={() => openPunchEdit(item)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {canDelete && item.editable && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Excluir item"
+                              onClick={() => void removePunchItem(item)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
@@ -1827,6 +2082,152 @@ export function QualityView({
         </div>
       </Dialog>
 
+      {/* Item de punch list */}
+      <Dialog
+        open={punchDialog}
+        title={editingPunchId ? "Editar item de punch list" : "Novo item de punch list"}
+        onClose={() => setPunchDialog(false)}
+        wide
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="punch-location">Localização *</Label>
+            <Input
+              id="punch-location"
+              value={punchForm.location}
+              onChange={(event) =>
+                setPunchForm((previous) => ({ ...previous, location: event.target.value }))
+              }
+              placeholder="Ex.: Bloco A — corredor 2º andar"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="punch-priority">Prioridade</Label>
+            <select
+              id="punch-priority"
+              value={punchForm.priority}
+              onChange={(event) =>
+                setPunchForm((previous) => ({ ...previous, priority: event.target.value }))
+              }
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            >
+              {FIELD_PRIORITIES.map((priority) => (
+                <option key={priority} value={priority}>
+                  {FIELD_PRIORITY_LABELS_PT[priority]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="punch-owner">Responsável</Label>
+            <select
+              id="punch-owner"
+              value={punchForm.ownerId}
+              onChange={(event) =>
+                setPunchForm((previous) => ({ ...previous, ownerId: event.target.value }))
+              }
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            >
+              <option value="">— selecionar —</option>
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="punch-due">Prazo</Label>
+            <Input
+              id="punch-due"
+              type="date"
+              value={punchForm.dueDate}
+              onChange={(event) =>
+                setPunchForm((previous) => ({ ...previous, dueDate: event.target.value }))
+              }
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="punch-photo">Foto do problema</Label>
+            <select
+              id="punch-photo"
+              value={punchForm.photoEvidenceId}
+              onChange={(event) =>
+                setPunchForm((previous) => ({ ...previous, photoEvidenceId: event.target.value }))
+              }
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            >
+              <option value="">— sem foto —</option>
+              {photos.map((photo) => (
+                <option key={photo.id} value={photo.id}>
+                  {photo.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="punch-wbs">WBS</Label>
+            <select
+              id="punch-wbs"
+              value={punchForm.wbsNodeId}
+              onChange={(event) =>
+                setPunchForm((previous) => ({ ...previous, wbsNodeId: event.target.value }))
+              }
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            >
+              <option value="">— sem vínculo —</option>
+              {wbsNodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  {node.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="punch-activity">Atividade</Label>
+            <select
+              id="punch-activity"
+              value={punchForm.activityId}
+              onChange={(event) =>
+                setPunchForm((previous) => ({ ...previous, activityId: event.target.value }))
+              }
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            >
+              <option value="">— sem vínculo —</option>
+              {activities.map((activity) => (
+                <option key={activity.id} value={activity.id}>
+                  {activity.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2 sm:col-span-2">
+            <Label htmlFor="punch-description">Descrição *</Label>
+            <textarea
+              id="punch-description"
+              value={punchForm.description}
+              onChange={(event) =>
+                setPunchForm((previous) => ({ ...previous, description: event.target.value }))
+              }
+              rows={3}
+              placeholder="Descreva a correção a ser feita (§34)"
+              className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setPunchDialog(false)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => void submitPunchItem()}
+            disabled={busy || !punchForm.location.trim() || !punchForm.description.trim()}
+          >
+            {busy ? "Salvando…" : "Salvar"}
+          </Button>
+        </div>
+      </Dialog>
+
       {/* Transição de status */}
       <Dialog
         open={transition !== null}
@@ -1866,7 +2267,47 @@ export function QualityView({
               </div>
             )}
 
-            {transition.action === "CANCEL" && (
+            {transition.kind === "punchItem" && transition.action === "ASSIGN" && (
+              <div className="grid gap-2">
+                <Label htmlFor="transition-owner">Responsável *</Label>
+                <select
+                  id="transition-owner"
+                  value={transition.ownerId}
+                  onChange={(event) => setTransitionField("ownerId", event.target.value)}
+                  className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                >
+                  <option value="">— selecionar —</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {transition.kind === "punchItem" && transition.action === "SUBMIT" && (
+              <div className="grid gap-2">
+                <Label htmlFor="transition-correction-photo">Foto da correção *</Label>
+                <select
+                  id="transition-correction-photo"
+                  value={transition.correctionEvidenceId}
+                  onChange={(event) =>
+                    setTransitionField("correctionEvidenceId", event.target.value)
+                  }
+                  className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                >
+                  <option value="">— selecionar —</option>
+                  {photos.map((photo) => (
+                    <option key={photo.id} value={photo.id}>
+                      {photo.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {(transition.action === "CANCEL" || transition.action === "REJECT") && (
               <div className="grid gap-2">
                 <Label htmlFor="transition-reason">Motivo *</Label>
                 <textarea
@@ -1889,7 +2330,14 @@ export function QualityView({
                   busy ||
                   !transition.action ||
                   (transitionNotesRequired && !transition.resultNotes.trim()) ||
-                  (transition.action === "CANCEL" && !transition.reason.trim())
+                  ((transition.action === "CANCEL" || transition.action === "REJECT") &&
+                    !transition.reason.trim()) ||
+                  (transition.kind === "punchItem" &&
+                    transition.action === "ASSIGN" &&
+                    !transition.ownerId) ||
+                  (transition.kind === "punchItem" &&
+                    transition.action === "SUBMIT" &&
+                    !transition.correctionEvidenceId)
                 }
               >
                 {busy ? "Aplicando…" : "Aplicar"}

@@ -12,10 +12,13 @@ import {
   INSPECTION_TRANSITIONS,
   NON_CONFORMITY_STATUSES,
   NON_CONFORMITY_TRANSITIONS,
+  PUNCH_ITEM_STATUSES,
+  PUNCH_ITEM_TRANSITIONS,
   availableChecklistExecutionActions,
   availableCorrectiveActionActions,
   availableInspectionActions,
   availableNonConformityActions,
+  availablePunchItemActions,
   inspectionHasEvidence,
   isChecklistExecutionEditable,
   isChecklistExecutionTerminal,
@@ -27,11 +30,15 @@ import {
   isNonConformityEditable,
   isNonConformityOpen,
   isNonConformityResolved,
+  isPunchItemEditable,
+  isPunchItemOpen,
+  isPunchItemOverdue,
   isValidTemplateItems,
   nextChecklistExecutionStatus,
   nextCorrectiveActionStatus,
   nextInspectionStatus,
   nextNonConformityStatus,
+  nextPunchItemStatus,
   parseChecklistItems,
   summarizeChecklistItems,
   summarizeQualityBoard,
@@ -314,5 +321,74 @@ describe("quadro de qualidade", () => {
     expect(board.nonConformitiesOpen).toBe(3);
     expect(board.correctiveActions).toBe(3);
     expect(board.correctiveActionsOpen).toBe(2);
+  });
+
+  it("conta punch list: abertos fora de CLOSED e vencidos por prazo anterior a hoje", () => {
+    const board = summarizeQualityBoard({
+      templates: [],
+      executions: [],
+      inspections: [],
+      punchItems: [
+        { status: "OPEN", dueDate: "2000-01-01" },
+        { status: "IN_PROGRESS", dueDate: null },
+        { status: "VERIFIED", dueDate: "2000-01-01" },
+        { status: "CLOSED", dueDate: "2000-01-01" },
+      ],
+    });
+
+    expect(board.punchItems).toBe(4);
+    expect(board.punchItemsOpen).toBe(3);
+    expect(board.punchItemsOverdue).toBe(2);
+  });
+});
+
+describe("maquina de estados do item de punch list (E13-US05, §34)", () => {
+  it("fluxo feliz OPEN → ASSIGNED → IN_PROGRESS → READY_FOR_VERIFICATION → VERIFIED → CLOSED", () => {
+    expect(nextPunchItemStatus("OPEN", "ASSIGN")).toBe("ASSIGNED");
+    expect(nextPunchItemStatus("ASSIGNED", "START")).toBe("IN_PROGRESS");
+    expect(nextPunchItemStatus("IN_PROGRESS", "SUBMIT")).toBe("READY_FOR_VERIFICATION");
+    expect(nextPunchItemStatus("READY_FOR_VERIFICATION", "VERIFY")).toBe("VERIFIED");
+    expect(nextPunchItemStatus("VERIFIED", "CLOSE")).toBe("CLOSED");
+    expect(availablePunchItemActions("OPEN")).toEqual(["ASSIGN"]);
+    expect(availablePunchItemActions("READY_FOR_VERIFICATION")).toEqual(["VERIFY", "REJECT"]);
+  });
+
+  it("reprovacao volta a IN_PROGRESS e CLOSED reabre em VERIFIED", () => {
+    expect(nextPunchItemStatus("READY_FOR_VERIFICATION", "REJECT")).toBe("REJECTED");
+    expect(nextPunchItemStatus("VERIFIED", "REJECT")).toBe("REJECTED");
+    expect(nextPunchItemStatus("REJECTED", "REOPEN")).toBe("IN_PROGRESS");
+    expect(nextPunchItemStatus("CLOSED", "REOPEN")).toBe("VERIFIED");
+    expect(availablePunchItemActions("CLOSED")).toEqual(["REOPEN"]);
+  });
+
+  it("sem CANCELLED; acoes fora de ordem retornam null", () => {
+    expect(PUNCH_ITEM_STATUSES).not.toContain("CANCELLED");
+    expect(nextPunchItemStatus("OPEN", "SUBMIT")).toBeNull();
+    expect(nextPunchItemStatus("OPEN", "CLOSE")).toBeNull();
+    expect(nextPunchItemStatus("IN_PROGRESS", "ASSIGN")).toBeNull();
+    expect(nextPunchItemStatus("CLOSED", "VERIFY")).toBeNull();
+    for (const status of PUNCH_ITEM_STATUSES) {
+      expect(PUNCH_ITEM_TRANSITIONS[status]).toBeDefined();
+    }
+  });
+
+  it("edita somente OPEN/ASSIGNED/IN_PROGRESS; aberto ate CLOSED", () => {
+    expect(isPunchItemEditable("OPEN")).toBe(true);
+    expect(isPunchItemEditable("ASSIGNED")).toBe(true);
+    expect(isPunchItemEditable("IN_PROGRESS")).toBe(true);
+    expect(isPunchItemEditable("READY_FOR_VERIFICATION")).toBe(false);
+    expect(isPunchItemEditable("VERIFIED")).toBe(false);
+    expect(isPunchItemOpen("READY_FOR_VERIFICATION")).toBe(true);
+    expect(isPunchItemOpen("VERIFIED")).toBe(true);
+    expect(isPunchItemOpen("REJECTED")).toBe(true);
+    expect(isPunchItemOpen("CLOSED")).toBe(false);
+  });
+
+  it("vencido compara apenas o dia e ignora encerrados ou sem prazo", () => {
+    const now = new Date("2026-03-10T12:00:00Z");
+    expect(isPunchItemOverdue({ status: "IN_PROGRESS", dueDate: "2026-03-09", now })).toBe(true);
+    expect(isPunchItemOverdue({ status: "IN_PROGRESS", dueDate: "2026-03-10", now })).toBe(false);
+    expect(isPunchItemOverdue({ status: "IN_PROGRESS", dueDate: null, now })).toBe(false);
+    expect(isPunchItemOverdue({ status: "CLOSED", dueDate: "2000-01-01", now })).toBe(false);
   });
 });

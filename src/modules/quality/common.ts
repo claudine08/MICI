@@ -28,10 +28,10 @@ export async function assertQualityProject(organizationId: string, projectId: st
   }
 }
 
-// Código automático por projeto e prefixo (CT/CE/IN/NC/CA — §13 identidade).
+// Código automático por projeto e prefixo (CT/CE/IN/NC/CA/PX — §13 identidade).
 export async function nextQualityCode(
   projectId: string,
-  prefix: "CT" | "CE" | "IN" | "NC" | "CA"
+  prefix: "CT" | "CE" | "IN" | "NC" | "CA" | "PX"
 ): Promise<string> {
   let rows: { code: string }[];
   switch (prefix) {
@@ -55,6 +55,12 @@ export async function nextQualityCode(
       break;
     case "CA":
       rows = await prisma.correctiveAction.findMany({
+        where: { projectId },
+        select: { code: true },
+      });
+      break;
+    case "PX":
+      rows = await prisma.punchItem.findMany({
         where: { projectId },
         select: { code: true },
       });

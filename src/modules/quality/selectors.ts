@@ -5,6 +5,7 @@ import {
   availableCorrectiveActionActions,
   availableInspectionActions,
   availableNonConformityActions,
+  availablePunchItemActions,
   isChecklistExecutionEditable,
   isCorrectiveActionEditable,
   isCorrectiveActionOpen,
@@ -12,6 +13,9 @@ import {
   isInspectionOpen,
   isNonConformityEditable,
   isNonConformityOpen,
+  isPunchItemEditable,
+  isPunchItemOpen,
+  isPunchItemOverdue,
   parseChecklistItems,
   summarizeChecklistItems,
   summarizeQualityBoard,
@@ -25,8 +29,11 @@ import {
   type InspectionStatus,
   type NonConformityAction,
   type NonConformityStatus,
+  type PunchItemAction,
+  type PunchItemStatus,
   type QualityBoardCounts,
 } from "@/modules/quality/engine";
+import type { FieldPriority } from "@/modules/field/engine";
 import { assertQualityProject } from "@/modules/quality/common";
 
 // Leituras de qualidade (E13, §33/§34) — sempre escopadas pelo
@@ -384,7 +391,7 @@ export interface QualitySummaryRow {
 export async function listQualitySummaries(
   organizationId: string
 ): Promise<QualitySummaryRow[]> {
-  const [projects, templates, executions, inspections, nonConformities, correctiveActions] =
+  const [projects, templates, executions, inspections, nonConformities, correctiveActions, punchItems] =
     await Promise.all([
       prisma.project.findMany({
         where: { organizationId, deletedAt: null },
@@ -410,6 +417,10 @@ export async function listQualitySummaries(
         where: { organizationId, deletedAt: null },
         select: { id: true, projectId: true, status: true },
       }),
+      prisma.punchItem.findMany({
+        where: { organizationId, deletedAt: null },
+        select: { id: true, projectId: true, status: true, dueDate: true },
+      }),
     ]);
 
   return projects.map((project) => ({
@@ -422,6 +433,7 @@ export async function listQualitySummaries(
       inspections: inspections.filter((item) => item.projectId === project.id),
       nonConformities: nonConformities.filter((item) => item.projectId === project.id),
       correctiveActions: correctiveActions.filter((item) => item.projectId === project.id),
+      punchItems: punchItems.filter((item) => item.projectId === project.id),
     }),
   }));
 }
@@ -657,4 +669,147 @@ export async function getCorrectiveActionRow(
     throw new AppError("NOT_FOUND", "Ação corretiva não encontrada nesta organização.");
   }
   return (await toCorrectiveActionRows([row]))[0];
+}
+
+// ---------------------------------------------------------------------------
+// Punch list (E13-US05, §34)
+// ---------------------------------------------------------------------------
+
+export interface PunchItemRow {
+  id: string;
+  code: string;
+  location: string;
+  description: string;
+  priority: FieldPriority;
+  status: PunchItemStatus;
+  ownerId: string | null;
+  ownerName: string | null;
+  dueDate: string | null;
+  overdue: boolean;
+  wbsNodeId: string | null;
+  wbsNodeCode: string | null;
+  activityId: string | null;
+  activityCode: string | null;
+  photoEvidenceId: string | null;
+  photoEvidenceCode: string | null;
+  correctionEvidenceId: string | null;
+  correctionEvidenceCode: string | null;
+  verificationNotes: string | null;
+  rejectReason: string | null;
+  verifiedById: string | null;
+  verifiedByName: string | null;
+  verifiedAt: string | null;
+  closedAt: string | null;
+  actions: PunchItemAction[];
+  editable: boolean;
+  isOpen: boolean;
+  version: number;
+  createdAt: string;
+}
+
+interface PunchItemRecord {
+  id: string;
+  code: string;
+  location: string;
+  description: string;
+  priority: FieldPriority;
+  status: PunchItemStatus;
+  ownerId: string | null;
+  dueDate: Date | null;
+  wbsNodeId: string | null;
+  wbsNode: { code: string } | null;
+  activityId: string | null;
+  activity: { code: string } | null;
+  photoEvidenceId: string | null;
+  photoEvidence: { code: string } | null;
+  correctionEvidenceId: string | null;
+  correctionEvidence: { code: string } | null;
+  verificationNotes: string | null;
+  rejectReason: string | null;
+  verifiedById: string | null;
+  verifiedAt: Date | null;
+  closedAt: Date | null;
+  version: number;
+  createdAt: Date;
+}
+
+const punchItemInclude = {
+  wbsNode: { select: { code: true } },
+  activity: { select: { code: true } },
+  photoEvidence: { select: { code: true } },
+  correctionEvidence: { select: { code: true } },
+} as const;
+
+async function toPunchItemRows(rows: PunchItemRecord[]): Promise<PunchItemRow[]> {
+  const names = await resolveUserNames(
+    new Set(
+      rows
+        .flatMap((row) => [row.ownerId, row.verifiedById])
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    code: row.code,
+    location: row.location,
+    description: row.description,
+    priority: row.priority,
+    status: row.status,
+    ownerId: row.ownerId,
+    ownerName: row.ownerId ? names.get(row.ownerId) ?? null : null,
+    dueDate: isoDate(row.dueDate),
+    overdue: isPunchItemOverdue({ status: row.status, dueDate: row.dueDate }),
+    wbsNodeId: row.wbsNodeId,
+    wbsNodeCode: row.wbsNode?.code ?? null,
+    activityId: row.activityId,
+    activityCode: row.activity?.code ?? null,
+    photoEvidenceId: row.photoEvidenceId,
+    photoEvidenceCode: row.photoEvidence?.code ?? null,
+    correctionEvidenceId: row.correctionEvidenceId,
+    correctionEvidenceCode: row.correctionEvidence?.code ?? null,
+    verificationNotes: row.verificationNotes,
+    rejectReason: row.rejectReason,
+    verifiedById: row.verifiedById,
+    verifiedByName: row.verifiedById ? names.get(row.verifiedById) ?? null : null,
+    verifiedAt: isoDateTime(row.verifiedAt),
+    closedAt: isoDateTime(row.closedAt),
+    actions: availablePunchItemActions(row.status),
+    editable: isPunchItemEditable(row.status),
+    isOpen: isPunchItemOpen(row.status),
+    version: row.version,
+    createdAt: isoDateTime(row.createdAt)!,
+  }));
+}
+
+export async function listPunchItems(
+  organizationId: string,
+  projectId: string,
+  filters?: { status?: string }
+): Promise<PunchItemRow[]> {
+  await assertQualityProject(organizationId, projectId);
+  const rows = await prisma.punchItem.findMany({
+    where: {
+      organizationId,
+      projectId,
+      deletedAt: null,
+      ...(filters?.status ? { status: filters.status as PunchItemStatus } : {}),
+    },
+    include: punchItemInclude,
+    orderBy: [{ dueDate: "asc" }, { code: "asc" }],
+  });
+  return toPunchItemRows(rows);
+}
+
+export async function getPunchItemRow(
+  organizationId: string,
+  punchItemId: string
+): Promise<PunchItemRow> {
+  const row = await prisma.punchItem.findFirst({
+    where: { id: punchItemId, organizationId, deletedAt: null },
+    include: punchItemInclude,
+  });
+  if (!row) {
+    throw new AppError("NOT_FOUND", "Item de punch list não encontrado nesta organização.");
+  }
+  return (await toPunchItemRows([row]))[0];
 }

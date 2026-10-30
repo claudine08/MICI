@@ -532,6 +532,7 @@ model Project {
   inspections     Inspection[]
   nonConformities NonConformity[]
   correctiveActions CorrectiveAction[]
+  punchItems      PunchItem[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -790,6 +791,7 @@ model WBSNode {
   photos       PhotoEvidence[]
   progressMeasurements ProgressMeasurement[]
   inspections  Inspection[]
+  punchItems   PunchItem[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId, parentId])
@@ -897,6 +899,7 @@ model ScheduleActivity {
   photos        PhotoEvidence[]
   progressMeasurements ProgressMeasurement[]
   inspections   Inspection[]
+  punchItems    PunchItem[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -1764,6 +1767,9 @@ model PhotoEvidence {
   activity ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
   inspection Inspection?     @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
 
+  punchItemPhotos      PunchItem[] @relation("PunchItemPhotoEvidence")
+  punchItemCorrections PunchItem[] @relation("PunchItemCorrectionEvidence")
+
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])
   @@index([organizationId, projectId])
@@ -2073,4 +2079,74 @@ model CorrectiveAction {
   @@index([organizationId, projectId, status])
   @@index([organizationId, nonConformityId])
   @@map("corrective_actions")
+}
+
+// ---------------------------------------------------------------------------
+// E13 Fatia 2b (§34): punch list — itens de correção menores apurados na
+// vistoria/entrega. Fluxo da spec: OPEN → ASSIGNED → IN_PROGRESS →
+// READY_FOR_VERIFICATION → VERIFIED → CLOSED; REJECTED volta a IN_PROGRESS.
+// Campos da spec: location, description, priority, owner, due_date, status,
+// photo_evidence (o "como está"), correction_evidence (o "como ficou"),
+// verified_by e verified_at.
+// ---------------------------------------------------------------------------
+
+enum PunchItemStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  READY_FOR_VERIFICATION
+  VERIFIED
+  REJECTED
+  CLOSED
+
+  @@map("punch_item_status")
+}
+
+model PunchItem {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  projectId      String          @map("project_id") @db.Uuid
+  code           String          @db.VarChar(32)
+  location       String          @db.VarChar(300)
+  description    String          @db.Text
+  priority       FieldPriority   @default(MEDIUM)
+  status         PunchItemStatus @default(OPEN)
+
+  ownerId String?    @map("owner_id") @db.Uuid
+  dueDate DateTime? @map("due_date") @db.Date
+
+  wbsNodeId  String? @map("wbs_node_id") @db.Uuid
+  activityId String? @map("activity_id") @db.Uuid
+
+  // §34: foto do problema (photo_evidence) e da correção (correction_evidence).
+  photoEvidenceId       String? @map("photo_evidence_id") @db.Uuid
+  correctionEvidenceId  String? @map("correction_evidence_id") @db.Uuid
+
+  verificationNotes String? @map("verification_notes") @db.Text
+  rejectReason      String? @map("reject_reason") @db.VarChar(1000)
+
+  verifiedById String?   @map("verified_by") @db.Uuid
+  verifiedAt   DateTime? @map("verified_at")
+  closedAt     DateTime? @map("closed_at")
+  clientUuid   String?   @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project            Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode            WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity           ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  photoEvidence      PhotoEvidence?    @relation("PunchItemPhotoEvidence", fields: [photoEvidenceId], references: [id], onDelete: SetNull)
+  correctionEvidence PhotoEvidence?    @relation("PunchItemCorrectionEvidence", fields: [correctionEvidenceId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@map("punch_items")
 }

@@ -5,7 +5,9 @@ import {
   CORRECTIVE_ACTION_ACTIONS,
   INSPECTION_ACTIONS,
   NON_CONFORMITY_ACTIONS,
+  PUNCH_ITEM_ACTIONS,
 } from "@/modules/quality/engine";
+import { FIELD_PRIORITIES } from "@/modules/field/engine";
 
 // Qualidade (E13, §33): validações de entrada — checklist (modelo e
 // execução) e inspeção. Mesmo estilo do módulo de campo.
@@ -31,6 +33,8 @@ export const checklistExecutionActionSchema = z.enum(CHECKLIST_EXECUTION_ACTIONS
 export const inspectionActionSchema = z.enum(INSPECTION_ACTIONS);
 export const nonConformityActionSchema = z.enum(NON_CONFORMITY_ACTIONS);
 export const correctiveActionActionSchema = z.enum(CORRECTIVE_ACTION_ACTIONS);
+export const punchItemActionSchema = z.enum(PUNCH_ITEM_ACTIONS);
+export const punchItemPrioritySchema = z.enum(FIELD_PRIORITIES);
 
 // Item de checklist: no modelo é texto + obrigatoriedade; na execução
 // ganha o resultado (§33 "atingir o critério").
@@ -157,5 +161,36 @@ export const correctiveActionTransitionSchema = z.object({
   action: correctiveActionActionSchema,
   reason: noteText.optional(),
   actionNotes: longText.optional(),
+  verificationNotes: longText.optional(),
+});
+
+// ---------------------------------------------------------------------------
+// Punch list (E13-US05, §34)
+// ---------------------------------------------------------------------------
+
+export const createPunchItemSchema = z.object({
+  code: qualityCode.optional(),
+  location: z.string().trim().min(1).max(300),
+  description: z.string().trim().min(1).max(4000),
+  priority: punchItemPrioritySchema.optional(),
+  ownerId: z.string().uuid().nullable().optional(),
+  dueDate: isoDate.optional(),
+  wbsNodeId: z.string().uuid().nullable().optional(),
+  activityId: z.string().uuid().nullable().optional(),
+  photoEvidenceId: z.string().uuid().nullable().optional(),
+  clientUuid,
+});
+
+export const updatePunchItemSchema = createPunchItemSchema
+  .partial()
+  .omit({ code: true, clientUuid: true });
+
+// A transição pode carregar o responsável (ASSIGN), a foto da correção
+// (SUBMIT) ou a nota de verificação (VERIFY) junto com a ação.
+export const punchItemTransitionSchema = z.object({
+  action: punchItemActionSchema,
+  reason: noteText.optional(),
+  ownerId: z.string().uuid().nullable().optional(),
+  correctionEvidenceId: z.string().uuid().nullable().optional(),
   verificationNotes: longText.optional(),
 });

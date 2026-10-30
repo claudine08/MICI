@@ -7,20 +7,22 @@ import {
   listCorrectiveActions,
   listInspections,
   listNonConformities,
+  listPunchItems,
 } from "@/modules/quality/selectors";
 import { summarizeQualityBoard } from "@/modules/quality/engine";
 import { listMembers } from "@/modules/identity/selectors";
 import { getWbsTree } from "@/modules/wbs/selectors";
 import { flattenWbsTree } from "@/modules/wbs/engine";
 import { listActivities } from "@/modules/schedule/selectors";
+import { listPhotos } from "@/modules/field/selectors";
 import { QualityView } from "@/components/quality/quality-view";
 import { NoPermission } from "@/components/shell/no-permission";
 
 export const metadata = { title: "Qualidade do projeto" };
 
-// Operação de qualidade do projeto (E13-US01..US04, §33): modelos de
-// checklist, execuções com resposta de itens, inspeções com critério, NCR e
-// ações corretivas.
+// Operação de qualidade do projeto (E13-US01..US05, §33/§34): modelos de
+// checklist, execuções com resposta de itens, inspeções com critério, NCR,
+// ações corretivas e punch list.
 export default async function ProjetoQualidadePage({
   params,
 }: {
@@ -36,16 +38,18 @@ export default async function ProjetoQualidadePage({
 
   const project = await getProjectDetail(context.organizationId, id);
 
-  const [templates, executions, inspections, nonConformities, correctiveActions, members, tree, activityRows] =
+  const [templates, executions, inspections, nonConformities, correctiveActions, punchItems, members, tree, activityRows, photos] =
     await Promise.all([
       listChecklistTemplates(context.organizationId, id),
       listChecklistExecutions(context.organizationId, id),
       listInspections(context.organizationId, id),
       listNonConformities(context.organizationId, id),
       listCorrectiveActions(context.organizationId, id),
+      listPunchItems(context.organizationId, id),
       listMembers(context.organizationId),
       getWbsTree(context.organizationId, id),
       listActivities(context.organizationId, id),
+      listPhotos(context.organizationId, id),
     ]);
 
   const wbsNodes = flattenWbsTree(tree).map((node) => ({
@@ -55,6 +59,10 @@ export default async function ProjetoQualidadePage({
   const activities = activityRows.map((activity) => ({
     id: activity.id,
     label: `${activity.code} → ${activity.name}`,
+  }));
+  const photoOptions = photos.map((photo) => ({
+    id: photo.id,
+    label: `${photo.code} — ${photo.fileName}`,
   }));
 
   const activeMembers = members
@@ -67,6 +75,7 @@ export default async function ProjetoQualidadePage({
     inspections: inspections.map((inspection) => ({ status: inspection.status })),
     nonConformities: nonConformities.map((ncr) => ({ status: ncr.status })),
     correctiveActions: correctiveActions.map((action) => ({ status: action.status })),
+    punchItems: punchItems.map((item) => ({ status: item.status, dueDate: item.dueDate })),
   });
 
   return (
@@ -76,8 +85,8 @@ export default async function ProjetoQualidadePage({
           Qualidade — {project.code} {project.name}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Checklists, inspeções com critério de aceite, NCR e ações corretivas
-          (E13-US01..US04, §33).
+          Checklists, inspeções com critério de aceite, NCR, ações corretivas e
+          punch list (E13-US01..US05, §33/§34).
         </p>
       </div>
       <QualityView
@@ -87,10 +96,12 @@ export default async function ProjetoQualidadePage({
         initialInspections={inspections}
         initialNonConformities={nonConformities}
         initialCorrectiveActions={correctiveActions}
+        initialPunchItems={punchItems}
         board={board}
         members={activeMembers}
         wbsNodes={wbsNodes}
         activities={activities}
+        photos={photoOptions}
         canCreate={can(permissions, "QUALITY", "CREATE")}
         canEdit={can(permissions, "QUALITY", "EDIT")}
         canDelete={can(permissions, "QUALITY", "DELETE")}

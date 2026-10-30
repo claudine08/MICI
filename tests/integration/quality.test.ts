@@ -1,6 +1,7 @@
-// Qualidade (E13, §33): modelos de checklist, execues com snapshot e
+// Qualidade (E13, §33/§34): modelos de checklist, execues com snapshot e
 // respostas, inspees com critrio de aceite e evidncia obrigatoria para
-// PASS/FAIL; NCR automtico na reprovao e acao corretiva (E13-US03/US04).
+// PASS/FAIL; NCR automtico na reprovao e acao corretiva (E13-US03/US04);
+// punch list com fluxo de verificao e evidncia de correo (E13-US05).
 // Estados reais em Postgres + isolamento de tenant.
 
 import { randomBytes, randomUUID } from "node:crypto";
@@ -39,6 +40,12 @@ import {
   transitionCorrectiveAction,
   deleteCorrectiveAction,
 } from "@/modules/quality/corrective-actions";
+import {
+  createPunchItem,
+  updatePunchItem,
+  transitionPunchItem,
+  deletePunchItem,
+} from "@/modules/quality/punch-items";
 import { createPhoto, preparePhotoUpload } from "@/modules/field/photos";
 import {
   getChecklistExecutionRow,
@@ -46,11 +53,13 @@ import {
   getCorrectiveActionRow,
   getInspectionRow,
   getNonConformityRow,
+  getPunchItemRow,
   listChecklistExecutions,
   listChecklistTemplates,
   listCorrectiveActions,
   listInspections,
   listNonConformities,
+  listPunchItems,
   listQualitySummaries,
 } from "@/modules/quality/selectors";
 
@@ -880,5 +889,251 @@ describe("portflio e isolamento de tenant (§33)", () => {
     const row = await getChecklistTemplateRow(orgA.id, template.id);
     expect(row.code).toBe(template.code);
     await expectAppError(getChecklistTemplateRow(orgB.id, template.id), "NOT_FOUND");
+  });
+});
+
+function punchFile(name: string) {
+  const buffer = Buffer.from(`punch-${name}-${Date.now()}`);
+  return preparePhotoUpload({ name, type: "image/png", size: buffer.length, buffer });
+}
+
+describe("punch list (E13-US05, §34)", () => {
+  let punchId: string;
+
+  it("cria com cdigo automtico PX001, prioridade e idempotncia", async () => {
+    const clientUuid = randomUUID();
+    const item = await createPunchItem({
+      ...actorA(),
+      projectId,
+      location: "Bloco A - corredor 2o andar",
+      description: "Retocar pintura descascada no rode.",
+      priority: "LOW",
+      ownerId: userA.id,
+      dueDate: "2099-06-30",
+      clientUuid,
+    });
+    punchId = item.id;
+    expect(item.code).toBe("PX001");
+    expect(item.status).toBe("OPEN");
+
+    const replay = await createPunchItem({
+      ...actorA(),
+      projectId,
+      location: "Bloco A - corredor 2o andar",
+      description: "Retocar pintura descascada no rode.",
+      priority: "LOW",
+      ownerId: userA.id,
+      dueDate: "2099-06-30",
+      clientUuid,
+    });
+    expect(replay.id).toBe(item.id);
+
+    const row = await getPunchItemRow(orgA.id, item.id);
+    expect(row.ownerName).toBe("Quality A");
+    expect(row.dueDate).toBe("2099-06-30");
+    expect(row.priority).toBe("LOW");
+    expect(row.overdue).toBe(false);
+    expect(row.editable).toBe(true);
+  });
+
+  it("foto de evidncia de outro projeto no vincula", async () => {
+    const foreignPhoto = await createPhoto({
+      ...actorA(),
+      projectId: otherProjectId,
+      file: punchFile("foreign.png"),
+    });
+    await expectAppError(
+      createPunchItem({
+        ...actorA(),
+        projectId,
+        location: "Bloco B",
+        description: "No pode usar foto de outro projeto.",
+        photoEvidenceId: foreignPhoto.id,
+        clientUuid: randomUUID(),
+      }),
+      "VALIDATION_ERROR"
+    );
+  });
+
+  it("fluxo OPEN - ASSIGNED - IN_PROGRESS - READY_FOR_VERIFICATION - VERIFIED - CLOSED", async () => {
+    // ASSIGN mantém o responsvel j existente no item
+    const assigned = await transitionPunchItem({
+      ...actorA(),
+      punchItemId: punchId,
+      action: "ASSIGN",
+    });
+    expect(assigned.status).toBe("ASSIGNED");
+    expect(assigned.ownerId).toBe(userA.id);
+
+    const started = await transitionPunchItem({
+      ...actorA(),
+      punchItemId: punchId,
+      action: "START",
+    });
+    expect(started.status).toBe("IN_PROGRESS");
+
+    // SUBMIT exige foto da correcao
+    await expectAppError(
+      transitionPunchItem({ ...actorA(), punchItemId: punchId, action: "SUBMIT" }),
+      "VALIDATION_ERROR"
+    );
+    const photo = await createPhoto({
+      ...actorA(),
+      projectId,
+      caption: "Correo aplicada",
+      file: punchFile("correcao.png"),
+    });
+    const submitted = await transitionPunchItem({
+      ...actorA(),
+      punchItemId: punchId,
+      action: "SUBMIT",
+      correctionEvidenceId: photo.id,
+    });
+    expect(submitted.status).toBe("READY_FOR_VERIFICATION");
+    expect(submitted.correctionEvidenceId).toBe(photo.id);
+
+    // em verificao no edita
+    await expectAppError(
+      updatePunchItem({ ...actorA(), punchItemId: punchId, location: "no pode" }),
+      "CONFLICT"
+    );
+
+    // VERIFY exige verificationNotes e grava verifiedById/At
+    await expectAppError(
+      transitionPunchItem({ ...actorA(), punchItemId: punchId, action: "VERIFY" }),
+      "VALIDATION_ERROR"
+    );
+    const verified = await transitionPunchItem({
+      ...actorA(),
+      punchItemId: punchId,
+      action: "VERIFY",
+      verificationNotes: "Retoque conferido, sem descascamento.",
+    });
+    expect(verified.status).toBe("VERIFIED");
+    expect(verified.verifiedById).toBe(userA.id);
+    expect(verified.verifiedAt).not.toBeNull();
+
+    const closed = await transitionPunchItem({
+      ...actorA(),
+      punchItemId: punchId,
+      action: "CLOSE",
+    });
+    expect(closed.status).toBe("CLOSED");
+    expect(closed.closedAt).not.toBeNull();
+
+    // encerrado vira histrico: no edita nem exclui
+    await expectAppError(
+      updatePunchItem({ ...actorA(), punchItemId: punchId, location: "no pode" }),
+      "CONFLICT"
+    );
+    await expectAppError(deletePunchItem({ ...actorA(), punchItemId: punchId }), "CONFLICT");
+
+    // REOPEN de CLOSED volta para VERIFIED
+    const reopened = await transitionPunchItem({
+      ...actorA(),
+      punchItemId: punchId,
+      action: "REOPEN",
+    });
+    expect(reopened.status).toBe("VERIFIED");
+    expect(reopened.closedAt).toBeNull();
+  });
+
+  it("REJECT exige motivo, volta a IN_PROGRESS e o fluxo pode recomear", async () => {
+    const item = await createPunchItem({
+      ...actorA(),
+      projectId,
+      location: "Bloco C - laje técnica",
+      description: "Recompor contrapiso erodido.",
+      clientUuid: randomUUID(),
+    });
+
+    // ASSIGN exige responsvel quando o item no tem dono
+    await expectAppError(
+      transitionPunchItem({ ...actorA(), punchItemId: item.id, action: "ASSIGN" }),
+      "VALIDATION_ERROR"
+    );
+    await transitionPunchItem({
+      ...actorA(),
+      punchItemId: item.id,
+      action: "ASSIGN",
+      ownerId: userA.id,
+    });
+    await transitionPunchItem({ ...actorA(), punchItemId: item.id, action: "START" });
+    const photo = await createPhoto({
+      ...actorA(),
+      projectId,
+      caption: "Correo da laje",
+      file: punchFile("laje.png"),
+    });
+    await transitionPunchItem({
+      ...actorA(),
+      punchItemId: item.id,
+      action: "SUBMIT",
+      correctionEvidenceId: photo.id,
+    });
+
+    await expectAppError(
+      transitionPunchItem({ ...actorA(), punchItemId: item.id, action: "REJECT" }),
+      "VALIDATION_ERROR"
+    );
+    const rejected = await transitionPunchItem({
+      ...actorA(),
+      punchItemId: item.id,
+      action: "REJECT",
+      reason: "retoque incompleto no canto nordeste",
+    });
+    expect(rejected.status).toBe("REJECTED");
+    expect(rejected.rejectReason).toBe("retoque incompleto no canto nordeste");
+
+    const reopened = await transitionPunchItem({
+      ...actorA(),
+      punchItemId: item.id,
+      action: "REOPEN",
+    });
+    expect(reopened.status).toBe("IN_PROGRESS");
+  });
+
+  it("edita no estado livre, vencido por prazo, filtros e isolamento", async () => {
+    const item = await createPunchItem({
+      ...actorA(),
+      projectId,
+      location: "Bloco D - sacada",
+      description: "Trocar vedao da porta.",
+      clientUuid: randomUUID(),
+    });
+
+    const updated = await updatePunchItem({
+      ...actorA(),
+      punchItemId: item.id,
+      location: "Bloco D - sacada leste",
+      priority: "CRITICAL",
+      dueDate: "2000-01-01",
+    });
+    expect(updated.location).toBe("Bloco D - sacada leste");
+    expect(updated.priority).toBe("CRITICAL");
+
+    const row = await getPunchItemRow(orgA.id, item.id);
+    expect(row.overdue).toBe(true);
+
+    const open = await listPunchItems(orgA.id, projectId, { status: "OPEN" });
+    expect(open.some((entry) => entry.id === item.id)).toBe(true);
+    // punchId foi REOPEN de CLOSED para VERIFIED no teste do fluxo
+    const verifiedList = await listPunchItems(orgA.id, projectId, { status: "VERIFIED" });
+    expect(verifiedList.some((entry) => entry.id === punchId)).toBe(true);
+
+    await expectAppError(getPunchItemRow(orgB.id, item.id), "NOT_FOUND");
+    await expectAppError(listPunchItems(orgB.id, projectId), "NOT_FOUND");
+
+    const removed = await deletePunchItem({ ...actorA(), punchItemId: item.id });
+    expect(removed.punchItemId).toBe(item.id);
+    await expect(getPunchItemRow(orgA.id, item.id)).rejects.toThrow();
+  });
+
+  it("resumo do portflio conta punch list", async () => {
+    const summaries = await listQualitySummaries(orgA.id);
+    const summary = summaries.find((entry) => entry.projectId === projectId);
+    expect(summary).toBeDefined();
+    expect(summary!.board.punchItems).toBeGreaterThan(0);
+    expect(summary!.board.punchItemsOpen).toBeGreaterThan(0);
   });
 });

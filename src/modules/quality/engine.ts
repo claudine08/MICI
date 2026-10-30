@@ -379,6 +379,113 @@ export function isCorrectiveActionOpen(status: CorrectiveActionStatus): boolean 
 }
 
 // ---------------------------------------------------------------------------
+// Punch list (E13-US05, §34)
+// ---------------------------------------------------------------------------
+
+// §34: itens de correção menores apurados na vistoria/entrega. Estados da
+// spec: OPEN, ASSIGNED, IN_PROGRESS, READY_FOR_VERIFICATION, VERIFIED,
+// REJECTED, CLOSED (sem CANCELLED — descarte é soft delete enquanto
+// editável).
+export const PUNCH_ITEM_STATUSES = [
+  "OPEN",
+  "ASSIGNED",
+  "IN_PROGRESS",
+  "READY_FOR_VERIFICATION",
+  "VERIFIED",
+  "REJECTED",
+  "CLOSED",
+] as const;
+
+export type PunchItemStatus = (typeof PUNCH_ITEM_STATUSES)[number];
+
+export const PUNCH_ITEM_STATUS_LABELS_PT: Record<PunchItemStatus, string> = {
+  OPEN: "Aberto",
+  ASSIGNED: "Atribuído",
+  IN_PROGRESS: "Em correção",
+  READY_FOR_VERIFICATION: "Pronto para verificação",
+  VERIFIED: "Verificado",
+  REJECTED: "Reprovado",
+  CLOSED: "Encerrado",
+};
+
+export const PUNCH_ITEM_ACTIONS = [
+  "ASSIGN",
+  "START",
+  "SUBMIT",
+  "VERIFY",
+  "REJECT",
+  "CLOSE",
+  "REOPEN",
+] as const;
+
+export type PunchItemAction = (typeof PUNCH_ITEM_ACTIONS)[number];
+
+export const PUNCH_ITEM_ACTION_LABELS_PT: Record<PunchItemAction, string> = {
+  ASSIGN: "Atribuir",
+  START: "Iniciar correção",
+  SUBMIT: "Enviar para verificação",
+  VERIFY: "Verificar (efetiva)",
+  REJECT: "Reprovar verificação",
+  CLOSE: "Encerrar",
+  REOPEN: "Reabrir",
+};
+
+// Fluxo da spec (qualidade.md): OPEN → ASSIGNED → IN_PROGRESS →
+// READY_FOR_VERIFICATION → VERIFIED → CLOSED. REJECTED volta a IN_PROGRESS;
+// CLOSED reabre em VERIFIED (re-verificação), assim como as ações
+// corretivas.
+export const PUNCH_ITEM_TRANSITIONS: Record<
+  PunchItemStatus,
+  Partial<Record<PunchItemAction, PunchItemStatus>>
+> = {
+  OPEN: { ASSIGN: "ASSIGNED" },
+  ASSIGNED: { START: "IN_PROGRESS" },
+  IN_PROGRESS: { SUBMIT: "READY_FOR_VERIFICATION" },
+  READY_FOR_VERIFICATION: { VERIFY: "VERIFIED", REJECT: "REJECTED" },
+  VERIFIED: { CLOSE: "CLOSED", REJECT: "REJECTED" },
+  REJECTED: { REOPEN: "IN_PROGRESS" },
+  CLOSED: { REOPEN: "VERIFIED" },
+};
+
+export function nextPunchItemStatus(
+  current: PunchItemStatus,
+  action: PunchItemAction
+): PunchItemStatus | null {
+  return PUNCH_ITEM_TRANSITIONS[current]?.[action] ?? null;
+}
+
+export function availablePunchItemActions(current: PunchItemStatus): PunchItemAction[] {
+  return Object.keys(PUNCH_ITEM_TRANSITIONS[current] ?? {}) as PunchItemAction[];
+}
+
+// Só os estados operacionais são editáveis/apagáveis; a partir de
+// READY_FOR_VERIFICATION o registro é histórico (muda-se por transição).
+export function isPunchItemEditable(status: PunchItemStatus): boolean {
+  return status === "OPEN" || status === "ASSIGNED" || status === "IN_PROGRESS";
+}
+
+export function isPunchItemOpen(status: PunchItemStatus): boolean {
+  return status !== "CLOSED";
+}
+
+// Overdue compara apenas o dia (due_date é DATE): venceu se o vencimento é
+// anterior a hoje e o item ainda não foi encerrado.
+export function isPunchItemOverdue(input: {
+  status: PunchItemStatus;
+  dueDate: Date | string | null;
+  now?: Date;
+}): boolean {
+  if (!input.dueDate || input.status === "CLOSED") return false;
+  const due =
+    typeof input.dueDate === "string" ? new Date(input.dueDate) : input.dueDate;
+  if (Number.isNaN(due.getTime())) return false;
+  const now = input.now ?? new Date();
+  const dueDay = Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return dueDay < today;
+}
+
+// ---------------------------------------------------------------------------
 // Resumo do quadro de qualidade (página portfólio e home do projeto)
 // ---------------------------------------------------------------------------
 
@@ -397,6 +504,9 @@ export interface QualityBoardCounts {
   nonConformitiesOpen: number;
   correctiveActions: number;
   correctiveActionsOpen: number;
+  punchItems: number;
+  punchItemsOpen: number;
+  punchItemsOverdue: number;
 }
 
 export function summarizeQualityBoard(input: {
@@ -405,11 +515,13 @@ export function summarizeQualityBoard(input: {
   inspections: { status: InspectionStatus }[];
   nonConformities?: { status: NonConformityStatus }[];
   correctiveActions?: { status: CorrectiveActionStatus }[];
+  punchItems?: { status: PunchItemStatus; dueDate: Date | string | null }[];
 }): QualityBoardCounts {
   const byStatus = (status: InspectionStatus) =>
     input.inspections.filter((inspection) => inspection.status === status).length;
   const ncrs = input.nonConformities ?? [];
   const actions = input.correctiveActions ?? [];
+  const punch = input.punchItems ?? [];
 
   return {
     templates: input.templates.length,
@@ -428,5 +540,10 @@ export function summarizeQualityBoard(input: {
     correctiveActions: actions.length,
     correctiveActionsOpen: actions.filter((action) => isCorrectiveActionOpen(action.status))
       .length,
+    punchItems: punch.length,
+    punchItemsOpen: punch.filter((item) => isPunchItemOpen(item.status)).length,
+    punchItemsOverdue: punch.filter((item) =>
+      isPunchItemOverdue({ status: item.status, dueDate: item.dueDate })
+    ).length,
   };
 }
