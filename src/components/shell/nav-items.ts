@@ -18,6 +18,7 @@ import {
   Settings,
   HardHat,
   ClipboardCheck,
+  ShoppingCart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,6 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Mudanças", href: "/mudancas", icon: GitPullRequestArrow },
       { label: "Campo", href: "/campo", icon: HardHat },
       { label: "Qualidade", href: "/qualidade", icon: ClipboardCheck },
+      { label: "Suprimentos", href: "/suprimentos", icon: ShoppingCart },
       { label: "Relatórios", icon: FileBarChart2, soon: true },
     ],
   },
