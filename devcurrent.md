@@ -8,20 +8,20 @@
 > por sessão, mas apenas para consulta histórica — não são mais a fonte de
 > retomada. Profundidade de um módulo: `qualidade.md` etc.
 
-**Última atualização:** 29/10/2026 (E12-backlog Fatia 1 — PWA/fila offline em produção, smoke verde)
+**Última atualização:** 29/10/2026 (E12-backlog Fatia 2 — fotos offline + regra de conflito, gate verde, não commitada)
 
 ---
 
 ## 1. Estado atual (resumo de 1 linha)
 
-E01–E13 completos e em produção; **E12-backlog Fatia 1 (manifest + SW +
-fila offline de criações + indicador de pendências) DEPLOYADA em 29/10**
-(commit feat `116bd7a`, deployment `mici-a2yyxu4dd-homeland1`, smoke verde:
-`/manifest.webmanifest` e `/sw.js` → 200). Gate completo: lint/typecheck/238
-unit/266 integração/build. **Próxima frente: Fatia 2 do backlog E12 (fotos
-offline + conflito + testes)** ou E14+.
+E01–E13 completos e em produção; **E12-backlog Fatia 1 DEPLOYADA** (commit
+`116bd7a`, deployment `mici-a2yyxu4dd-homeland1`, smoke verde). **Fatia 2
+(fotos offline + regra de conflito de edição) com código pronto e gate
+completo verde** (lint/typecheck/251 unit/267 integração/build) — **ainda não
+commitada nem deployada** (commit só sob pedido). Próximos: commit+deploy da
+Fatia 2, depois E14+.
 
-Working tree limpa, `main` pushada (`0f13e2d`).
+Working tree limpa menos a Fatia 2; `main` pushada até `4fd591b`.
 
 ## 2. Ambiente e comandos (não precisa rediscover)
 
@@ -34,7 +34,7 @@ Working tree limpa, `main` pushada (`0f13e2d`).
 | Banco local | PostgreSQL 17 portátil em `%LOCALAPPDATA%\PostgreSQL17-data`; **sobe via tarefa agendada `mici-postgres`** (settings corrigidas 29/10: `AllowStartIfOnBatteries=True`; start via shell direto morre com `0xC0000142`) |
 | Dev local | `npm run dev` → `http://localhost:3000`; seed demo: 5 usuários, login `admin@mici.demo` / `Demo@1234` |
 | `.env*` | `DATABASE_URL` local usa `127.0.0.1` (Prisma não conecta em `localhost`/IPv6 nesta máquina). `prisma7.config.ts` carrega `.env` via dotenv (não `.env.local`) |
-| Testes | `npm test` (unit/Vitest 5) · `MICI_TEST_NO_RESET=1 npm run test:integration` (global-setup pula `--force-reset`; banco `mici_test` já sincronizado via `prisma db push`) — **última execução: 238 unit / 17 arquivos + 266 integração / 14 arquivos, todos verdes** |
+| Testes | `npm test` (unit/Vitest 5) · `MICI_TEST_NO_RESET=1 npm run test:integration` (global-setup pula `--force-reset`; banco `mici_test` já sincronizado via `prisma db push`) — **última execução: 251 unit / 17 arquivos + 267 integração / 14 arquivos, todos verdes** |
 | Gate padrão entre fases | `npm run lint` · `npm run typecheck` · `npm test` · `MICI_TEST_NO_RESET=1 npm run test:integration` · `npm run build` — tudo verde antes de commitar |
 | Deploy (fluxo fixo) | 1) commit `feat:` + push → 2) `prisma migrate deploy` com `DATABASE_URL` do `.env.local` (setar env antes; dotenv não sobrescreve) → 3) `npx vercel --prod` → 4) smoke autenticado → 5) commit `docs:` (DIARIO+ROADMAP+md do módulo) + push |
 | Smoke autenticado | POST `/api/auth/csrf` → POST `/api/auth/callback/credentials` (email/password/csrfToken, `json=true`, seguir 302) → bater nas rotas com a WebSession; sem sessão deve dar 401 |
@@ -92,6 +92,42 @@ Gate 29/10: lint ✓ · typecheck ✓ · 238 unit/17 arquivos ✓ · 266 integra
 arquivos ✓ · build ✓ (`/manifest.webmanifest` gerado). Deploy posterior:
 `vercel --prod` sem migration (só front-end) + smoke verde.
 
+**STATUS 29/10/2026 (noite) — Fatia 2 PRONTA, NÃO COMMITADA** (gate verde,
+sem migration — é só front-end/app):
+
+- `src/lib/offline-queue.ts` (estendido): `OfflineEntity += "photo"`;
+  `method?: "POST"|"PATCH"` no item (legado sem method → POST);
+  `enqueuePhoto` persiste `file: Blob` + `fileName`/`mimeType`;
+  `buildFormDataFor(item)` monta o multipart; **`sendQueuedItem(item, transport)`**
+  com `QueueTransport {json, upload}` injetável (produção: `apiRequest`/`apiUpload`;
+  testes: mock puro); `sendOrQueueEdit` (PATCH) e `sendOrQueuePhoto` (multipart);
+  `listQueueItems()`; `sendOrQueueWith` compartilhado por create/edit.
+- **Bug fix na rota de fotos** (`POST field/photos`): o `clientUuid` do FormData
+  **era ignorado** (não estava em `rawFields`) — o reenvio da fila duplicava a
+  foto. Parse extraído para `photoUploadFields(formData)` em
+  `src/modules/field/photos.ts` (testável sem HTTP; rota agora delega).
+- `src/components/field/field-view.tsx`:
+  - **Foto offline**: `submitPhoto` valida MIME (allowlist igual ao server) e
+    teto de 4 MB **antes** de enviar/enfileirar (arquivo inválido não vira
+    "falha" muda na fila); criação via `sendOrQueuePhoto` (online usa
+    `apiUpload`/XHR com diagnóstico, em vez do `fetch` cru); edição de foto
+    continua online-only (não tem rascunho).
+  - **Edições offline (regra de conflito)**: diário/tarefa/restrição enfileiram
+    PATCH **só se editáveis na hora** (`isDiaryEditable` = DRAFT/REJECTED,
+    `isTaskEditable`, `isConstraintEditable`); senão, PATCH online direto.
+    Medição (sem máquina de estados) enfileira sempre — last-wins puro.
+  - Transições (`/status`) e deletes continuam **sempre online**.
+- Testes: `tests/unit/offline-queue.test.ts` +13 (foto/Blob, multipart,
+  despacho POST/PATCH, sendOrQueueEdit/Photo sent/queued/4xx, flush mista
+  FIFO) · `tests/integration/field.test.ts` +1 (idempotência de foto com
+  `clientUuid` no serviço + `photoUploadFields` extraíndo clientUuid/form
+  inválido → VALIDATION_ERROR).
+
+Gate Fatia 2: lint ✓ · typecheck ✓ · **251 unit/17** ✓ · **267 integração/14**
+✓ · build ✓. **Playwright não montado**: não existe infra e2e no repo
+(sem `playwright.config`) — mock de offline coberto no Vitest (transporte
+injetável + `navigator.onLine` stub); e2e real fica opcional/futuro.
+
 ### 4.1 O que já existe (base pronta — reaproveitar)
 
 - **`clientUuid` idempotente em TODAS as 5 entidades de campo** (schema:
@@ -115,7 +151,14 @@ arquivos ✓ · build ✓ (`/manifest.webmanifest` gerado). Deploy posterior:
 3. **Sync engine no cliente**: enviar fila em ordem FIFO por entidade; tratar 4xx (erro de negócio → marcar como falha definitiva e mostrar ao usuário) vs 5xx/timeout (repetir).
 4. **Upload de fotos offline**: enfileirar Blob/FormData e reenviar (atenção ao teto de 4 MB e SHA-256).
 5. **UI de status**: indicador "N pendentes de sincronizar", fila visível (erros reenviáveis vs definitivos), ação "sincronizar agora".
-6. **Conflitos**: definição mínima — hoje `clientUuid` evita duplicata; divergência de conteúdo (dois dispositivos no mesmo diário) precisa de regra (ex.: último-wins no rascunho DRAFT, transições sempre revalidadas).
+6. **Conflitos**: ✅ **regra definida e implementada na Fatia 2** —
+   (a) creates são idempotentes por `clientUuid` (replay devolve o original);
+   (b) **edição offline só de entidade editável na hora** (rascunho DRAFT/
+   REJECTED, tarefa/restrição abertas) com **último-wins no conteúdo**; no
+   replay o **servidor revalida a máquina de estados** (se outro dispositivo
+   mudou o status, PATCH → 4xx → item `failed` visível para descartar);
+   (c) transições e deletes são **sempre online**; (d) medição não tem estado →
+   last-wins puro.
 
 ### 4.3 Restrições/decisões de ambiente
 
@@ -126,7 +169,7 @@ arquivos ✓ · build ✓ (`/manifest.webmanifest` gerado). Deploy posterior:
 ### 4.4 Fatia sugerida (mesmo padrão de fases anteriores)
 
 - **Fatia 1**: manifest + SW (cache de shell) + fila IndexedDB de creates simples (diário/tarefa/restrição/medição) + indicador de pendências. **✅ EM PRODUÇÃO 29/10 (commit `116bd7a`, smoke verde).**
-- **Fatia 2**: fotos offline + tratamento de conflito + "sincronizar agora" + testes (mock de offline no Vitest/Playwright — `@playwright/test` já está em devDependencies). Obs.: "sincronizar agora" já entrou na Fatia 1; resto segue pendente. Conflito de conteúdo (2 dispositivos no mesmo diário) ainda sem regra — último-wins em DRAFT é a candidata.
+- **Fatia 2**: fotos offline + tratamento de conflito + "sincronizar agora" + testes (mock de offline no Vitest/Playwright). **✅ PRONTA 29/10 (gate verde; falta commitar/deployar).** "Sincronizar agora" entrou na Fatia 1; conflito resolvido no §4.2.6; testes no Vitest (Playwright: sem infra e2e no repo, ficou de fora — ver STATUS Fatia 2).
 
 ## 5. Restante do roadmap (após E12-backlog)
 

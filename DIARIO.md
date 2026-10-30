@@ -1362,3 +1362,60 @@ do E12 — PWA/fila offline, Fatia 1** (`devcurrent.md` §4.4).
 - **Fatia 1 do backlog E12 em produção**; working tree limpa, `main` pushada
   (`0f13e2d`). Próximo passo decidido com o usuário: **Fatia 2** (fotos
   offline + regra de conflito + testes) ou **E14 Procurement**.
+
+## 29/10/2026 (noite, parte 2) — E12-backlog, Fatia 2 (fotos offline + conflito)
+
+Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
+
+### Bug fix encontrado no caminho
+
+- A rota **`POST /field/photos` ignorava o `clientUuid` do multipart** (não
+  estava no `rawFields`), embora o schema aceitasse e `createPhoto` fizesse
+  replay: **o reenvio da fila offline duplicaria a foto** em vez de devolver
+  o original. Corrigido extraindo o parse para
+  **`photoUploadFields(formData)`** em `src/modules/field/photos.ts`
+  (testável sem HTTP — a rota agora delega).
+
+### O que entrou
+
+- **`src/lib/offline-queue.ts`** (estendido, compatível com itens da Fatia 1
+  gravados no IndexedDB):
+  - entity `"photo"` com **`file: Blob` persistido** + `fileName`/`mimeType`;
+  - `method?: POST|PATCH` por item (legado sem method = POST);
+  - `buildFormDataFor` monta o multipart; **`sendQueuedItem(item, transport)`**
+    com `QueueTransport {json, upload}` **injetável** (produção usa
+    `apiRequest`/`apiUpload`; testes usam mock puro);
+  - `sendOrQueueEdit` (PATCH) e `sendOrQueuePhoto` (multipart) com a mesma
+    classificação: online → envia; offline/ApiError 0 → fila; 4xx → relança.
+- **Fotos offline** (`field-view.tsx`): validação de **MIME (allowlist) e teto
+  de 4 MB antes** de enviar/enfileirar (evita 4xx surpresa no replay); envio
+  online trocado do `fetch` cru pelo **`apiUpload`** (XHR com diagnóstico);
+  enfileirado → "foto salva offline (até 4 MB)".
+- **Regra de conflito implementada** (§4.2.6 do `devcurrent.md`):
+  - criações: idempotência por `clientUuid` (já existia);
+  - **edição offline só de entidade editável na hora** (diário DRAFT/REJECTED,
+    tarefa/restrição abertas via `is*Editable` do engine) — **último-wins no
+    rascunho**; no replay o **servidor revalida o status** (4xx → `failed`
+    visível, descartável pelo banner);
+  - medição (sem estados) enfileira sempre (last-wins puro);
+  - transições e deletes continuam **sempre online**.
+- **Testes**: unit +13 (`offline-queue.test.ts`: Blob, multipart, despacho
+  POST/PATCH, edit/photo sent/queued/4xx, flush mista FIFO) · integração +1
+  (`field.test.ts`: replay de foto por `clientUuid` no serviço + parse do
+  multipart extraindo `clientUuid` e rejeitando `diaryId` inválido).
+
+### Gate (29/10, 23h30) — tudo verde
+
+- `npm run lint` ✅ · `npm run typecheck` ✅
+- `npm test` ✅ **251 unit / 17 arquivos** (+13) ·
+  `MICI_TEST_NO_RESET=1 npm run test:integration` ✅ **267 / 14** (+1)
+- `npm run build` ✅
+- **Playwright ficou de fora**: o repo não tem infra e2e (sem
+  `playwright.config`); o mock de offline está coberto no Vitest (transporte
+  injetável + stub de `navigator.onLine`). E2E real é opcional/futuro.
+
+### Estado
+
+- **Fatia 2 pronta, gate verde, não commitada** (commits só sob pedido do
+  usuário, como sempre). Próximo: commit `feat:` + deploy (sem migration) +
+  smoke, depois E14+ ou o que o usuário decidir.
