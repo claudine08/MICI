@@ -1187,3 +1187,92 @@ inspeção reprova (FAIL)**; **2b** = punch list (E13-US05, §34).
 - **Estado no fim do dia**: working tree só com os docs desta entrada
   (`DIARIO.md` + `qualidade.md`), commitados em seguida; Neon migrado e
   smoke verde. Nada pela metade.
+
+## 29/10/2026 — E13 Quality, Fatia 2b (punch list)
+
+**E13 completo no código**: punch list (E13-US05, §34) implementada de ponta
+a ponta — `PunchItem` com os 7 estados da spec, verificação com evidência de
+correção e aba própria na UI. Sem deploy nesta entrada (Neon pendente).
+
+### Schema e migration
+
+- `prisma/schema.prisma`: enum `punch_item_status`
+  (OPEN/ASSIGNED/IN_PROGRESS/READY_FOR_VERIFICATION/VERIFIED/REJECTED/CLOSED —
+  **sem CANCELLED**, fiel à §34; descarte é soft delete) e modelo
+  `PunchItem` (PXxxx, `@@unique([projectId, code])`, `clientUuid`
+  idempotente, `priority` reutiliza o enum `FieldPriority`,
+  `wbsNodeId`/`activityId` opcionais com `SET NULL`, **duas fotos** —
+  `photoEvidenceId` "como está" e `correctionEvidenceId` "como ficou" — via
+  relations nomeadas `PunchItemPhotoEvidence`/`PunchItemCorrectionEvidence`
+  em `PhotoEvidence`, `verificationNotes`, `rejectReason`, `verifiedById`,
+  `verifiedAt`, `closedAt`); reverse relations em `Project`, `WBSNode`,
+  `ScheduleActivity` e `PhotoEvidence`.
+- Migration `20261029120000_phase14_punch` gerada com
+  `prisma migrate diff --from-migrations --to-schema` (Prisma 7), aplicada no
+  dev (`migrate deploy`, 16ª de 16) e sincronizada no `mici_test`
+  (`db push`); client regenerado (7.10.0).
+- **Postgres local**: a tarefa agendada `mici-postgres` ficava "Queued" por
+  `DisallowStartIfOnBatteries=True` — corrigido com
+  `Set-ScheduledTask -Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries …)`;
+  start direto via shell continua morto por `0xC0000142` (árvore de processos
+  do agente), como registrado em 15/10.
+
+### Domínio (`src/modules/quality/`)
+
+- `engine.ts`: máquina punch (`OPEN →(ASSIGN) ASSIGNED →(START) IN_PROGRESS
+  →(SUBMIT) READY_FOR_VERIFICATION →(VERIFY) VERIFIED →(CLOSE) CLOSED`,
+  `REJECT` de READY/VERIFIED → REJECTED →(REOPEN) IN_PROGRESS, CLOSED
+  →(REOPEN) VERIFIED), rótulos PT, helpers (`isPunchItemEditable/Open`,
+  `isPunchItemOverdue` — vencido = prazo DATE anterior a hoje e ≠ CLOSED) e
+  quadro estendido (`punchItems`, `punchItemsOpen`, `punchItemsOverdue`).
+- `common.ts`: `nextQualityCode` aceita `PX`.
+- `punch-items.ts` (novo): CRUD + transições com as regras da §33/§34 —
+  `ASSIGN` exige responsável (membro ativo), `SUBMIT` exige
+  `correctionEvidenceId` (foto da correção, validada no projeto), `VERIFY`
+  exige `verificationNotes` e grava `verifiedById`+`verifiedAt`, `REJECT`
+  exige motivo (`rejectReason`), `REOPEN` de CLOSED limpa `closedAt`;
+  idempotência `clientUuid`, exclusão lógica só em OPEN/ASSIGNED/IN_PROGRESS,
+  audit + eventos `Quality.PunchItem.*`.
+- `schemas.ts`/`selectors.ts`: schemas zod (`createPunchItemSchema`,
+  `updatePunchItemSchema`, `punchItemTransitionSchema` com
+  `ownerId`/`correctionEvidenceId` no payload da transição) e
+  `PunchItemRow`/`listPunchItems`/`getPunchItemRow` (owner/verificador
+  resolvidos, `overdue`, ações disponíveis); `listQualitySummaries` passa a
+  contar punch items no board.
+
+### API e telas
+
+- **3 rotas novas** em `/api/v1/projects/[id]/quality/punch-items`
+  (GET/POST + `[punchItemId]` GET/PATCH/DELETE + `[punchItemId]/status`
+  POST), permissões `QUALITY:*`, mesmo padrão das demais.
+- `quality-view.tsx`: **6 abas** (nova "Punch list" com tabela localização /
+  descrição / prioridade / responsável / prazo vencido em vermelho / status,
+  CRUD e transições), quadro com "Punch list abertos" e "Punch list
+  vencidos", diálogo de transição estendido (sele de responsável no `ASSIGN`,
+  sele de foto da correção no `SUBMIT`, motivo também no `REJECT`) e diálogo
+  de criação/edição (localização, descrição, prioridade `FieldPriority`,
+  responsável, prazo, foto do problema, WBS, atividade);
+  `projetos/[id]/qualidade/page.tsx` carrega `listPunchItems` e `listPhotos`
+  (sele de fotos) e alimenta o board.
+
+### Verificação (gate ✅)
+
+- `eslint` 0 · `tsc --noEmit` limpo · **226 unit / 16 arquivos** (+6 em
+  `tests/unit/quality-engine.test.ts`: máquina punch completa, ausência de
+  CANCELLED, editable/aberto, `isPunchItemOverdue` por dia, board com punch) ·
+  **266 integração / 14 arquivos** (+6 em `tests/integration/quality.test.ts`:
+  PX001 + idempotência, foto de outro projeto barrada, fluxo completo
+  ASSIGN→CLOSE com regras de ASSIGN/SUBMIT/VERIFY, REJECT com motivo e
+  retorno a IN_PROGRESS, edição/vencido/filtros/isolamento, resumo do
+  portfólio).
+- Integração rodou com `MICI_TEST_NO_RESET=1` (schema já sincronizado via
+  `db push` — evita o `--force-reset` que exige consentimento).
+
+### Estado
+
+- Commitado e no ar no banco: `feat:` **`01a0966`** em `main` + push (14
+  arquivos, +1739 linhas); `20261029120000_phase14_punch` **aplicada no Neon**
+  (16ª de 16, via `prisma migrate deploy` com a URL do `.env.local`).
+- **Pendente**: `vercel --prod` (deploy da Fatia 2b) + smoke — commit `docs:`
+  desta entrada registra o estado até o migrate deploy.
+- **E13 fechado no código**; próximo épico/decisão a cargo do usuário.

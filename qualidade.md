@@ -1,14 +1,15 @@
-# Qualidade — fluxo de modelos, execuções, inspeções, NCR e ações corretivas (E13)
+# Qualidade — fluxo de modelos, execuções, inspeções, NCR, ações corretivas e punch list (E13)
 
 > Fonte: código em `src/modules/quality/`, `prisma/schema.prisma` (§33/§34) e
-> registro em `DIARIO.md` (E13 Fatia 1, 24/10/2026; Fatia 2a, 27/10/2026).
-> **Status: Fatia 1 + Fatia 2a no ar** (modelos, execuções, inspeções, NCR e
-> ação corretiva).
-> **Fatia 2b pendente**: punch list (E13-US05, §34).
+> registro em `DIARIO.md` (E13 Fatia 1, 24/10/2026; Fatia 2a, 27/10/2026;
+> Fatia 2b, 29/10/2026).
+> **Status: E13 completo no código** (modelos, execuções, inspeções, NCR,
+> ação corretiva e punch list). Fatia 1 + 2a em produção; **Fatia 2b: código
+> commitado (`01a0966`) e schema no Neon — `vercel --prod` pendente**.
 
 ---
 
-## 1. Os seis conceitos
+## 1. Os sete conceitos
 
 | Conceito | Entidade | O que é | Código |
 |---|---|---|---|
@@ -17,7 +18,8 @@
 | **Inspeção** | `Inspection` | Verificação planejada com **critério de aceite obrigatório**, data, responsável e vínculos WBS/atividade. É o "caso" que sustenta o resultado. | `IN001`, `IN002`… |
 | **Não conformidade (NCR)** | `NonConformity` | O desvio constatado. **Nascida automaticamente** quando a inspeção falha (FAIL) — ou registrada manualmente. Gateia o encerramento da inspeção. | `NC001`, `NC002`… |
 | **Ação corretiva** | `CorrectiveAction` | O que fazer para resolver o NCR, com **responsável e prazo**. Sem ela o NCR não anda. | `CA001`, `CA002`… |
-| **Evidência** | `PhotoEvidence` | Foto de prova material. Pode ser vinculada a **inspeção** (`inspectionId`), **diário**, **WBS** ou **atividade**. | `PH001`… |
+| **Punch list** | `PunchItem` | Item de **correção menor** apurado na vistoria/entrega (§34): localização, descrição, prioridade, responsável, prazo, **foto do problema** e **foto da correção**; fluxo próprio com verificação. | `PX001`, `PX002`… |
+| **Evidência** | `PhotoEvidence` | Foto de prova material. Pode ser vinculada a **inspeção** (`inspectionId`), **diário**, **WBS**, **atividade** ou **punch list** (`photoEvidenceId`/`correctionEvidenceId`). | `PH001`… |
 
 Relações:
 - Modelo **1 → N** Execuções (a execução guarda `templateCode`/`templateName` no snapshot).
@@ -25,6 +27,9 @@ Relações:
 - Inspeção **1 → N** Fotos (`inspectionId` em `photo_evidence`).
 - Inspeção **1 → N** NCRs (`inspectionId` em `non_conformity`, `ON DELETE SET NULL`).
 - NCR **1 → N** Ações corretivas (`nonConformityId`, exclusão em cascata).
+- Projeto **1 → N** Punch items; punch item **N → 1** WBS/atividade (opcionais,
+  `SET NULL`) e **N → 1** foto em cada um dos dois papéis (`photo_evidence_id`
+  "como está", `correction_evidence_id` "como ficou"; `SET NULL`).
 
 ---
 
@@ -95,6 +100,35 @@ Relações:
 │      │                  └──CANCEL (motivo)──► CANCELLED        CLOSED    │
 │    CLOSED ──REOPEN──► VERIFIED · CANCELLED ──REOPEN──► OPEN             │
 │    COMPLETE exige actionNotes · VERIFY exige verificationNotes          │
+└───────────────────────────────────┬──────────────────────────────────────┘
+                                    │ paralelo — correções menores da
+                                    │ vistoria/entrega (§34)
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 6. PUNCH LIST (PunchItem) — PXxxx                                        │
+│    criar: localização, descrição, prioridade, responsável, prazo,        │
+│           foto do problema (opcional) → status OPEN                      │
+│    OPEN ──ASSIGN──► ASSIGNED ──START──► IN_PROGRESS ──SUBMIT──► READY    │
+│                                                            FOR_VERIFICAT.│
+│      └── (sem dono, ASSIGN falha)          │              │              │
+│                                            │              ├──VERIFY──►   │
+│                                            │              │  VERIFIED ── │
+│                                            │              │  (CLOSE──►   │
+│                                            │              │   CLOSED;    │
+│                                            │              │   REJECT─┐   │
+│                                            │              │  VERIFIED◄──┘│
+│                                            │              └──REJECT──►   │
+│                                            │                    REJECTED │
+│                                            │                       │      │
+│                                            │    SUBMIT exige foto da      │
+│                                            │    correção (correctionEvidence│
+│                                            │    Id); VERIFY exige         │
+│                                            │    verificationNotes e grava  │
+│                                            │    verifiedBy/At; REJECT     │
+│                                            │    exige motivo e volta a     │
+│                                            │    IN_PROGRESS               │
+│                                            └── REOPEN (de REJECTED) ──────┘
+│    CLOSED ──REOPEN──► VERIFIED · sem CANCELLED (descarte = soft delete)  │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -194,6 +228,36 @@ Regras do writer (`corrective-actions.ts`):
 - Só edita (título/descrição/responsável/prazo) em `OPEN`/`IN_PROGRESS`.
 - Responsável precisa ser membro ativo do projeto (`assertMember`).
 
+### 3.5 Punch list (`engine.ts` + `punch-items.ts`)
+
+| Status | Rótulo PT | Ações disponíveis | Editável? |
+|---|---|---|---|
+| `OPEN` | Aberto | `ASSIGN` (→ ASSIGNED) | sim |
+| `ASSIGNED` | Atribuído | `START` (→ IN_PROGRESS) | sim |
+| `IN_PROGRESS` | Em correção | `SUBMIT` (→ READY_FOR_VERIFICATION) | sim |
+| `READY_FOR_VERIFICATION` | Pronto para verificação | `VERIFY` (→ VERIFIED), `REJECT` (→ REJECTED) | não (histórico) |
+| `VERIFIED` | Verificado | `CLOSE` (→ CLOSED), `REJECT` (→ REJECTED) | não |
+| `REJECTED` | Reprovado | `REOPEN` (→ IN_PROGRESS) | não |
+| `CLOSED` | Encerrado | `REOPEN` (→ VERIFIED) | não |
+
+Sem `CANCELLED` (a spec §34 não define cancelamento): o descarte é exclusão
+lógica enquanto o item é editável — depois disso, reabra para editar.
+
+Regras do writer (`punch-items.ts`):
+- `ASSIGN` exige responsável (`ownerId` no payload ou já gravado no item);
+  validado como membro ativo.
+- `SUBMIT` exige **foto da correção** (`correctionEvidenceId` no payload ou
+  já gravada) — a §33 "evidência adequada" aplicada ao item.
+- `VERIFY` exige `verificationNotes` e grava `verifiedById` (ator) +
+  `verifiedAt`; `REJECT` exige `reason` (motivo) e grava `rejectReason`.
+- `REOPEN` de `CLOSED` limpa `closedAt` e volta a `VERIFIED` (re-verificação).
+- Só edita (localização/descrição/prioridade/responsável/prazo/vínculos/fotos)
+  em `OPEN`/`ASSIGNED`/`IN_PROGRESS`; exclusão lógica nos mesmos status.
+- Fotos (problema e correção) precisam pertencer ao mesmo projeto; responsável
+  é membro ativo; WBS/atividade validados por `assertFieldLinks`.
+- `isPunchItemOverdue`: vencido = prazo (DATE) anterior a **hoje** e status
+  diferente de `CLOSED` — usado no board (`punchItemsOverdue`).
+
 ---
 
 ## 4. Regras de negócio (gravadas nos writers)
@@ -234,17 +298,25 @@ Regras do writer (`corrective-actions.ts`):
 - Idempotência offline por `clientUuid`; transições conforme §3.4.
 - Exclusão lógica só em `OPEN`/`IN_PROGRESS`.
 
+**Punch list (`punch-items.ts`)**
+- `location`/`description` obrigatórios; prioridade reutiliza `FieldPriority`
+  (LOW/MEDIUM/HIGH/CRITICAL, padrão MEDIUM).
+- Idempotência offline por `clientUuid`; transições conforme §3.5.
+- Exclusão lógica só em `OPEN`/`ASSIGNED`/`IN_PROGRESS`.
+- Vínculos WBS/atividade e as duas fotos validados contra o projeto.
+
 **Transversal (módulo `common.ts`, reutiliza o módulo de campo)**
 - Escopo de tenant sempre validado (`assertQualityProject`).
 - Código automático por projeto: `CT` (modelo), `CE` (execução),
-  `IN` (inspeção), `NC` (NCR), `CA` (ação corretiva) — sequencial de 3 dígitos
-  (`CT001`).
+  `IN` (inspeção), `NC` (NCR), `CA` (ação corretiva), `PX` (punch list) —
+  sequencial de 3 dígitos (`CT001`).
 - Idempotência offline por `clientUuid` (`@@unique([projectId, clientUuid])`
-  em execução, inspeção, NCR e ação corretiva): reenvio devolve o registro
-  original.
+  em execução, inspeção, NCR, ação corretiva e punch item): reenvio devolve o
+  registro original.
 - Toda escrita gera `AuditEvent` (CREATE/UPDATE/DELETE/ação) e `DomainEvent`
   (`Quality.ChecklistTemplate.*`, `Quality.ChecklistExecution.*`,
-  `Quality.Inspection.*`, `Quality.NonConformity.*`, `Quality.CorrectiveAction.*`).
+  `Quality.Inspection.*`, `Quality.NonConformity.*`, `Quality.CorrectiveAction.*`,
+  `Quality.PunchItem.*`).
 - Campos de data: `inspectionDate`, `dueDate` (DATE) e datas de transição
   (`executedAt`, `closedAt`, `completedAt`, `correctedAt`, `verifiedAt`).
 
@@ -263,7 +335,7 @@ Mostrado na tela de inspeções como `N foto(s) · M checklist(s) concluído(s)`
 
 ---
 
-## 6. API (27 rotas)
+## 6. API (30 rotas)
 
 Base: `/api/v1/projects/[id]/quality/…` — padrão `apiHandler` + `actorOf` +
 `idsFrom`, mesmo padrão do módulo de campo.
@@ -299,6 +371,12 @@ Base: `/api/v1/projects/[id]/quality/…` — padrão `apiHandler` + `actorOf` +
 | PATCH | `/corrective-actions/[correctiveActionId]` | `QUALITY:EDIT` | edita (só OPEN/IN_PROGRESS) |
 | DELETE | `/corrective-actions/[correctiveActionId]` | `QUALITY:DELETE` | exclui (se OPEN/IN_PROGRESS) |
 | POST | `/corrective-actions/[correctiveActionId]/status` | `QUALITY:EDIT` | `START`/`COMPLETE`/`VERIFY`/`REJECT`/`CLOSE`/`CANCEL`/`REOPEN` |
+| GET | `/punch-items` | `QUALITY:VIEW` | lista (`?status=`) |
+| POST | `/punch-items` | `QUALITY:CREATE` | cria item (`PXxxx`) |
+| GET | `/punch-items/[punchItemId]` | `QUALITY:VIEW` | detalhe |
+| PATCH | `/punch-items/[punchItemId]` | `QUALITY:EDIT` | edita (só OPEN/ASSIGNED/IN_PROGRESS) |
+| DELETE | `/punch-items/[punchItemId]` | `QUALITY:DELETE` | exclui (se OPEN/ASSIGNED/IN_PROGRESS) |
+| POST | `/punch-items/[punchItemId]/status` | `QUALITY:EDIT` | `ASSIGN`/`START`/`SUBMIT`/`VERIFY`/`REJECT`/`CLOSE`/`REOPEN` |
 
 Contrato de erro padrão: `{ error: { code, message, details?, correlation_id } }`.
 
@@ -314,7 +392,8 @@ Contrato de erro padrão: `{ error: { code, message, details?, correlation_id } 
 
 Componentes da tela:
 - **Quadro**: Modelos · Execuções em preenchimento · Inspeções abertas ·
-  Planejadas · Reprovadas · Encerradas · NCR abertas · Ações corretivas abertas.
+  Planejadas · Reprovadas · Encerradas · NCR abertas · Ações corretivas
+  abertas · Punch list abertos · Punch list vencidos.
 - **Aba Modelos**: editor de itens com obrigatoriedade (criar/editar/excluir).
 - **Aba Execuções**: criar a partir de modelo (vinculando inspeção e
   responsável), responder item a item com `PASS`/`FAIL`/`NA` + observação,
@@ -326,59 +405,69 @@ Componentes da tela:
   NCR, editar/excluir (só em OPEN/CORRECTION).
 - **Aba Ações corretivas**: NCR de origem, responsável, prazo, transições do
   fluxo, editar/excluir (só em OPEN/IN_PROGRESS).
+- **Aba Punch list**: localização, descrição, prioridade, responsável, prazo
+  (vencido destacado em vermelho), status, transições do fluxo, editar/excluir
+  (só em OPEN/ASSIGNED/IN_PROGRESS); o diálogo de criação/edição inclui foto
+  do problema, WBS e atividade (opções carregadas via `listPhotos`).
 
 Diálogo único de transição (compartilhado por todos os fluxos): escolhe a
 ação e pede a nota obrigatória da virada (não conformidade no `FAIL`,
 `correctionNotes` no `SUBMIT`, `verificationNotes` no `VERIFY`, `actionNotes`
-no `COMPLETE`) ou o motivo no `CANCEL`.
+no `COMPLETE`), o motivo no `CANCEL`/`REJECT`, o responsável no `ASSIGN` de
+punch item e a **foto da correção** no `SUBMIT` de punch item.
 
 ---
 
 ## 8. Limitações conhecidas (hoje)
 
-1. **Punch list não existe** (E13-US05, §34) — fica para a Fatia 2b.
-2. **Execução não pode ser editada após concluir** sem reabrir — por design
+1. **Execução não pode ser editada após concluir** sem reabrir — por design
    (rastro de conformidade), mas exige o passo extra de `REOPEN`.
-3. **Foto e checklist são formas de evidência equivalentes** na regra atual
+2. **Foto e checklist são formas de evidência equivalentes** na regra atual
    (`inspectionHasEvidence` usa OU).
-4. **NCR automático é 1 a cada FAIL** — reprovar de novo a mesma inspeção
+3. **NCR automático é 1 a cada FAIL** — reprovar de novo a mesma inspeção
    (após REOPEN) gera um novo NCR; não há deduplicação por inspeção.
-5. **Encerrar NCR não exige ação corretiva** — o gate do `CLOSE` da inspeção
+4. **Encerrar NCR não exige ação corretiva** — o gate do `CLOSE` da inspeção
    checa apenas o status do NCR; a spec prevê "Failed → Corrective Action",
    mas hoje é opcional (sem CA o NCR ainda precisa de `correctionNotes` e
    `verificationNotes` para fechar).
+5. **Punch list não se liga a NCR/inspeção** — a §34 não exige vínculo
+   obrigatório; hoje o item se liga a projeto/WBS/atividade/fotos, e a
+   associação a uma inspeção específica pode ser feita via atividade.
 
 ---
 
-## 9. Próximo passo (E13 Fatia 2b)
+## 9. Próximo passo
 
-**Punch list** (E13-US05, §34): itens de correção menores, ligados a
-WBS/atividade/foto, com estados
-`OPEN → ASSIGNED → IN_PROGRESS → READY_FOR_VERIFICATION → VERIFIED → CLOSED`
-(`REJECTED` volta a `IN_PROGRESS`).
-
-O fluxo §33 completo já está de pé:
+**E13 fechado no código** (Fatia 1 + 2a + 2b). O fluxo §33 completo está de pé:
 
 ```
 Planned → Executed → Passed / Failed → Corrective Action → Verification → Closed
 ```
 
+com a punch list (§34) cobrindo as correções menores da vistoria/entrega.
+
+Pendências operacionais: **deploy da Fatia 2b** (migration `phase14_punch` no
+Neon + `vercel --prod`) — fica para quando o usuário pedir.
+
 ---
 
-## 10. Verificação (gate da Fatia 2a)
+## 10. Verificação (gate da Fatia 2b)
 
 - `eslint` 0 problemas · `tsc --noEmit` limpo.
-- **220 testes unitários** (27 em `tests/unit/quality-engine.test.ts`,
-  incluindo as máquinas NCR e ação corretiva).
-- **260 testes de integração** (incluindo NCR automático no FAIL, gating do
-  `CLOSE` e fluxo completo NCR → ação corretiva em
+- **226 testes unitários** (incluindo máquina punch, `isPunchItemOverdue` e
+  board com punch list em `tests/unit/quality-engine.test.ts`).
+- **266 testes de integração** (incluindo PX001 + idempotência, fluxo
+  completo ASSIGN→CLOSE, REJECT com motivo, foto de outro projeto barrada,
+  vencido por prazo e isolamento de tenant em
   `tests/integration/quality.test.ts`).
-- Migration `20261027180000_phase13_ncr_corrective` (enums
-  `non_conformity_status`/`corrective_action_status` + tabelas
-  `non_conformity`/`corrective_action`) — aplicada local e no Neon (15ª de 15).
-- Deploy: commit `762b55c` (27/10) → `mici-7fzp222qm-homeland1` (alias
-  `mici-theta.vercel.app`), smoke verde nas 2 rotas novas e nas páginas.
-  Deploy da Fatia 1: `mici-ff842b4h4` (24/10).
+- Migration `20261029120000_phase14_punch` (enum `punch_item_status` +
+  tabela `punch_items` + FKs para foto/WBS/atividade) — aplicada localmente
+  (dev e `mici_test`) e **no Neon em 29/10** (via `prisma migrate deploy`).
+- Deploy da Fatia 2b: commit `01a0966` (29/10) no repo + schema Neon;
+  **`vercel --prod` pendente**. Deploy da Fatia 2a: commit `762b55c` (27/10)
+  → `mici-7fzp222qm-homeland1` (alias `mici-theta.vercel.app`), smoke verde
+  nas rotas de NCR/CA. Deploy da Fatia 1: `mici-ff842b4h4` (24/10).
 
 > Detalhamento diário em [`DIARIO.md`](DIARIO.md) (seções "24/10/2026 — E13
-> Quality, Fatia 1" e "27/10/2026 — E13 Quality, Fatia 2a").
+> Quality, Fatia 1", "27/10/2026 — E13 Quality, Fatia 2a" e
+> "29/10/2026 — E13 Quality, Fatia 2b (punch list)").
