@@ -3,9 +3,9 @@
 > Fonte: código em `src/modules/quality/`, `prisma/schema.prisma` (§33/§34) e
 > registro em `DIARIO.md` (E13 Fatia 1, 24/10/2026; Fatia 2a, 27/10/2026;
 > Fatia 2b, 29/10/2026).
-> **Status: E13 completo no código** (modelos, execuções, inspeções, NCR,
-> ação corretiva e punch list). Fatia 1 + 2a em produção; **Fatia 2b: código
-> commitado (`01a0966`) e schema no Neon — `vercel --prod` pendente**.
+> **Status: E13 completo e em produção** (modelos, execuções, inspeções, NCR,
+> ação corretiva e punch list — Fatia 2b em produção desde 29/10, smoke
+> verde).
 
 ---
 
@@ -463,10 +463,11 @@ Neon + `vercel --prod`) — fica para quando o usuário pedir.
 - Migration `20261029120000_phase14_punch` (enum `punch_item_status` +
   tabela `punch_items` + FKs para foto/WBS/atividade) — aplicada localmente
   (dev e `mici_test`) e **no Neon em 29/10** (via `prisma migrate deploy`).
-- Deploy da Fatia 2b: commit `01a0966` (29/10) no repo + schema Neon;
-  **`vercel --prod` pendente**. Deploy da Fatia 2a: commit `762b55c` (27/10)
-  → `mici-7fzp222qm-homeland1` (alias `mici-theta.vercel.app`), smoke verde
-  nas rotas de NCR/CA. Deploy da Fatia 1: `mici-ff842b4h4` (24/10).
+- Deploy da Fatia 2b: commit `01a0966` (29/10) → `mici-nb8dr9z1l-homeland1`
+  (alias `mici-theta.vercel.app`), smoke verde nas rotas de punch
+  (`/quality/punch-items` → 200 `{"punchItems":[]}`). Deploy da Fatia 2a:
+  commit `762b55c` (27/10) → `mici-7fzp222qm-homeland1`, smoke verde nas
+  rotas de NCR/CA. Deploy da Fatia 1: `mici-ff842b4h4` (24/10).
 
 > Detalhamento diário em [`DIARIO.md`](DIARIO.md) (seções "24/10/2026 — E13
 > Quality, Fatia 1", "27/10/2026 — E13 Quality, Fatia 2a" e

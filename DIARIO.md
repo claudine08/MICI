@@ -1268,11 +1268,24 @@ correção e aba própria na UI. Sem deploy nesta entrada (Neon pendente).
 - Integração rodou com `MICI_TEST_NO_RESET=1` (schema já sincronizado via
   `db push` — evita o `--force-reset` que exige consentimento).
 
+### Deploy e smoke (29/10, 21h)
+
+- `vercel --prod` a partir de `main` (`01a0966`): deployment
+  **`mici-nb8dr9z1l-homeland1`** (alias `mici-theta.vercel.app`), pronto em
+  ~1m — a Fatia 2b está em produção junto com o schema Neon migrado.
+- Smoke autenticado (`admin@mici.demo` / `Demo@1234`): `/api/v1/health` →
+  200, `/api/v1/projects` → DEMO-001,
+  **`/quality/punch-items` → 200 `{"punchItems":[]}`** e página
+  `/projetos/[id]/qualidade` → 200 (os selectors de punch rodaram contra o
+  Neon); rota sem sessão → 401 UNAUTHENTICATED. (Um GET com id não-UUID
+  `/projects/1/...` retorna 500 — o Prisma falha no cast; comportamento já
+  observado nas demais rotas, fora do escopo desta fatia.)
+
 ### Estado
 
-- Commitado e no ar no banco: `feat:` **`01a0966`** em `main` + push (14
-  arquivos, +1739 linhas); `20261029120000_phase14_punch` **aplicada no Neon**
-  (16ª de 16, via `prisma migrate deploy` com a URL do `.env.local`).
-- **Pendente**: `vercel --prod` (deploy da Fatia 2b) + smoke — commit `docs:`
-  desta entrada registra o estado até o migrate deploy.
-- **E13 fechado no código**; próximo épico/decisão a cargo do usuário.
+- Deploy completo: commit **`01a0966`** (feat) + **`52dc736`** (docs desta
+  entrada) em `main` + push; `20261029120000_phase14_punch` aplicada no
+  Neon; produção (`mici-theta.vercel.app`) servindo a punch list com smoke
+  verde.
+- **E13 fechado de ponta a ponta** (código + banco + produção); próximo
+  épico/decisão a cargo do usuário.
