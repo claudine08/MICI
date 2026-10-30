@@ -8,16 +8,18 @@
 > por sessão, mas apenas para consulta histórica — não são mais a fonte de
 > retomada. Profundidade de um módulo: `qualidade.md` etc.
 
-**Última atualização:** 29/10/2026 (pós-deploy E13 Fatia 2b)
+**Última atualização:** 29/10/2026 (E12-backlog Fatia 1 — PWA/fila offline, gate verde, não commitado)
 
 ---
 
 ## 1. Estado atual (resumo de 1 linha)
 
 E01–E13 **completos e em produção** (último deploy 29/10, commit
-`accf167`/feat `01a0966`, punch list). Working tree limpa, `main` pushada.
-**Próxima frente de trabalho: backlog E12 — PWA/fila offline completa**
-(seção 4), ou E14+ se o usuário escolher outro épico.
+`accf167`/feat `01a0966`, punch list). **E12-backlog Fatia 1 (manifest + SW +
+fila offline de criações + indicador de pendências) implementada e gate
+completo verde** (lint/typecheck/238 unit/266 integração/build) — **ainda não
+commitada nem deployada** (commit só sob pedido). Próxima: Fatia 2 (fotos
+offline) ou E14+.
 
 ## 2. Ambiente e comandos (não precisa rediscover)
 
@@ -30,7 +32,7 @@ E01–E13 **completos e em produção** (último deploy 29/10, commit
 | Banco local | PostgreSQL 17 portátil em `%LOCALAPPDATA%\PostgreSQL17-data`; **sobe via tarefa agendada `mici-postgres`** (settings corrigidas 29/10: `AllowStartIfOnBatteries=True`; start via shell direto morre com `0xC0000142`) |
 | Dev local | `npm run dev` → `http://localhost:3000`; seed demo: 5 usuários, login `admin@mici.demo` / `Demo@1234` |
 | `.env*` | `DATABASE_URL` local usa `127.0.0.1` (Prisma não conecta em `localhost`/IPv6 nesta máquina). `prisma7.config.ts` carrega `.env` via dotenv (não `.env.local`) |
-| Testes | `npm test` (unit/Vitest 5) · `MICI_TEST_NO_RESET=1 npm run test:integration` (global-setup pula `--force-reset`; banco `mici_test` já sincronizado via `prisma db push`) — **última execução: 226 unit / 16 arquivos + 266 integração / 14 arquivos, todos verdes** |
+| Testes | `npm test` (unit/Vitest 5) · `MICI_TEST_NO_RESET=1 npm run test:integration` (global-setup pula `--force-reset`; banco `mici_test` já sincronizado via `prisma db push`) — **última execução: 238 unit / 17 arquivos + 266 integração / 14 arquivos, todos verdes** |
 | Gate padrão entre fases | `npm run lint` · `npm run typecheck` · `npm test` · `MICI_TEST_NO_RESET=1 npm run test:integration` · `npm run build` — tudo verde antes de commitar |
 | Deploy (fluxo fixo) | 1) commit `feat:` + push → 2) `prisma migrate deploy` com `DATABASE_URL` do `.env.local` (setar env antes; dotenv não sobrescreve) → 3) `npx vercel --prod` → 4) smoke autenticado → 5) commit `docs:` (DIARIO+ROADMAP+md do módulo) + push |
 | Smoke autenticado | POST `/api/auth/csrf` → POST `/api/auth/callback/credentials` (email/password/csrfToken, `json=true`, seguir 302) → bater nas rotas com a WebSession; sem sessão deve dar 401 |
@@ -51,6 +53,38 @@ E01–E13 **completos e em produção** (último deploy 29/10, commit
 Contexto: E12 (Campo) está em produção mas **só a idempotência
 server-side entrou**. O offline real (PWA + fila local) ficou em backlog
 "quando houver demanda" — usuário decidiu retomar agora.
+
+**STATUS 29/10/2026 — Fatia 1 CONCLUÍDA (gate verde, pendente de commit+deploy):**
+
+Arquivos criados/alterados:
+- `src/lib/offline-queue.ts` (novo): tipos `OfflineEntity`/`OfflineQueueItem`;
+  stores `MemoryQueueStore` e `IndexedDbQueueStore` (DB `mici-offline`, store
+  `field-queue`, singleton `getQueueStore()`); `enqueueCreate` (gera key,
+  extrai `clientUuid` do payload, dispara evento `mici:queue-changed`);
+  `getQueueCounts`; `discardFailedItems`; `flushQueueWith(store, send)` FIFO
+  — sucesso remove, 4xx → `failed` (não reenvia sozinho), ApiError status 0 →
+  interrompe flush (fica `pending`), 5xx → `pending` com `attempts++`;
+  `flushQueue()` global com trava de concorrência; `sendOrQueueCreate` devolve
+  `"sent" | "queued"` (offline check + ApiError 0 → fila; 4xx → relança).
+- `src/app/manifest.ts` (novo): `MetadataRoute.Manifest` → `/manifest.webmanifest`
+  (start_url `/painel`, standalone, theme `#2563eb`, ícones SVG).
+- `public/icon.svg` (novo) e `public/sw.js` (novo): cache-first `/_next/static/`,
+  network-first navegações com fallback, nunca intercepta `/api/` nem não-GET;
+  cache `mici-shell-v1` + cleanup no activate.
+- `src/components/service-worker-register.tsx` (novo): registra `/sw.js` só em
+  produção; montado no `src/app/layout.tsx` (+ `viewport.themeColor`).
+- `src/components/field/field-view.tsx` (alterado): os 4 creates (diário/tarefa/
+  restrição/medição) passam por `sendOrQueueCreate` (edições PATCH continuam
+  online-only); estado `info` + `InfoBox`; banner warning com contagem
+  pending/failed + "Sincronizar agora" + "Descartar falhas"; listeners de
+  `mici:queue-changed`/`online` (conectividade via `useSyncExternalStore`).
+- `tests/unit/offline-queue.test.ts` (novo): 12 testes (store, enqueue, contagens,
+  flush FIFO/4xx/rede/5xx, sendOrQueueCreate sent/queued/4xx).
+- `tests/integration/field.test.ts` (alterado): idempotência de restrição com
+  `clientUuid` adicionada (lacuna fechada; era a única das 4 sem teste).
+
+Gate 29/10: lint ✓ · typecheck ✓ · 238 unit/17 arquivos ✓ · 266 integração/14
+arquivos ✓ · build ✓ (`/manifest.webmanifest` gerado). **Nada commitado.**
 
 ### 4.1 O que já existe (base pronta — reaproveitar)
 
@@ -85,8 +119,8 @@ server-side entrou**. O offline real (PWA + fila local) ficou em backlog
 
 ### 4.4 Fatia sugerida (mesmo padrão de fases anteriores)
 
-- **Fatia 1**: manifest + SW (cache de shell) + fila IndexedDB de creates simples (diário/tarefa/restrição/medição) + indicador de pendências.
-- **Fatia 2**: fotos offline + tratamento de conflito + "sincronizar agora" + testes (mock de offline no Vitest/Playwright — `@playwright/test` já está em devDependencies).
+- **Fatia 1**: manifest + SW (cache de shell) + fila IndexedDB de creates simples (diário/tarefa/restrição/medição) + indicador de pendências. **✅ FEITA 29/10 (ver STATUS acima) — falta commitar/deployar.**
+- **Fatia 2**: fotos offline + tratamento de conflito + "sincronizar agora" + testes (mock de offline no Vitest/Playwright — `@playwright/test` já está em devDependencies). Obs.: "sincronizar agora" já entrou na Fatia 1; resto segue pendente. Conflito de conteúdo (2 dispositivos no mesmo diário) ainda sem regra — último-wins em DRAFT é a candidata.
 
 ## 5. Restante do roadmap (após E12-backlog)
 
@@ -100,7 +134,7 @@ server-side entrou**. O offline real (PWA + fila local) ficou em backlog
 
 ## 6. Ponteiros rápidos de código
 
-- Campo (E12/backlog): `src/modules/field/*` · rotas `api/v1/projects/[id]/field/*` · UI `src/components/field/field-view.tsx` · testes `tests/{unit/field-engine,integration/field}.test.ts` · doc `campo.md` (se existir; senão DIARIO 18–22/10).
+- Campo (E12/backlog): `src/modules/field/*` · rotas `api/v1/projects/[id]/field/*` · UI `src/components/field/field-view.tsx` · fila offline `src/lib/offline-queue.ts` + `public/sw.js` + `src/app/manifest.ts` · testes `tests/{unit/offline-queue,unit/field-engine,integration/field}.test.ts` · doc `campo.md` (se existir; senão DIARIO 18–22/10).
 - Qualidade (E13, referência de padrão maduro): `src/modules/quality/*` (inclui `punch-items.ts`) · `qualidade.md` · testes `tests/{unit/quality-engine,integration/quality}.test.ts`.
 - Auth/permissões: `src/lib/auth.ts` · guards nas rotas · seed em `prisma/seed.ts`.
 - Schema completo: `prisma/schema.prisma` (~2150 linhas).

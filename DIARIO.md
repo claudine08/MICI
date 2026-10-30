@@ -1293,3 +1293,55 @@ correção e aba própria na UI. Sem deploy nesta entrada (Neon pendente).
   verde.
 - **E13 fechado de ponta a ponta** (código + banco + produção); próximo
   épico/decisão a cargo do usuário.
+
+## 29/10/2026 (noite) — E12-backlog, Fatia 1 (PWA + fila offline)
+
+**Decisão do usuário na mesma sessão**: criar o `devcurrent.md` como fonte
+oficial de retomada (DIARIO/ROADMAP viram só histórico) e atacar o **backlog
+do E12 — PWA/fila offline, Fatia 1** (`devcurrent.md` §4.4).
+
+### O que entrou (código local — ainda não commitado)
+
+- **`src/lib/offline-queue.ts`** (novo): fila de criações de campo com
+  store `IndexedDbQueueStore` (DB `mici-offline`/`field-queue`, fallback em
+  memória); `enqueueCreate` extrai o `clientUuid` do payload (o reenvio é
+  idempotente no server); `flushQueueWith` FIFO — sucesso remove, **4xx →
+  `failed`** (não reenvia sozinho; usuário descarta), **ApiError status 0 →
+  interrompe o flush** (fica pendente), **5xx → pendente com `attempts++`**;
+  `flushQueue()` com trava de concorrência; `sendOrQueueCreate` devolve
+  `"sent" | "queued"` (offline determinístico via `navigator.onLine`, queda
+  de rede via `ApiError(0)`; 4xx relança para a UI). Evento
+  `mici:queue-changed` para a UI.
+- **PWA**: `src/app/manifest.ts` (rota de metadata do Next 16 →
+  `/manifest.webmanifest`, standalone, theme `#2563eb`, ícone SVG);
+  `public/icon.svg`; `public/sw.js` (cache-first `/_next/static/`,
+  network-first de navegações com fallback, **nunca intercepta `/api/`** nem
+  não-GET; cache `mici-shell-v1` + cleanup no activate);
+  `src/components/service-worker-register.tsx` (só em produção) montado no
+  layout raiz (+ `viewport.themeColor`).
+- **UI** (`field-view.tsx`): os 4 creates (diário/tarefa/restrição/medição)
+  passam a usar `sendOrQueueCreate` — offline enfileira e mostra "salvo
+  offline"; edições PATCH continuam online-only. Banner com contagem de
+  pendentes/falhas, **"Sincronizar agora"** e **"Descartar falhas"**;
+  flush automático no evento `online`; conectividade via
+  `useSyncExternalStore` (sem `setState` síncrono no effect, exigência do
+  lint React 19).
+- **Testes**: `tests/unit/offline-queue.test.ts` (12 casos: store, enqueue,
+  contagens, flush FIFO/4xx/rede/5xx, sent/queued/4xx) e lacuna fechada em
+  `tests/integration/field.test.ts` — **restrição era a única das 4 entidades
+  sem teste de idempotência com `clientUuid`**.
+
+### Gate (29/10, 23h) — tudo verde
+
+- `npm run lint` ✅ (corrigidos: `set-state-in-effect`, `useSyncExternalStore`
+  para conectividade, ordem de declarações) · `npm run typecheck` ✅
+- `npm test` ✅ **238 unit / 17 arquivos** (+12) ·
+  `MICI_TEST_NO_RESET=1 npm run test:integration` ✅ **266 / 14**
+- `npm run build` ✅ — `/manifest.webmanifest` gerado como rota estática.
+
+### Estado
+
+- **Código pronto, gate verde, nada commitado** (commits só sob pedido).
+- Próximos passos: commit `feat:` + deploy (`vercel --prod`, sem migration —
+  é só front-end) + smoke; depois **Fatia 2** (fotos offline, regra de
+  conflito, Playwright) ou abrir **E14 Procurement**.
