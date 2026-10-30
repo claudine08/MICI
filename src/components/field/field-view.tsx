@@ -1,9 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, ArrowRightLeft, Camera, Eye } from "lucide-react";
+import { CloudOff, Plus, Pencil, Trash2, ArrowRightLeft, Camera, Eye } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
+import {
+  discardFailedItems,
+  flushQueue,
+  getQueueCounts,
+  sendOrQueueCreate,
+} from "@/lib/offline-queue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,6 +111,15 @@ function ErrorBox({ message }: { message: string | null }) {
   if (!message) return null;
   return (
     <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      {message}
+    </p>
+  );
+}
+
+function InfoBox({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
       {message}
     </p>
   );
@@ -272,6 +287,71 @@ export function FieldView({
     }
   };
 
+  // --- Fila offline (E12 backlog §4) ---------------------------------------
+  const [info, setInfo] = useState<string | null>(null);
+  const [queuePending, setQueuePending] = useState(0);
+  const [queueFailed, setQueueFailed] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+
+  const refreshQueue = async () => {
+    const counts = await getQueueCounts();
+    setQueuePending(counts.pending);
+    setQueueFailed(counts.failed);
+  };
+
+  const syncNow = async () => {
+    setSyncing(true);
+    try {
+      const result = await flushQueue();
+      await refreshQueue();
+      if (result.synced > 0) {
+        setInfo(
+          `${result.synced} registro(s) sincronizado(s) com o servidor${result.pending > 0 ? `; ${result.pending} ainda aguardando` : ""}.`
+        );
+        await loadAll();
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao sincronizar a fila offline.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const discardFailed = async () => {
+    if (!window.confirm("Descartar os registros que falharam na sincronização?")) return;
+    await discardFailedItems();
+    await refreshQueue();
+  };
+
+  // Conectividade via store externo (regra do React: sem setState síncrono
+  // dentro de effect; o navegador é a fonte da verdade do estado online).
+  const isOffline = useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("online", onChange);
+      window.addEventListener("offline", onChange);
+      return () => {
+        window.removeEventListener("online", onChange);
+        window.removeEventListener("offline", onChange);
+      };
+    },
+    () => navigator.onLine === false,
+    () => false
+  );
+
+  useEffect(() => {
+    const onQueueChanged = () => void refreshQueue();
+    const onOnline = () => void syncNow();
+    window.addEventListener("mici:queue-changed", onQueueChanged);
+    window.addEventListener("online", onOnline);
+    const initialRefresh = setTimeout(() => void refreshQueue(), 0);
+    return () => {
+      window.removeEventListener("mici:queue-changed", onQueueChanged);
+      window.removeEventListener("online", onOnline);
+      clearTimeout(initialRefresh);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // --- Diário -------------------------------------------------------------
   const setDiaryField = (key: keyof typeof diaryForm, value: string) =>
     setDiaryForm((previous) => ({ ...previous, [key]: value }));
@@ -308,13 +388,29 @@ export function FieldView({
   const submitDiary = async () => {
     setBusy(true);
     setError(null);
+    setInfo(null);
     try {
       const payload: Record<string, unknown> = cleanPayload(diaryForm);
       if (diaryForm.workHours !== "") payload.workHours = Number(diaryForm.workHours);
-      await apiRequest(editingDiaryId ? `${diaryBase}/${editingDiaryId}` : diaryBase, {
-        method: editingDiaryId ? "PATCH" : "POST",
-        body: JSON.stringify(payload),
-      });
+      if (editingDiaryId) {
+        await apiRequest(`${diaryBase}/${editingDiaryId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        const outcome = await sendOrQueueCreate({
+          entity: "diary",
+          projectId,
+          url: diaryBase,
+          payload,
+        });
+        if (outcome === "queued") {
+          setDiaryDialog(false);
+          setInfo("Sem conexão: diário salvo offline. Sincronizamos automaticamente ao voltar a rede.");
+          await refreshQueue();
+          return;
+        }
+      }
       setDiaryDialog(false);
       await loadAll();
     } catch (caught) {
@@ -366,12 +462,28 @@ export function FieldView({
   const submitTask = async () => {
     setBusy(true);
     setError(null);
+    setInfo(null);
     try {
       const payload = cleanPayload(taskForm);
-      await apiRequest(editingTaskId ? `${taskBase}/${editingTaskId}` : taskBase, {
-        method: editingTaskId ? "PATCH" : "POST",
-        body: JSON.stringify(payload),
-      });
+      if (editingTaskId) {
+        await apiRequest(`${taskBase}/${editingTaskId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        const outcome = await sendOrQueueCreate({
+          entity: "task",
+          projectId,
+          url: taskBase,
+          payload,
+        });
+        if (outcome === "queued") {
+          setTaskDialog(false);
+          setInfo("Sem conexão: tarefa salva offline. Sincronizamos automaticamente ao voltar a rede.");
+          await refreshQueue();
+          return;
+        }
+      }
       setTaskDialog(false);
       await loadAll();
     } catch (caught) {
@@ -423,12 +535,30 @@ export function FieldView({
   const submitConstraint = async () => {
     setBusy(true);
     setError(null);
+    setInfo(null);
     try {
       const payload = cleanPayload(constraintForm);
-      await apiRequest(
-        editingConstraintId ? `${constraintBase}/${editingConstraintId}` : constraintBase,
-        { method: editingConstraintId ? "PATCH" : "POST", body: JSON.stringify(payload) }
-      );
+      if (editingConstraintId) {
+        await apiRequest(`${constraintBase}/${editingConstraintId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        const outcome = await sendOrQueueCreate({
+          entity: "constraint",
+          projectId,
+          url: constraintBase,
+          payload,
+        });
+        if (outcome === "queued") {
+          setConstraintDialog(false);
+          setInfo(
+            "Sem conexão: restrição salva offline. Sincronizamos automaticamente ao voltar a rede."
+          );
+          await refreshQueue();
+          return;
+        }
+      }
       setConstraintDialog(false);
       await loadAll();
     } catch (caught) {
@@ -486,6 +616,7 @@ export function FieldView({
   const submitProgress = async () => {
     setBusy(true);
     setError(null);
+    setInfo(null);
     try {
       const payload: Record<string, unknown> = cleanPayload(progressForm);
       if (progressForm.progressPercent !== "")
@@ -494,10 +625,27 @@ export function FieldView({
         payload.quantityPlanned = Number(progressForm.quantityPlanned);
       if (progressForm.quantityReal !== "")
         payload.quantityReal = Number(progressForm.quantityReal);
-      await apiRequest(editingProgressId ? `${progressBase}/${editingProgressId}` : progressBase, {
-        method: editingProgressId ? "PATCH" : "POST",
-        body: JSON.stringify(payload),
-      });
+      if (editingProgressId) {
+        await apiRequest(`${progressBase}/${editingProgressId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        const outcome = await sendOrQueueCreate({
+          entity: "progress",
+          projectId,
+          url: progressBase,
+          payload,
+        });
+        if (outcome === "queued") {
+          setProgressDialog(false);
+          setInfo(
+            "Sem conexão: medição salva offline. Sincronizamos automaticamente ao voltar a rede."
+          );
+          await refreshQueue();
+          return;
+        }
+      }
       setProgressDialog(false);
       await loadAll();
     } catch (caught) {
@@ -689,6 +837,32 @@ export function FieldView({
   return (
     <div className="flex flex-col gap-6">
       <ErrorBox message={error} />
+      <InfoBox message={info} />
+
+      {(isOffline || queuePending > 0 || queueFailed > 0) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+          <span className="flex items-center gap-2 text-foreground">
+            <CloudOff className="h-4 w-4 shrink-0 text-warning" />
+            {isOffline && queuePending > 0
+              ? `Offline — ${queuePending} registro(s) aguardando sincronização.`
+              : isOffline
+                ? "Offline — registros criados agora serão salvos localmente."
+                : `${queuePending} registro(s) prontos para sincronizar${queueFailed > 0 ? ` · ${queueFailed} com falha` : ""}.`}
+          </span>
+          <span className="flex gap-2">
+            {queuePending > 0 && (
+              <Button size="sm" variant="outline" disabled={syncing || isOffline} onClick={() => void syncNow()}>
+                {syncing ? "Sincronizando…" : "Sincronizar agora"}
+              </Button>
+            )}
+            {queueFailed > 0 && (
+              <Button size="sm" variant="ghost" disabled={syncing} onClick={() => void discardFailed()}>
+                Descartar falhas
+              </Button>
+            )}
+          </span>
+        </div>
+      )}
 
       <Card className="p-4">
         <div className="mb-3 flex items-center justify-between">

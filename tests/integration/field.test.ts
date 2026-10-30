@@ -653,7 +653,7 @@ describe("medicao de avanco fisico (E12-US04, BR-006, 12)", () => {
     expect(synced?.physicalProgress).toBe(60);
   });
 
-  it("idempotencia offline com clientUuid (medicao, dirio e tarefa)", async () => {
+  it("idempotencia offline com clientUuid (medicao, dirio, tarefa e restrio)", async () => {
     const clientUuid = randomUUID();
     const first = await createProgress({
       ...actorA(),
@@ -704,6 +704,26 @@ describe("medicao de avanco fisico (E12-US04, BR-006, 12)", () => {
       clientUuid: taskUuid,
     });
     expect(taskReplay.id).toBe(task.id);
+
+    const constraintUuid = randomUUID();
+    const constraint = await createConstraint({
+      ...actorA(),
+      projectId,
+      title: "Restrio offline",
+      type: "EXTERNAL",
+      priority: "HIGH",
+      clientUuid: constraintUuid,
+    });
+    const constraintReplay = await createConstraint({
+      ...actorA(),
+      projectId,
+      title: "Restrio offline (reenvio)",
+      type: "EXTERNAL",
+      priority: "HIGH",
+      clientUuid: constraintUuid,
+    });
+    expect(constraintReplay.id).toBe(constraint.id);
+    expect(constraintReplay.title).toBe("Restrio offline");
   });
 
   it("listagem e escrita da medicao respeitam tenant", async () => {
