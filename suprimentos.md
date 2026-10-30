@@ -1,18 +1,79 @@
-# Suprimentos — fornecedores, requisições de compra, cotações e mapa comparativo (E14, Fatia 1)
+# Suprimentos — fornecedores, requisições de compra, cotações e mapa comparativo (E14)
 
 > Fonte: código em `src/modules/procurement/`, `prisma/schema.prisma` (bloco
 > Procurement), rotas `src/app/api/v1/.../procurement/*` e `src/app/api/v1/suppliers/*`,
-> tela `src/app/(app)/projetos/[id]/suprimentos/page.tsx` + `src/components/procurement/procurement-view.tsx`.
+> telas `src/app/(app)/suprimentos/page.tsx` e `src/app/(app)/projetos/[id]/suprimentos/page.tsx`.
 > **Status: E14 Fatia 1 completo e em produção** (commit `2ea90bb`,
-> deploy `mici-5w7tzxsmi-homeland1`, alias `mici-theta.vercel.app`, smoke verde,
-> migration `20261030190000_phase15_procurement` aplicada no Neon em 30/10/2026).
-> Escopo da Fatia 1: fornecedores, requisição de compra, cotação e mapa
-> comparativo (equalização + seleção do vencedor + aprovação da requisição).
-> Pedido de compra (PO) e recebimento ficam para a Fatia 2.
+> deploy `mici-5w7tzxsmi-homeland1`, smoke verde, migration `phase15_procurement`
+> no Neon). A **Fatia 2** (Pedido de Compra / PO e recebimento) ainda não foi
+> iniciada — o fluxo end-to-end completo está descrito abaixo, com a Fatia 2
+> marcada como planejada.
 
 ---
 
-## 1. Os seis conceitos
+## 1. Visão geral do processo (end-to-end)
+
+O módulo de Suprimentos (E14, RF-019) cobre todo o ciclo de aquisição de um
+projeto, da identificação da necessidade até o fechamento financeiro. A Fatia 1
+entregue cobre da **necessidade** à **aprovação da requisição** (escolha do
+fornecedor vencedor). A Fatia 2 cobrirá do **pedido de compra** ao
+**recebimento e fechamento**.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                            FLUXO END-TO-END DE SUPRIMENTOS                          │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  FATIA 1 (em produção)                                                              │
+│  ─────────────────────                                                              │
+│                                                                                      │
+│  [0] FORNECEDORES (cadastro central da organização)                                 │
+│       │                                                                             │
+│       ▼                                                                             │
+│  [1] NECESSIDADE → REQUISIÇÃO DE COMPRA (PR)                                        │
+│       • identifica o que comprar, quanto, para quando, para qual WBS/atividade       │
+│       • status DRAFT → SUBMITTED → (QUOTING) → COMPARED → APPROVED                  │
+│       │                                                                             │
+│       ▼                                                                             │
+│  [2] COTAÇÃO (QT) — propostas dos fornecedores                                      │
+│       • cada fornecedor envia preços, prazos e condições                            │
+│       • status DRAFT → SUBMITTED → SELECTED / REJECTED                              │
+│       │                                                                             │
+│       ▼                                                                             │
+│  [3] MAPA COMPARATIVO (BC) — equalização                                            │
+│       • compara preços, prazos e condições; destaca menor preço/prazo               │
+│       • status DRAFT → COMPLETED (seleciona vencedora)                              │
+│       │                                                                             │
+│       ▼                                                                             │
+│  [4] APROVAÇÃO DA REQUISIÇÃO                                                        │
+│       • gestor aprova a requisição com a cotação vencedora                          │
+│       • status COMPARED → APPROVED                                                  │
+│                                                                                      │
+│  FATIA 2 (planejada — PO e recebimento)                                             │
+│  ──────────────────────────────────────                                             │
+│                                                                                      │
+│  [5] PEDIDO DE COMPRA (PO) — emitido a partir da requisição aprovada                │
+│       • formaliza a compra com o fornecedor vencedor                                 │
+│       • status DRAFT → ISSUED → (parcialmente/totalmente recebido)                  │
+│       │                                                                             │
+│       ▼                                                                             │
+│  [6] RECEBIMENTO (GR) — entrada de material/serviço                                 │
+│       • conferência de quantidade, qualidade e prazo                                 │
+│       • inspeção de recebimento (vinculada à Qualidade E13)                          │
+│       │                                                                             │
+│       ▼                                                                             │
+│  [7] FECHAMENTO FINANCEIRO                                                          │
+│       • medição de avanço, commitment de custo, fatura                              │
+│       • encerramento do PO                                                          │
+│                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. Os conceitos (entidades)
+
+### Fatia 1 (implementada)
 
 | Conceito | Entidade | O que é | Código |
 |---|---|---|---|
@@ -23,7 +84,16 @@
 | **Item da Cotação** | `QuotationItem` | Linha da cotação: descrição, quantidade, unidade, preço unitário, total, prazo e marca. Pode referenciar o item da requisição de origem. | — |
 | **Mapa Comparativo** | `BidComparison` | Equalização das cotações de uma requisição: identifica menor preço, menor prazo, diferenças percentuais e registra a cotação vencedora com justificativa. | `BC001`, `BC002`… |
 
-Relações:
+### Fatia 2 (planejada)
+
+| Conceito | Entidade (prevista) | O que é | Código (previsto) |
+|---|---|---|---|
+| **Pedido de Compra** | `PurchaseOrder` | Documento formal emitido ao fornecedor vencedor, com itens, quantidades, preços, prazo e condições. Nasce a partir de uma requisição `APPROVED`. | `PO001`, `PO002`… |
+| **Item do Pedido** | `PurchaseOrderItem` | Linha do pedido: descrição, quantidade, unidade, preço unitário, total, vínculo ao item da requisição/cotação. | — |
+| **Recebimento** | `GoodsReceipt` | Registro de entrada de material/serviço contra o pedido: quantidade recebida, data, responsável, inspeção. | `GR001`, `GR002`… |
+| **Item do Recebimento** | `GoodsReceiptItem` | Linha do recebimento: quantidade recebida, quantidade rejeitada, observação, vínculo ao item do pedido. | — |
+
+Relações da Fatia 1 (implementadas):
 - Organização **1 → N** Fornecedores (fornecedor é escopo da org, não do projeto).
 - Projeto **1 → N** Requisições de Compra.
 - Requisição **1 → N** Itens (cascade).
@@ -34,215 +104,292 @@ Relações:
 - Mapa Comparativo **N → 1** Cotação selecionada (`SetNull`).
 - Requisição **N → 1** WBS / Atividade / Item de Custo (opcionais, `SetNull`).
 
----
-
-## 2. Fluxo completo (visão geral)
-
-```
-┌────────────────────────────────────────────────────────────────────────────┐
-│ 0. FORNECEDOR (Supplier) — escopo da organização                           │
-│    cadastrar razão social, CNPJ, categoria, contato → SPxxx, status ACTIVE  │
-│    ACTIVE / BLOCKED / INACTIVE                                             │
-└───────────────────────────────┬────────────────────────────────────────────┘
-                                │ "nova requisição" escolhe projeto
-                                ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│ 1. REQUISIÇÃO DE COMPRA (PurchaseRequest) — status DRAFT ("Rascunho")       │
-│    título, prioridade, data de necessidade, vínculos WBS/atividade/custo,  │
-│    itens [{descrição, qtd, unidade, preço est.}] → PRxxx                    │
-│    editável apenas em DRAFT/SUBMITTED                                      │
-└───────────────────────────────┬────────────────────────────────────────────┘
-                                │ SUBMIT (exige ≥1 item)
-                                ▼
-                       SUBMITTED ("Aberta")
-                                │ START_QUOTING (manual) ou criação de cotação
-                                │ (avança automaticamente SUBMITTED → QUOTING)
-                                ▼
-                       QUOTING ("Em cotação")
-                                │ FINISH_QUOTING (exige ≥1 cotação)
-                                ▼
-                       COMPARED ("Cotada")  ← mapa comparativo concluído
-                                │ APPROVE (exige cotação selecionada no mapa)
-                                ▼
-                       APPROVED ("Aprovada")  (terminal para esta fatia)
-                                │
-       CANCEL (qualquer exceto APPROVED) ──► CANCELLED ──REOPEN──► DRAFT
-       REJECT (SUBMITTED/COMPARED) ────────► REJECTED   ──REOPEN──► DRAFT
-└────────────────────────────────────────────────────────────────────────────┘
-
-┌────────────────────────────────────────────────────────────────────────────┐
-│ 2. COTAÇÃO (Quotation) — status DRAFT ("Rascunho")                          │
-│    requisição + fornecedor ativo + itens precificados + frete + desconto     │
-│    → QTxxx; totais calculados: itemsTotal + frete − desconto                 │
-│    se a requisição estava SUBMITTED, avança automaticamente para QUOTING   │
-└───────────────────────────────┬────────────────────────────────────────────┘
-                                │ SUBMIT (exige ≥1 item)
-                                ▼
-                       SUBMITTED ("Enviada")
-                                │ SELECT ──► SELECTED ("Selecionada") — vencedora
-                                │ REJECT ──► REJECTED ("Desqualificada")
-                                │ CANCEL ──► CANCELLED
-                                │ REOPEN ──► DRAFT (de SUBMITTED/CANCELLED/REJECTED)
-└────────────────────────────────────────────────────────────────────────────┘
-
-┌────────────────────────────────────────────────────────────────────────────┐
-│ 3. MAPA COMPARATIVO (BidComparison) — status DRAFT ("Em elaboração")        │
-│    gerado a partir das cotações da requisição:                              │
-│    • ordena por preço, identifica menor preço e menor prazo                  │
-│    • calcula % de diferença em relação ao menor preço                       │
-│    • pré-seleciona a cotação de menor preço                                 │
-│    → BCxxx                                                                  │
-└───────────────────────────────┬────────────────────────────────────────────┘
-                                │ COMPLETE (seleciona vencedora + justificativa)
-                                ▼
-                       COMPLETED ("Concluído")
-                                │
-                                ├── cotação vencedora → SELECTED
-                                ├── demais cotações SUBMITTED/DRAFT → REJECTED
-                                └── requisição → COMPARED
-```
-
-Fluxo recomendado na prática:
-1. Cadastrar **fornecedores** (uma vez, reutilizável em todo o projeto/org).
-2. Criar a **requisição de compra** com itens e estimativas.
-3. **Enviar** a requisição (DRAFT → SUBMITTED) e **iniciar cotação** (→ QUOTING).
-4. Registrar **cotações** dos fornecedores (cada cotação avança a requisição para QUOTING se ainda SUBMITTED).
-5. **Submeter** as cotações (DRAFT → SUBMITTED).
-6. **Finalizar a cotação** (QUOTING → COMPARED) — exige ≥1 cotação; em seguida gerar o **mapa comparativo**.
-7. **Concluir o mapa** selecionando a vencedora e justificando: a vencedora vira SELECTED, as demais REJECTED e a requisição vira COMPARED.
-8. **Aprovar** a requisição (COMPARED → APPROVED).
+Relações da Fatia 2 (previstas):
+- Requisição `APPROVED` **1 → 1 (ou N)** Pedido de Compra.
+- Pedido **1 → N** Itens; **1 → N** Recebimentos.
+- Recebimento **N → 1** Pedido; **1 → N** Itens.
+- Recebimento **N → 1** Inspeção (Qualidade E13) para inspeção de recebimento.
 
 ---
 
-## 3. Máquinas de estados
+## 3. Fluxo detalhado passo a passo
 
-### 3.1 Fornecedor (`engine.ts`)
+### Etapa 0 — Fornecedores (cadastro central)
 
-| Status | Rótulo PT | Descrição |
-|---|---|---|
-| `ACTIVE` | Ativo | Pode receber cotações (`isSupplierActive` = true). |
-| `BLOCKED` | Bloqueado | Não pode receber cotações. |
-| `INACTIVE` | Inativo | Desativado (usado em vez de exclusão quando há cotações vinculadas). |
+**Quem:** Comprador / equipe de suprimentos (papel `PROCUREMENT` ou superior).
 
-Sem transições formais: o status é alterado via `updateSupplier` (campo `status` no `updateSupplierSchema`).
+**O que acontece:**
+1. Acessa a aba **Fornecedores** na tela de Suprimentos do projeto (ou a lista global em `/suprimentos`).
+2. Cadastra o fornecedor: razão social (obrigatório), nome fantasia, CNPJ/CPF, categoria (Materiais, Serviços, Equipamentos, Empreiteiro, Projetos, Outros), e-mail, telefone, contato comercial, endereço, observações.
+3. O sistema gera o código `SP001`, `SP002`… automaticamente (escopo da organização) e define o status inicial `ACTIVE`.
+4. O fornecedor pode ser **bloqueado** (`BLOCKED`) ou **inativado** (`INACTIVE`) a qualquer momento via edição; fornecedores com cotações vinculadas não podem ser excluídos (apenas inativados).
 
-### 3.2 Requisição de Compra (`engine.ts` + `requests.ts`)
+**Regras:**
+- Idempotência por `clientUuid`: reenvio do mesmo `clientUuid` devolve o fornecedor já criado (suporta fila offline).
+- Código explícito informado é validado contra duplicidade na organização.
+- Exclusão lógica (`deletedAt`) bloqueada se houver cotações vinculadas (`CONFLICT`).
 
-| Status | Rótulo PT | Ações disponíveis | Editável? |
-|---|---|---|---|
-| `DRAFT` | Rascunho | `SUBMIT`, `CANCEL`, `REOPEN` (de cancelada/rejeitada) | sim |
-| `SUBMITTED` | Aberta | `START_QUOTING`, `APPROVE`, `REJECT`, `CANCEL` | sim |
-| `QUOTING` | Em cotação | `FINISH_QUOTING`, `CANCEL` | não |
-| `COMPARED` | Cotada | `APPROVE`, `REJECT` | não |
-| `APPROVED` | Aprovada | — (terminal nesta fatia) | não |
-| `CANCELLED` | Cancelada | `REOPEN` (→ DRAFT) | não |
-| `REJECTED` | Rejeitada | `REOPEN` (→ DRAFT) | não |
+**Saída:** base de fornecedores homologados disponível para todos os projetos da organização.
 
-Regras adicionais gravadas no writer (`requests.ts`):
-- `SUBMIT` exige ≥1 item (`itemCount > 0`); caso contrário `PROCUREMENT_INVALID_STATE`.
-- `FINISH_QUOTING` exige ≥1 cotação (`quotationCount > 0`).
-- `APPROVE` de requisição `COMPARED` exige cotação selecionada no mapa (`hasSelectedQuotation`); `SUBMITTED` pode ser aprovada diretamente.
-- `REJECT` só em `SUBMITTED` ou `COMPARED`.
-- `CANCEL` não é permitido em `APPROVED`; requisição já cancelada não cancela de novo.
-- `REOPEN` apenas de `CANCELLED` ou `REJECTED` → volta a `DRAFT`.
-- Edição (`updatePurchaseRequest`) **só em `DRAFT`/`SUBMITTED`** (`isPurchaseRequestEditable`); fora disso → `PROCUREMENT_INVALID_STATE`.
+---
+
+### Etapa 1 — Necessidade → Requisição de Compra (PR)
+
+**Quem:** Engenheiro, coordenador de obra ou gestor de projeto.
+
+**O que acontece:**
+1. Identifica a necessidade de compra (material, serviço, equipamento) e acessa a aba **Requisições de Compra**.
+2. Cria a requisição informando:
+   - **Título** (obrigatório) e descrição/especificação.
+   - **Prioridade** (LOW/MEDIUM/HIGH/CRITICAL, padrão MEDIUM).
+   - **Data de necessidade** (prazo de entrega desejado).
+   - **Vínculos opcionais**: nó da WBS, atividade do cronograma, centro de custo, item de custo (para integração com o módulo de Custos).
+   - **Itens** (≥1): descrição, quantidade, unidade, preço unitário estimado (calcula o total estimado).
+3. O sistema gera o código `PR001`, `PR002`… (escopo do projeto) e define o status inicial `DRAFT` (Rascunho).
+4. A requisição pode ser editada livremente enquanto estiver em `DRAFT` ou `SUBMITTED`.
+
+**Transições:**
+- `DRAFT → SUBMITTED` via ação **Enviar** (exige ≥1 item). A partir daqui a requisição está "aberta" e pode receber cotações.
+- `SUBMITTED → QUOTING` via ação **Iniciar Cotação** (manual) **ou automaticamente** ao registrar a primeira cotação.
+
+**Regras:**
+- Idempotência por `clientUuid` (escopo do projeto).
+- `assertProcurementProject`: o projeto deve existir e pertencer à organização (tenant).
+- `assertFieldLinks`: WBS e atividade validados contra o projeto/organização.
+- `costItemId` validado contra o projeto.
+- Edição (`updatePurchaseRequest`) **só em `DRAFT`/`SUBMITTED`**; fora disso → `PROCUREMENT_INVALID_STATE`.
 - Exclusão lógica (`deletePurchaseRequest`) **só em `DRAFT`/`CANCELLED`** e sem cotações vinculadas.
-- `isPurchaseRequestOpen`: aberta = tudo exceto `APPROVED`/`CANCELLED`/`REJECTED`.
-- `isPurchaseRequestOverdue`: data de necessidade (DATE) anterior a hoje **e** requisição aberta.
+- Requisição **vencida** = data de necessidade anterior a hoje **e** requisição aberta (não aprovada/cancelada/rejeitada).
 
-### 3.3 Cotação (`engine.ts` + `quotations.ts`)
+**Saída:** requisição aberta e pronta para receber cotações.
 
-| Status | Rótulo PT | Ações disponíveis | Editável? |
-|---|---|---|---|
-| `DRAFT` | Rascunho | `SUBMIT`, `CANCEL` | sim |
-| `SUBMITTED` | Enviada | `SELECT`, `REJECT`, `CANCEL`, `REOPEN` (→ DRAFT) | não |
-| `SELECTED` | Selecionada | — (vencedora) | não |
-| `REJECTED` | Desqualificada | `REOPEN` (→ DRAFT) | não |
-| `CANCELLED` | Cancelada | `REOPEN` (→ DRAFT) | não |
+---
 
-Regras do writer (`quotations.ts`):
-- Criação exige requisição existente e não `CANCELLED`/`REJECTED`/`APPROVED`.
-- Fornecedor deve existir na organização e estar `ACTIVE` (`isSupplierActive`); caso contrário `VALIDATION_ERROR`.
-- `SUBMIT` exige ≥1 item precificado.
-- `SELECT`/`REJECT` apenas em `SUBMITTED`.
-- `CANCEL` de cotação já cancelada é bloqueado.
+### Etapa 2 — Cotação (QT)
+
+**Quem:** Comprador (contata fornecedores e registra as propostas).
+
+**O que acontece:**
+1. Para cada fornecedor interessado, cria uma **cotação** vinculada à requisição e ao fornecedor:
+   - Requisição de compra (obrigatório).
+   - Fornecedor (obrigatório, deve estar `ACTIVE`).
+   - Data da cotação, validade, prazo de entrega (dias), condições de pagamento, termo de frete.
+   - Frete e desconto.
+   - Itens precificados: descrição, quantidade, unidade, preço unitário, marca, observações (pode referenciar o item da requisição de origem).
+2. O sistema gera o código `QT001`, `QT002`… e define o status inicial `DRAFT`.
+3. Calcula automaticamente os totais: `itemsTotal = Σ(qtd × preço unit.)` e `totalAmount = max(0, itemsTotal + frete − desconto)`.
+4. Se a requisição estava em `SUBMITTED`, ela avança automaticamente para `QUOTING`.
+
+**Transições:**
+- `DRAFT → SUBMITTED` via ação **Submeter** (exige ≥1 item precificado). A partir daqui a cotação está "enviada" e pode ser selecionada ou desqualificada.
+- `SUBMITTED → SELECTED` via **Selecionar** (vencedora) — normalmente feito pelo mapa comparativo.
+- `SUBMITTED → REJECTED` via **Desqualificar**.
+- `SUBMITTED/CANCELLED/REJECTED → DRAFT` via **Reabrir**.
+
+**Regras:**
+- Idempotência por `clientUuid` (escopo do projeto).
+- Fornecedor deve existir na organização e estar `ACTIVE` (`isSupplierActive`); caso contrário → `VALIDATION_ERROR`.
+- Requisição não pode estar `CANCELLED`/`REJECTED`/`APPROVED`.
 - Edição (`updateQuotation`) **só em `DRAFT`** (`isQuotationEditable`); fora disso → `PROCUREMENT_INVALID_STATE`.
 - Exclusão lógica (`deleteQuotation`) **só em `DRAFT`/`CANCELLED`**.
-- Totais: `itemsTotal = Σ(qtd × preço unit.)`; `totalAmount = max(0, itemsTotal + frete − desconto)`, arredondado a 2 casas.
-- Ao criar uma cotação com a requisição em `SUBMITTED`, a requisição avança automaticamente para `QUOTING`.
+- Totais recalculados em create e update.
 
-### 3.4 Mapa Comparativo (`engine.ts` + `comparisons.ts`)
-
-| Status | Rótulo PT | Descrição |
-|---|---|---|
-| `DRAFT` | Em elaboração | Rascunho gerado a partir das cotações. |
-| `COMPLETED` | Concluído | Vencedora selecionada; requisição avança para `COMPARED`. |
-| `CANCELLED` | Cancelado | Cancelado. |
-
-`analyzeBidComparison` (puro):
-- Ordena as cotações por `totalAmount` (crescente) → `priceRank`.
-- Identifica a de **menor preço** (`lowestPriceQuotationId`/`lowestPrice`).
-- Identifica a de **menor prazo** entre as com `leadTimeDays > 0` (`fastestLeadTimeQuotationId`/`fastestLeadTimeDays`).
-- Calcula `differenceFromLowestPercent = ((total − menor) / menor) × 100` (1 casa decimal).
-- Marca `isLowestPrice` e `isFastest`.
-
-Regras do writer (`comparisons.ts`):
-- `createOrUpdateBidComparison` gera/atualiza o rascunho a partir das cotações da requisição; pré-seleciona a de menor preço (`selectedQuotationId` default = `lowestPriceQuotationId`).
-- `completeBidComparison` (transação):
-  1. Cotação selecionada → `SELECTED`.
-  2. Demais cotações `SUBMITTED`/`DRAFT` → `REJECTED`.
-  3. Cria/atualiza o `BidComparison` como `COMPLETED` (`completedAt`, `completedById`).
-  4. Requisição de compra → `COMPARED`.
-- A cotação selecionada deve pertencer à requisição (validação `VALIDATION_ERROR` caso contrário).
+**Saída:** conjunto de cotações (propostas) para a requisição, prontas para equalização.
 
 ---
 
-## 4. Regras de negócio (gravadas nos writers)
+### Etapa 3 — Mapa Comparativo (BC)
 
-**Fornecedor (`suppliers.ts`)**
-- Idempotência por `clientUuid`: reenvio com o mesmo `clientUuid` devolve o fornecedor já criado.
-- Código sequencial `SP001`, `SP002`… por organização (`nextProcurementCode`).
-- Código explícito informado é validado contra duplicidade na organização (CONFLICT).
-- Exclusão lógica (`deletedAt`/`deletedBy`) bloqueada se houver cotações vinculadas (CONFLICT) — orienta-se desativar (status `INACTIVE`).
-- Atualização de status/metadados incrementa `version`.
+**Quem:** Comprador / gestor de suprimentos.
 
-**Requisição de Compra (`requests.ts`)**
-- Idempotência por `clientUuid` (escopo do projeto).
-- Código sequencial `PR001`… por projeto.
-- `assertProcurementProject`: projeto deve existir e pertencer à organização (tenant).
-- `assertFieldLinks`: valida WBS/atividade contra o projeto/organização.
-- `costItemId` validado contra o projeto.
-- Itens criados em transação; na edição, itens são recriados (deleteMany + createMany).
-- Toda escrita gera `AuditEvent` (CREATE/UPDATE/DELETE/STATUS_CHANGE) e `DomainEvent` (`PurchaseRequest.Created`, `.StatusChanged`).
+**O que acontece:**
+1. Com as cotações submetidas, gera o **mapa comparativo** a partir da requisição:
+   - O sistema lê todas as cotações (não excluídas) da requisição.
+   - Ordena por preço (crescente) e calcula a diferença percentual em relação ao menor preço.
+   - Identifica a cotação de **menor preço** e a de **menor prazo** (entre as com prazo > 0).
+   - Pré-seleciona a de menor preço como vencedora sugerida.
+2. Gera/atualiza o rascunho `BC001`, `BC002`… com os dados de equalização (`comparisonData`).
+3. O usuário revisa a tabela equalizada (fornecedor, cotação, prazo, condições, frete, desconto, total, diferença %).
+4. **Conclui o mapa** selecionando a cotação vencedora e informando a **justificativa da escolha** (mínimo 5 caracteres).
 
-**Cotação (`quotations.ts`)**
-- Idempotência por `clientUuid` (escopo do projeto).
-- Código sequencial `QT001`… por projeto.
-- Valida requisição (não cancelada/rejeitada/aprovada) e fornecedor ativo.
-- Totais recalculados em create e update (incluindo frete e desconto).
-- Ao criar cotação com requisição `SUBMITTED`, avança a requisição para `QUOTING`.
-- Toda escrita gera `AuditEvent` e `DomainEvent` (`Quotation.Created`).
+**Efeitos da conclusão (transação):**
+- Cotação vencedora → `SELECTED`.
+- Demais cotações `SUBMITTED`/`DRAFT` → `REJECTED`.
+- Mapa comparativo → `COMPLETED` (grava `completedAt` e `completedById`).
+- Requisição de compra → `COMPARED`.
 
-**Mapa Comparativo (`comparisons.ts`)**
-- `createOrUpdateBidComparison` cria (BCxxx) ou atualiza o rascunho, recalculando a análise a partir das cotações atuais da requisição.
+**Regras:**
+- `createOrUpdateBidComparison` cria ou atualiza o rascunho, recalculando a análise a partir das cotações atuais.
 - Idempotência por `clientUuid` no create.
-- `completeBidComparison` é transacional e avança cotação/requisição.
-- Toda escrita gera `AuditEvent` (CREATE/UPDATE/COMPLETE) e `DomainEvent` (`BidComparison.Completed`).
+- A cotação selecionada deve pertencer à requisição (validação `VALIDATION_ERROR` caso contrário).
+- `analyzeBidComparison` é função pura (testável sem I/O).
 
-**Transversal (`common.ts`)**
-- Escopo de tenant sempre validado (`assertProcurementProject`).
-- Códigos automáticos por escopo: `SP` (organização), `PR`/`QT`/`BC` (projeto) — sequencial de 3 dígitos.
-- Auditoria com `projectId` opcional (fornecedor é escopo da org).
-- Domain events com `projectId` opcional.
-- `ActorContext` reutilizado do módulo de campo.
+**Saída:** fornecedor vencedor definido, requisição cotada.
 
 ---
 
-## 5. API (14 rotas)
+### Etapa 4 — Aprovação da Requisição
+
+**Quem:** Gestor de projeto ou PMO (permissão `PROCUREMENT:APPROVE`).
+
+**O que acontece:**
+1. Com a requisição em `COMPARED`, o gestor revisa o mapa comparativo e a justificativa.
+2. Aprova a requisição via ação **Aprovar** (com motivo opcional).
+3. A requisição avança para `APPROVED`.
+
+**Regras:**
+- `APPROVE` de requisição `COMPARED` exige cotação selecionada no mapa (`hasSelectedQuotation`).
+- Requisição `SUBMITTED` pode ser aprovada diretamente (sem cotação/mapa), quando a compra é simples ou emergencial.
+- Requisição `APPROVED` é terminal nesta fatia — não pode ser cancelada diretamente (exige fluxo de mudança/encerramento).
+
+**Saída:** requisição aprovada, pronta para gerar o Pedido de Compra (Fatia 2).
+
+---
+
+### Etapa 5 — Pedido de Compra (PO) *(Fatia 2 — planejada)*
+
+**Status:** não implementado. Descrição do escopo previsto.
+
+**Quem:** Comprador / equipe de suprimentos.
+
+**O que acontece (previsto):**
+1. A partir de uma requisição `APPROVED`, emite o **Pedido de Compra** (`PO001`…) formalizando:
+   - Fornecedor vencedor (da cotação `SELECTED`).
+   - Itens, quantidades e preços (da cotação vencedora).
+   - Prazo de entrega, condições de pagamento, termo de frete.
+   - Vínculos a WBS, atividade e item de custo (herdados da requisição).
+2. O pedido é enviado ao fornecedor e seu status avança de `DRAFT` para `ISSUED`.
+3. O pedido pode ser **parcialmente recebido** (status `PARTIALLY_RECEIVED`) ou **totalmente recebido** (`FULLY_RECEIVED`).
+
+**Transições previstas:**
+- `DRAFT → ISSUED` (emissão ao fornecedor).
+- `ISSUED → PARTIALLY_RECEIVED` (recebimento parcial).
+- `ISSUED/PARTIALLY_RECEIVED → FULLY_RECEIVED` (recebimento total).
+- `ISSUED → CANCELLED` (cancelamento, com motivo).
+- `FULLY_RECEIVED → CLOSED` (fechamento após conferência e fatura).
+
+**Regras previstas:**
+- Idempotência por `clientUuid`.
+- Código sequencial `PO001`… por projeto.
+- Só é possível emitir PO a partir de requisição `APPROVED`.
+- Apenas uma PO ativa por requisição (ou N, se compras parciais — a definir na Fatia 2).
+- Cancelamento de PO com recebimento iniciado exige justificativa e pode gerar ajuste de custo.
+
+**Saída:** pedido formalizado e enviado ao fornecedor, rastreável até a requisição e à cotação vencedora.
+
+---
+
+### Etapa 6 — Recebimento e Inspeção *(Fatia 2 — planejada)*
+
+**Quem:** Almoxarife / equipe de campo + inspetor de qualidade.
+
+**O que acontece (previsto):**
+1. Ao chegar o material/serviço, registra o **Recebimento** (`GR001`…) contra o pedido:
+   - Data de recebimento, responsável, quantidade recebida por item.
+   - Quantidade rejeitada (se houver) e motivo.
+   - Observações e evidências (fotos).
+2. O recebimento pode ser **parcial** (uma ou mais entregas) ou **total**.
+3. Para itens críticos, realiza **inspeção de recebimento** vinculada ao módulo de Qualidade (E13):
+   - Cria uma `Inspection` com critério de aceite.
+   - Vincula fotos de evidência (`inspectionId`).
+   - Registra resultado `PASS`/`FAIL`; no `FAIL` gera NCR automático.
+4. Se a inspeção falhar, o recebimento fica bloqueado até a resolução da NCR (ou aceite com ressalva, a definir).
+
+**Transições previstas:**
+- Recebimento: `DRAFT → CONFIRMED → (parcial/total)`.
+- Inspeção: reutiliza a máquina de estados de `Inspection` (E13): `PLANNED → EXECUTED → PASSED/FAILED → CLOSED`.
+
+**Regras previstas:**
+- Não é possível receber mais do que o saldo do pedido (quantidade pedida − já recebida).
+- Recebimento com inspeção reprovada não avança o status do pedido para `FULLY_RECEIVED` até resolução.
+- Toda escrita gera `AuditEvent` e `DomainEvent` (`GoodsReceipt.Created`, `.Confirmed`).
+
+**Saída:** material/serviço recebido, conferido e (quando aplicável) inspecionado.
+
+---
+
+### Etapa 7 — Fechamento Financeiro *(Fatia 2 — planejada)*
+
+**Quem:** Financeiro / controladoria.
+
+**O que acontece (previsto):**
+1. Com o pedido totalmente recebido e inspecionado, o financeiro:
+   - Registra o **commitment** de custo (integração com o módulo de Custos E09).
+   - Registra a **fatura** do fornecedor e a medição de avanço físico (integração com E12).
+   - Concilia valores pedidos vs. recebidos vs. faturados.
+2. Fecha o pedido (`CLOSED`) e encerra a requisição original (já `APPROVED`).
+3. Atualiza o painel de suprimentos (`getProcurementBoard`) com as métricas finais.
+
+**Saída:** ciclo de aquisição encerrado, custos e avanço atualizados.
+
+---
+
+## 4. Regras transversais (Fatia 1, implementadas)
+
+- **Escopo de tenant** sempre validado (`assertProcurementProject`): projeto deve existir e pertencer à organização.
+- **Códigos automáticos** por escopo: `SP` (organização), `PR`/`QT`/`BC` (projeto) — sequencial de 3 dígitos.
+- **Idempotência offline** por `clientUuid` em fornecedor, requisição, cotação e mapa comparativo (`@@unique([scope, clientUuid])`).
+- **Auditoria** (`AuditEvent`) em toda escrita: CREATE, UPDATE, DELETE, STATUS_CHANGE, COMPLETE.
+- **Domain events** (`DomainEvent`) em criações e transições relevantes: `Supplier.Created`, `PurchaseRequest.Created`/`.StatusChanged`, `Quotation.Created`, `BidComparison.Completed`.
+- **Versionamento otimista** (`version` incrementado) em updates.
+- **Exclusão lógica** (`deletedAt`/`deletedBy`) em todas as entidades; listagens filtram `deletedAt: null`.
+- **Permissões** por módulo `PROCUREMENT` com ações `VIEW/CREATE/EDIT/APPROVE/REJECT/DELETE`, atribuídas por papel (PMO, PM, Suprimentos, etc.).
+- **Fornecedor é escopo da organização**, não do projeto — reutilizável entre projetos.
+
+---
+
+## 5. Máquinas de estados (resumo)
+
+### 5.1 Fornecedor
+
+`ACTIVE` (pode receber cotações) · `BLOCKED` · `INACTIVE` (desativado; usado em vez de exclusão quando há cotações vinculadas). Status alterado via `updateSupplier`.
+
+### 5.2 Requisição de Compra
+
+```
+DRAFT ──SUBMIT──► SUBMITTED ──START_QUOTING──► QUOTING ──FINISH_QUOTING──► COMPARED ──APPROVE──► APPROVED
+  │                    │                          │                          │
+  │                    ├──APPROVE──► APPROVED     │                          ├──REJECT──► REJECTED
+  │                    ├──REJECT──► REJECTED       │                          │
+  │                    ├──CANCEL──► CANCELLED      ├──CANCEL──► CANCELLED      ├──CANCEL──► CANCELLED
+  └──CANCEL──► CANCELLED                          │
+CANCELLED/REJECTED ──REOPEN──► DRAFT
+```
+
+Editável apenas em `DRAFT`/`SUBMITTED`. Excluível apenas em `DRAFT`/`CANCELLED` (sem cotações).
+
+### 5.3 Cotação
+
+```
+DRAFT ──SUBMIT──► SUBMITTED ──SELECT──► SELECTED
+  │                    │
+  │                    ├──REJECT──► REJECTED
+  │                    ├──CANCEL──► CANCELLED
+  │                    └──REOPEN──► DRAFT
+  └──CANCEL──► CANCELLED
+CANCELLED/REJECTED/SUBMITTED ──REOPEN──► DRAFT
+```
+
+Editável apenas em `DRAFT`. Excluível apenas em `DRAFT`/`CANCELLED`.
+
+### 5.4 Mapa Comparativo
+
+`DRAFT → COMPLETED` (via `completeBidComparison`, que seleciona a vencedora e avança a requisição para `COMPARED`) · `CANCELLED`.
+
+### 5.5 Pedido de Compra (previsto — Fatia 2)
+
+`DRAFT → ISSUED → PARTIALLY_RECEIVED → FULLY_RECEIVED → CLOSED` · `ISSUED → CANCELLED`.
+
+### 5.6 Recebimento (previsto — Fatia 2)
+
+`DRAFT → CONFIRMED` (parcial ou total), com inspeção de recebimento opcional via E13.
+
+---
+
+## 6. API (Fatia 1 — 14 rotas implementadas)
 
 Base: `/api/v1/projects/[id]/procurement/…` (exceto fornecedores em `/api/v1/suppliers/…`).
-Padrão `apiHandler` + `actorOf` + `idsFrom`/`projectIdFrom`, mesmo padrão do módulo de campo.
-Permissões: `PROCUREMENT:VIEW/CREATE/EDIT/APPROVE/REJECT/DELETE`.
+Padrão `apiHandler` + `actorOf` + `idsFrom`/`projectIdFrom`. Permissões: `PROCUREMENT:VIEW/CREATE/EDIT/APPROVE/REJECT/DELETE`.
 
 | Método | Rota | Permissão | Função |
 |---|---|---|---|
@@ -271,11 +418,10 @@ Contrato de erro padrão: `{ error: { code, message, details?, correlation_id } 
 
 ---
 
-## 6. Telas
+## 7. Telas (Fatia 1)
 
 - **`/suprimentos`** — visão geral por projeto: contagem de requisições, em cotação, cotadas, aprovadas e fornecedores homologados; link para a tela do projeto.
 - **`/projetos/[id]/suprimentos`** — página principal (`procurement-view.tsx`), server-side com os selectors.
-- Sidebar: item **"Suprimentos"** (ícone `ShoppingCart`); link "Suprimentos (E14)" no cabeçalho do projeto.
 
 Componentes da tela:
 - **Quadro**: Requisições · Abertas · Em cotação · Cotadas/Comp. · Aprovadas · Fornecedores Ativos.
@@ -286,7 +432,7 @@ Componentes da tela:
 
 ---
 
-## 7. Limitações conhecidas (hoje)
+## 8. Limitações conhecidas (hoje)
 
 1. **Sem pedido de compra (PO) e recebimento** — a Fatia 1 fecha em `APPROVED` na requisição; PO/recebimento/inspeção de recebimento ficam para a Fatia 2.
 2. **Edição de requisição bloqueada após SUBMITTED avançado** — requisição só é editável em `DRAFT`/`SUBMITTED`; itens não podem ser alterados em cotação.
@@ -299,13 +445,13 @@ Componentes da tela:
 
 ---
 
-## 8. Próximo passo
+## 9. Próximo passo
 
 **E14 Fatia 2**: Pedido de Compra (PO) e recebimento — vincular a requisição aprovada a um PO, controle de entrega/recebimento, inspeção de recebimento e integração com estoque/custos. Ainda não iniciado.
 
 ---
 
-## 9. Verificação (gate da Fatia 1)
+## 10. Verificação (gate da Fatia 1)
 
 - `eslint` 0 problemas · `tsc --noEmit` limpo.
 - **263 testes unitários** (`tests/unit/procurement-engine.test.ts` — máquina de estados de requisição e cotação, cálculo de totais, análise de bid comparison, board summary).
