@@ -3,12 +3,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api-client";
 import {
+  buildFormDataFor,
   discardFailedItems,
   enqueueCreate,
+  enqueuePhoto,
   flushQueueWith,
   getQueueCounts,
+  listQueueItems,
   MemoryQueueStore,
   sendOrQueueCreate,
+  sendOrQueueEdit,
+  sendOrQueuePhoto,
+  sendQueuedItem,
 } from "@/lib/offline-queue";
 
 function pendingItem(overrides: Record<string, unknown> = {}) {
@@ -190,5 +196,169 @@ describe("sendOrQueueCreate", () => {
   it("4xx é relançado para a UI (não enfileira)", async () => {
     const send = vi.fn().mockRejectedValue(new ApiError(422, "Dados inválidos"));
     await expect(sendOrQueueCreate(input, send)).rejects.toThrow("Dados inválidos");
+  });
+});
+
+// --- Fatia 2: fotos offline, edições de rascunho e despacho -----------------
+
+const photoInput = {
+  projectId: "p1",
+  url: "/api/v1/projects/p1/field/photos",
+  meta: { caption: "Fachada norte", diaryId: "d-1", clientUuid: "photo-uuid-1" },
+  file: new Blob(["binario"], { type: "image/png" }),
+  fileName: "fachada.png",
+  mimeType: "image/png",
+};
+
+describe("enqueuePhoto (Fatia 2)", () => {
+  it("persiste Blob + metadados e extrai o clientUuid", async () => {
+    const store = new MemoryQueueStore();
+    const item = await enqueuePhoto(photoInput, store);
+    expect(item.entity).toBe("photo");
+    expect(item.method).toBe("POST");
+    expect(item.clientUuid).toBe("photo-uuid-1");
+    expect(item.file).toBe(photoInput.file);
+    expect(item.fileName).toBe("fachada.png");
+    expect(item.mimeType).toBe("image/png");
+    expect(JSON.parse(item.body)).toEqual(photoInput.meta);
+
+    const counts = await getQueueCounts(store);
+    expect(counts).toEqual({ pending: 1, failed: 0 });
+  });
+});
+
+describe("buildFormDataFor", () => {
+  it("monta multipart com file + metadados e ignora vazios", async () => {
+    const store = new MemoryQueueStore();
+    const item = await enqueuePhoto(
+      { ...photoInput, meta: { caption: "", diaryId: "d-1", wbsNodeId: undefined, clientUuid: "photo-uuid-1" } },
+      store
+    );
+    const form = buildFormDataFor(item);
+    expect(form.get("file")).toBeTruthy();
+    expect(form.get("diaryId")).toBe("d-1");
+    expect(form.get("clientUuid")).toBe("photo-uuid-1");
+    expect(form.get("caption")).toBeNull(); // vazio não vai no form
+    expect(form.get("wbsNodeId")).toBeNull();
+  });
+
+  it("item sem arquivo lança erro claro", () => {
+    expect(() =>
+      buildFormDataFor({ ...pendingItem({ entity: "diary" }), file: undefined })
+    ).toThrow("sem arquivo");
+  });
+});
+
+describe("sendQueuedItem (despacho por tipo)", () => {
+  it("foto vai para transport.upload com multipart", async () => {
+    const store = new MemoryQueueStore();
+    const item = await enqueuePhoto(photoInput, store);
+    const upload = vi.fn().mockResolvedValue({});
+    const json = vi.fn();
+
+    await sendQueuedItem(item, { json, upload });
+
+    expect(json).not.toHaveBeenCalled();
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect(upload.mock.calls[0][0]).toBe(photoInput.url);
+    const form = upload.mock.calls[0][1] as FormData;
+    expect(form.get("clientUuid")).toBe("photo-uuid-1");
+    expect(form.get("caption")).toBe("Fachada norte");
+  });
+
+  it("JSON usa o method do item (POST/PATCH; legado sem method = POST)", async () => {
+    const json = vi.fn().mockResolvedValue({});
+    const upload = vi.fn();
+
+    await sendQueuedItem({ ...pendingItem(), method: "PATCH" }, { json, upload });
+    expect(json).toHaveBeenCalledWith(pendingItem().url, { method: "PATCH", body: pendingItem().body });
+
+    await sendQueuedItem(pendingItem({ key: "legado" }), { json, upload });
+    expect(json).toHaveBeenLastCalledWith(pendingItem().url, { method: "POST", body: pendingItem().body });
+    expect(upload).not.toHaveBeenCalled();
+  });
+});
+
+describe("sendOrQueueEdit (regra de conflito: last-wins em rascunho)", () => {
+  const editInput = {
+    entity: "diary" as const,
+    projectId: "p1",
+    url: "/api/v1/projects/p1/field/diaries/d-1",
+    payload: { notes: "corrigido offline" },
+  };
+
+  it("envia PATCH online e devolve sent", async () => {
+    const send = vi.fn().mockResolvedValue({});
+    await expect(sendOrQueueEdit(editInput, send)).resolves.toBe("sent");
+    expect(send).toHaveBeenCalledWith(editInput.url, JSON.stringify(editInput.payload));
+  });
+
+  it("offline enfileira com method PATCH no item", async () => {
+    vi.stubGlobal("navigator", { onLine: false });
+    const send = vi.fn();
+    const before = (await listQueueItems()).length;
+    await expect(sendOrQueueEdit(editInput, send)).resolves.toBe("queued");
+    expect(send).not.toHaveBeenCalled();
+    const items = await listQueueItems();
+    expect(items.length).toBe(before + 1);
+    const item = items[items.length - 1]; // o recém-enfileirado
+    expect(item.method).toBe("PATCH");
+    expect(item.url).toBe(editInput.url);
+  });
+
+  it("4xx é relançado (revalidação do servidor não vai para a fila)", async () => {
+    const send = vi
+      .fn()
+      .mockRejectedValue(new ApiError(422, "Diário não editável neste status"));
+    await expect(sendOrQueueEdit(editInput, send)).rejects.toThrow(
+      "Diário não editável neste status"
+    );
+  });
+});
+
+describe("sendOrQueuePhoto (Fatia 2)", () => {
+  it("envia multipart online e devolve sent", async () => {
+    const send = vi.fn().mockResolvedValue({});
+    await expect(sendOrQueuePhoto(photoInput, send)).resolves.toBe("sent");
+    expect(send).toHaveBeenCalledTimes(1);
+    const form = send.mock.calls[0][1] as FormData;
+    expect(form.get("clientUuid")).toBe("photo-uuid-1");
+    expect(form.get("file")).toBeTruthy();
+  });
+
+  it("offline enfileira sem chamar send (Blob persistido)", async () => {
+    vi.stubGlobal("navigator", { onLine: false });
+    const send = vi.fn();
+    await expect(sendOrQueuePhoto(photoInput, send)).resolves.toBe("queued");
+    expect(send).not.toHaveBeenCalled();
+    const counts = await getQueueCounts();
+    expect(counts.pending).toBeGreaterThan(0);
+  });
+
+  it("queda de rede (ApiError 0) enfileira o Blob", async () => {
+    const send = vi.fn().mockRejectedValue(new ApiError(0, "Falha de conexão", "NETWORK_ERROR"));
+    await expect(sendOrQueuePhoto(photoInput, send)).resolves.toBe("queued");
+  });
+
+  it("4xx (ex.: arquivo rejeitado) é relançado para a UI", async () => {
+    const send = vi.fn().mockRejectedValue(new ApiError(413, "Foto acima de 4 MB"));
+    await expect(sendOrQueuePhoto(photoInput, send)).rejects.toThrow("Foto acima de 4 MB");
+  });
+});
+
+describe("flush de fila mista (Fatia 2)", () => {
+  it("processa foto e JSON em FIFO; foto remove no sucesso", async () => {
+    const store = new MemoryQueueStore();
+    await store.put(pendingItem({ key: "json", createdAt: "2026-10-29T10:00:00.000Z" }));
+    await enqueuePhoto(photoInput, store);
+    // ordena: json (10:00:00) antes da foto (enfileirada agora)
+    const order: string[] = [];
+    const result = await flushQueueWith(store, async (item) => {
+      order.push(item.entity);
+      return {};
+    });
+    expect(order).toEqual(["diary", "photo"]);
+    expect(result).toEqual({ synced: 2, failed: 0, pending: 0 });
+    expect(await store.list()).toEqual([]);
   });
 });

@@ -16,7 +16,7 @@ import {
   updateConstraint,
   transitionConstraint,
 } from "@/modules/field/constraints";
-import { createPhoto, deletePhoto, preparePhotoUpload, updatePhoto } from "@/modules/field/photos";
+import { createPhoto, deletePhoto, photoUploadFields, preparePhotoUpload, updatePhoto } from "@/modules/field/photos";
 import { createProgress, updateProgress, deleteProgress } from "@/modules/field/progress";
 import { createActivity } from "@/modules/schedule/activities";
 import { createActual } from "@/modules/cost/actuals";
@@ -372,6 +372,46 @@ describe("foto de evidência (E12-US02)", () => {
     const photos = await listPhotos(orgA.id, projectId, diary.id);
     expect(photos.some((row) => row.id === photo.id)).toBe(true);
     expect(photos[0].diaryCode).toBe(diary.code);
+  });
+
+  it("idempotencia offline com clientUuid (servico) e parse do multipart da rota", async () => {
+    // Reenvio do mesmo clientUuid (fila offline Fatia 2) devolve a foto
+    // original em vez de duplicar o binario.
+    const clientUuid = randomUUID();
+    const first = await createPhoto({
+      ...actorA(),
+      projectId,
+      caption: "Captura offline",
+      clientUuid,
+      file: imagePayload("offline-1.png"),
+    });
+    const replay = await createPhoto({
+      ...actorA(),
+      projectId,
+      caption: "Reenvio sem rede",
+      clientUuid,
+      file: imagePayload("offline-2.png"),
+    });
+    expect(replay.id).toBe(first.id);
+    expect(replay.caption).toBe("Captura offline");
+    const replayed = await prisma.photoEvidence.count({ where: { projectId, clientUuid } });
+    expect(replayed).toBe(1);
+
+    // O multipart da rota precisa repassar o clientUuid do form — sem isso a
+    // fila offline duplicava a foto (bug da Fatia 2).
+    const form = new FormData();
+    form.append("caption", "Fachada norte");
+    form.append("clientUuid", clientUuid);
+    const fields = photoUploadFields(form);
+    expect(fields.clientUuid).toBe(clientUuid);
+    expect(fields.caption).toBe("Fachada norte");
+
+    const empty = photoUploadFields(new FormData());
+    expect(empty.clientUuid).toBeUndefined();
+
+    const invalid = new FormData();
+    invalid.append("diaryId", "nao-e-uuid");
+    await expectAppError(Promise.resolve().then(() => photoUploadFields(invalid)), "VALIDATION_ERROR");
   });
 
   it("edita legenda e vnculos (dirio/atividade) depois do upload", async () => {

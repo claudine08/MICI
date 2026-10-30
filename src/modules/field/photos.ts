@@ -10,6 +10,7 @@ import {
   type ActorContext,
 } from "@/modules/field/common";
 import { assertFieldProject } from "@/modules/field/selectors";
+import { uploadPhotoFieldsSchema } from "@/modules/field/schemas";
 import { prepareFileUpload, type FilePayload } from "@/modules/documents/storage";
 
 // Foto de evidência (E12-US02, §33/§61): mesmo storage dos documentos
@@ -54,6 +55,30 @@ export interface CreatePhotoInput {
   activityId?: string | null;
   inspectionId?: string | null;
   file: FilePayload;
+}
+
+// Lê e valida os metadados do multipart de upload (usado pela rota POST).
+// Extraído do handler para ser testável sem HTTP — e para garantir que o
+// `clientUuid` do formulário chegue ao createPhoto: sem ele o reenvio offline
+// da fila duplicava a foto em vez de devolver o registro original (§38).
+export function photoUploadFields(formData: FormData) {
+  const rawFields = {
+    code: formData.get("code")?.toString() || undefined,
+    caption: formData.get("caption")?.toString() || undefined,
+    takenAt: formData.get("takenAt")?.toString() || undefined,
+    diaryId: formData.get("diaryId")?.toString() || undefined,
+    wbsNodeId: formData.get("wbsNodeId")?.toString() || undefined,
+    activityId: formData.get("activityId")?.toString() || undefined,
+    inspectionId: formData.get("inspectionId")?.toString() || undefined,
+    clientUuid: formData.get("clientUuid")?.toString() || undefined,
+  };
+  const parsed = uploadPhotoFieldsSchema.safeParse(rawFields);
+  if (!parsed.success) {
+    throw new AppError("VALIDATION_ERROR", "Metadados da foto inválidos.", {
+      details: parsed.error.flatten(),
+    });
+  }
+  return parsed.data;
 }
 
 async function assertDiary(organizationId: string, projectId: string, diaryId: string) {

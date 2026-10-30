@@ -1,4 +1,5 @@
-// Fila offline de criações de campo (E12 backlog §4 — §38).
+// Fila offline de criações de campo (E12 backlog §4 — §38; Fatia 1) e de
+// fotos/edições de rascunho (Fatia 2).
 //
 // Toda mutação enfileirada usa o `clientUuid` já gerado no formulário: o
 // reenvio é idempotente no servidor (devolve o registro original). A fila
@@ -8,15 +9,23 @@
 //     precisa corrigir os dados ou descartar);
 //   - 5xx                → permanece "pending" com tentativa contada;
 //   - falha de rede      → interrompe o flush (sem conexão).
-// Escopo Fatia 1: apenas POSTs de criação (diário/tarefa/restrição/medição).
+// Escopo: POSTs de criação (diário/tarefa/restrição/medição), upload de foto
+// (Blob no IndexedDB) e PATCH de edição editável na hora (regra de conflito:
+// último-wins em rascunho; o servidor revalida a máquina de estados no replay
+// — se o registro mudou de estado, o 4xx vira "failed" visível).
 
-import { ApiError, apiRequest } from "@/lib/api-client";
+import { ApiError, apiRequest, apiUpload } from "@/lib/api-client";
 
-export type OfflineEntity = "diary" | "task" | "constraint" | "progress";
+export type OfflineEntity = "diary" | "task" | "constraint" | "progress" | "photo";
+
+// POST = criação; PATCH = edição enfileirada (só rascunho editável). Itens
+// antigos (Fatia 1) podem vir do IndexedDB sem o campo → tratados como POST.
+export type OfflineMethod = "POST" | "PATCH";
 
 export interface OfflineQueueItem {
   key: string;
   entity: OfflineEntity;
+  method?: OfflineMethod;
   projectId: string;
   url: string;
   body: string;
@@ -25,6 +34,10 @@ export interface OfflineQueueItem {
   attempts: number;
   status: "pending" | "failed";
   lastError?: string;
+  // Fatia 2 — foto offline: binário persistido como Blob (IndexedDB suporta).
+  file?: Blob;
+  fileName?: string;
+  mimeType?: string;
 }
 
 export interface QueueStore {
@@ -128,6 +141,7 @@ export interface EnqueueInput {
   projectId: string;
   url: string;
   payload: Record<string, unknown>;
+  method?: OfflineMethod;
 }
 
 export async function enqueueCreate(
@@ -139,6 +153,7 @@ export async function enqueueCreate(
   const item: OfflineQueueItem = {
     key: crypto.randomUUID(),
     entity: input.entity,
+    method: input.method ?? "POST",
     projectId: input.projectId,
     url: input.url,
     body: JSON.stringify(input.payload),
@@ -146,6 +161,62 @@ export async function enqueueCreate(
     createdAt: new Date().toISOString(),
     attempts: 0,
     status: "pending",
+  };
+  await store.put(item);
+  notify();
+  return item;
+}
+
+// --- Foto offline (Fatia 2) -----------------------------------------------
+
+export interface EnqueuePhotoInput {
+  projectId: string;
+  url: string;
+  meta: Record<string, unknown>;
+  file: Blob;
+  fileName: string;
+  mimeType: string;
+}
+
+// Monta o multipart igual ao envio online: `file` + metadados não vazios.
+function photoFormData(meta: Record<string, unknown>, file: Blob, fileName?: string): FormData {
+  const form = new FormData();
+  form.append("file", file, fileName ?? "foto");
+  for (const [key, value] of Object.entries(meta)) {
+    if (value === undefined || value === null || value === "") continue;
+    form.append(key, String(value));
+  }
+  return form;
+}
+
+export function buildFormDataFor(item: OfflineQueueItem): FormData {
+  if (!item.file) {
+    throw new Error("Item da fila sem arquivo — upload de foto incompleto.");
+  }
+  const meta = JSON.parse(item.body || "{}") as Record<string, unknown>;
+  return photoFormData(meta, item.file, item.fileName);
+}
+
+export async function enqueuePhoto(
+  input: EnqueuePhotoInput,
+  store: QueueStore = getQueueStore()
+): Promise<OfflineQueueItem> {
+  const clientUuid =
+    typeof input.meta.clientUuid === "string" ? input.meta.clientUuid : undefined;
+  const item: OfflineQueueItem = {
+    key: crypto.randomUUID(),
+    entity: "photo",
+    method: "POST",
+    projectId: input.projectId,
+    url: input.url,
+    body: JSON.stringify(input.meta),
+    clientUuid,
+    createdAt: new Date().toISOString(),
+    attempts: 0,
+    status: "pending",
+    file: input.file,
+    fileName: input.fileName,
+    mimeType: input.mimeType,
   };
   await store.put(item);
   notify();
@@ -165,6 +236,10 @@ export async function getQueueCounts(
   return { pending, failed };
 }
 
+export async function listQueueItems(store: QueueStore = getQueueStore()): Promise<OfflineQueueItem[]> {
+  return store.list();
+}
+
 export async function discardFailedItems(store: QueueStore = getQueueStore()) {
   const items = await store.list();
   for (const item of items) {
@@ -175,7 +250,31 @@ export async function discardFailedItems(store: QueueStore = getQueueStore()) {
 
 type Sender = (item: OfflineQueueItem) => Promise<unknown>;
 
-const defaultSender: Sender = (item) => apiRequest(item.url, { method: "POST", body: item.body });
+// Transporte injetável: em produção usa a API real (JSON via apiRequest,
+// multipart via apiUpload/XHR); nos testes entra um mock puro.
+export interface QueueTransport {
+  json: (url: string, init: { method: string; body: string }) => Promise<unknown>;
+  upload: (url: string, form: FormData) => Promise<unknown>;
+}
+
+const defaultTransport: QueueTransport = {
+  json: (url, init) => apiRequest(url, init),
+  upload: (url, form) => apiUpload(url, form),
+};
+
+// Despacho por tipo de item: foto → multipart (Blob); demais → JSON com o
+// método gravado (POST ou PATCH). Itens legados sem method caem em POST.
+export function sendQueuedItem(
+  item: OfflineQueueItem,
+  transport: QueueTransport = defaultTransport
+): Promise<unknown> {
+  if (item.entity === "photo") {
+    return transport.upload(item.url, buildFormDataFor(item));
+  }
+  return transport.json(item.url, { method: item.method ?? "POST", body: item.body });
+}
+
+const defaultSender: Sender = (item) => sendQueuedItem(item);
 
 export async function flushQueueWith(
   store: QueueStore,
@@ -225,14 +324,13 @@ export function flushQueue(): Promise<FlushResult> {
   return flushInFlight;
 }
 
-// --- Criação com fallback para a fila ---------------------------------------
+// --- Criação/edição com fallback para a fila --------------------------------
 
-// Devolve "queued" quando a criação foi para a fila (offline ou queda de
+// Devolve "queued" quando a mutação foi para a fila (offline ou queda de
 // rede); erros de negócio (4xx) são relançados para a UI tratar como hoje.
-export async function sendOrQueueCreate(
+async function sendOrQueueWith(
   input: EnqueueInput,
-  send: (url: string, body: string) => Promise<unknown> = (url, body) =>
-    apiRequest(url, { method: "POST", body })
+  send: (url: string, body: string) => Promise<unknown>
 ): Promise<"sent" | "queued"> {
   const offline = typeof navigator !== "undefined" && navigator.onLine === false;
   if (!offline) {
@@ -244,5 +342,42 @@ export async function sendOrQueueCreate(
     }
   }
   await enqueueCreate(input);
+  return "queued";
+}
+
+export function sendOrQueueCreate(
+  input: EnqueueInput,
+  send: (url: string, body: string) => Promise<unknown> = (url, body) =>
+    apiRequest(url, { method: "POST", body })
+): Promise<"sent" | "queued"> {
+  return sendOrQueueWith({ ...input, method: "POST" }, send);
+}
+
+// Edição enfileirada (regra de conflito): último-wins no rascunho; o replay
+// revalida a máquina de estados no servidor (4xx → "failed" visível).
+export function sendOrQueueEdit(
+  input: EnqueueInput,
+  send: (url: string, body: string) => Promise<unknown> = (url, body) =>
+    apiRequest(url, { method: "PATCH", body })
+): Promise<"sent" | "queued"> {
+  return sendOrQueueWith({ ...input, method: "PATCH" }, send);
+}
+
+// Upload de foto com fallback: online manda multipart (XHR com progresso e
+// diagnóstico); offline/queda de rede persiste o Blob na fila.
+export async function sendOrQueuePhoto(
+  input: EnqueuePhotoInput,
+  send: (url: string, form: FormData) => Promise<unknown> = (url, form) => apiUpload(url, form)
+): Promise<"sent" | "queued"> {
+  const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+  if (!offline) {
+    try {
+      await send(input.url, photoFormData(input.meta, input.file, input.fileName));
+      return "sent";
+    } catch (caught) {
+      if (!(caught instanceof ApiError) || caught.status !== 0) throw caught;
+    }
+  }
+  await enqueuePhoto(input);
   return "queued";
 }

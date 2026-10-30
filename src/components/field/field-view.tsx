@@ -9,6 +9,8 @@ import {
   flushQueue,
   getQueueCounts,
   sendOrQueueCreate,
+  sendOrQueueEdit,
+  sendOrQueuePhoto,
 } from "@/lib/offline-queue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +34,9 @@ import {
   availableConstraintActions,
   availableDiaryActions,
   availableTaskActions,
+  isConstraintEditable,
+  isDiaryEditable,
+  isTaskEditable,
   type ConstraintStatus,
   type ConstraintType,
   type DiaryStatus,
@@ -393,10 +398,28 @@ export function FieldView({
       const payload: Record<string, unknown> = cleanPayload(diaryForm);
       if (diaryForm.workHours !== "") payload.workHours = Number(diaryForm.workHours);
       if (editingDiaryId) {
-        await apiRequest(`${diaryBase}/${editingDiaryId}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
+        // Regra de conflito: edição offline só de rascunho editável (última
+        // gravação vence); replay revalida o status no servidor.
+        const row = diaries.find((diary) => diary.id === editingDiaryId);
+        if (row && isDiaryEditable(row.status)) {
+          const outcome = await sendOrQueueEdit({
+            entity: "diary",
+            projectId,
+            url: `${diaryBase}/${editingDiaryId}`,
+            payload,
+          });
+          if (outcome === "queued") {
+            setDiaryDialog(false);
+            setInfo("Sem conexão: alteração do rascunho salva offline. Sincroniza ao voltar a rede.");
+            await refreshQueue();
+            return;
+          }
+        } else {
+          await apiRequest(`${diaryBase}/${editingDiaryId}`, {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+          });
+        }
       } else {
         const outcome = await sendOrQueueCreate({
           entity: "diary",
@@ -466,10 +489,26 @@ export function FieldView({
     try {
       const payload = cleanPayload(taskForm);
       if (editingTaskId) {
-        await apiRequest(`${taskBase}/${editingTaskId}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
+        const row = tasks.find((task) => task.id === editingTaskId);
+        if (row && isTaskEditable(row.status)) {
+          const outcome = await sendOrQueueEdit({
+            entity: "task",
+            projectId,
+            url: `${taskBase}/${editingTaskId}`,
+            payload,
+          });
+          if (outcome === "queued") {
+            setTaskDialog(false);
+            setInfo("Sem conexão: alteração da tarefa salva offline. Sincroniza ao voltar a rede.");
+            await refreshQueue();
+            return;
+          }
+        } else {
+          await apiRequest(`${taskBase}/${editingTaskId}`, {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+          });
+        }
       } else {
         const outcome = await sendOrQueueCreate({
           entity: "task",
@@ -539,10 +578,26 @@ export function FieldView({
     try {
       const payload = cleanPayload(constraintForm);
       if (editingConstraintId) {
-        await apiRequest(`${constraintBase}/${editingConstraintId}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        });
+        const row = constraints.find((item) => item.id === editingConstraintId);
+        if (row && isConstraintEditable(row.status)) {
+          const outcome = await sendOrQueueEdit({
+            entity: "constraint",
+            projectId,
+            url: `${constraintBase}/${editingConstraintId}`,
+            payload,
+          });
+          if (outcome === "queued") {
+            setConstraintDialog(false);
+            setInfo("Sem conexão: alteração da restrição salva offline. Sincroniza ao voltar a rede.");
+            await refreshQueue();
+            return;
+          }
+        } else {
+          await apiRequest(`${constraintBase}/${editingConstraintId}`, {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+          });
+        }
       } else {
         const outcome = await sendOrQueueCreate({
           entity: "constraint",
@@ -626,10 +681,19 @@ export function FieldView({
       if (progressForm.quantityReal !== "")
         payload.quantityReal = Number(progressForm.quantityReal);
       if (editingProgressId) {
-        await apiRequest(`${progressBase}/${editingProgressId}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
+        // Medição não tem máquina de estados — edição offline é last-wins puro.
+        const outcome = await sendOrQueueEdit({
+          entity: "progress",
+          projectId,
+          url: `${progressBase}/${editingProgressId}`,
+          payload,
         });
+        if (outcome === "queued") {
+          setProgressDialog(false);
+          setInfo("Sem conexão: alteração da medição salva offline. Sincroniza ao voltar a rede.");
+          await refreshQueue();
+          return;
+        }
       } else {
         const outcome = await sendOrQueueCreate({
           entity: "progress",
@@ -768,6 +832,7 @@ export function FieldView({
   const submitPhoto = async () => {
     setBusy(true);
     setError(null);
+    setInfo(null);
     try {
       if (editingPhoto) {
         await apiRequest(`${photoBase}/${editingPhoto.id}`, {
@@ -782,20 +847,46 @@ export function FieldView({
         });
       } else {
         if (!photoFile) throw new Error("Selecione a foto antes de enviar.");
-        const form = new FormData();
-        form.append("file", photoFile);
-        if (photoCaption) form.append("caption", photoCaption);
-        if (photoDiaryId) form.append("diaryId", photoDiaryId);
-        if (photoWbsNodeId) form.append("wbsNodeId", photoWbsNodeId);
-        if (photoActivityId) form.append("activityId", photoActivityId);
-        if (photoInspectionId) form.append("inspectionId", photoInspectionId);
-        if (photoClientUuid) form.append("clientUuid", photoClientUuid);
-        const response = await fetch(photoBase, { method: "POST", body: form });
-        if (!response.ok) {
-          const body = (await response.json().catch(() => null)) as {
-            error?: { message?: string };
-          } | null;
-          throw new Error(body?.error?.message ?? "Falha ao enviar a foto.");
+        // Valida igual ao servidor ANTES de enviar/enfileirar: um arquivo que
+        // o server rejeitaria viraria "falha" na fila sem motivo aparente.
+        const allowed = [
+          "image/png",
+          "image/jpeg",
+          "image/webp",
+          "image/gif",
+          "image/heic",
+          "image/heif",
+        ];
+        if (!allowed.includes(photoFile.type)) {
+          throw new Error(
+            `Tipo de arquivo não permitido para foto: ${photoFile.type || "desconhecido"}.`
+          );
+        }
+        if (photoFile.size > 4 * 1024 * 1024) {
+          throw new Error("Foto acima de 4 MB. Comprima a imagem antes de enviar.");
+        }
+        const meta: Record<string, unknown> = {};
+        if (photoCaption) meta.caption = photoCaption;
+        if (photoDiaryId) meta.diaryId = photoDiaryId;
+        if (photoWbsNodeId) meta.wbsNodeId = photoWbsNodeId;
+        if (photoActivityId) meta.activityId = photoActivityId;
+        if (photoInspectionId) meta.inspectionId = photoInspectionId;
+        if (photoClientUuid) meta.clientUuid = photoClientUuid;
+        const outcome = await sendOrQueuePhoto({
+          projectId,
+          url: photoBase,
+          meta,
+          file: photoFile,
+          fileName: photoFile.name,
+          mimeType: photoFile.type,
+        });
+        if (outcome === "queued") {
+          closePhotoDialog();
+          setInfo(
+            "Sem conexão: foto salva offline (até 4 MB). Será enviada ao voltar a rede, junto com as outras pendências."
+          );
+          await refreshQueue();
+          return;
         }
       }
       closePhotoDialog();

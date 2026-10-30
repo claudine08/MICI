@@ -3,8 +3,7 @@ import { apiHandler } from "@/core/api";
 import { AppError } from "@/core/errors";
 import { requireTenantContext, assertPermission } from "@/core/tenant";
 import { listPhotos } from "@/modules/field/selectors";
-import { createPhoto, preparePhotoUpload } from "@/modules/field/photos";
-import { uploadPhotoFieldsSchema } from "@/modules/field/schemas";
+import { createPhoto, photoUploadFields, preparePhotoUpload } from "@/modules/field/photos";
 import { fileFromFormData } from "@/modules/documents/storage";
 import { actorOf, projectIdFrom } from "@/modules/field/http";
 
@@ -33,22 +32,7 @@ export const { GET, POST } = apiHandler({
       throw new AppError("VALIDATION_ERROR", "Envie um formulário multipart com a foto.");
     }
 
-    const rawFields = {
-      code: formData.get("code")?.toString() || undefined,
-      caption: formData.get("caption")?.toString() || undefined,
-      takenAt: formData.get("takenAt")?.toString() || undefined,
-      diaryId: formData.get("diaryId")?.toString() || undefined,
-      wbsNodeId: formData.get("wbsNodeId")?.toString() || undefined,
-      activityId: formData.get("activityId")?.toString() || undefined,
-      inspectionId: formData.get("inspectionId")?.toString() || undefined,
-    };
-    const parsed = uploadPhotoFieldsSchema.safeParse(rawFields);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", "Metadados da foto inválidos.", {
-        details: parsed.error.flatten(),
-      });
-    }
-
+    const fields = photoUploadFields(formData);
     const file = await fileFromFormData(formData);
     if (!file) {
       throw new AppError("VALIDATION_ERROR", "Foto ausente (campo `file`).");
@@ -58,7 +42,7 @@ export const { GET, POST } = apiHandler({
     const photo = await createPhoto({
       ...actorOf(tenant, request),
       projectId,
-      ...parsed.data,
+      ...fields,
       file: payload,
     });
     return Response.json({ photo }, { status: 201 });
