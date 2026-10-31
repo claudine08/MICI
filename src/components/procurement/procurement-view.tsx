@@ -86,12 +86,32 @@ export interface SupplierRow {
   status: SupplierStatus;
 }
 
+export interface PurchaseOrderRow {
+  id: string;
+  code: string;
+  status: string;
+  supplier?: { id: string; name: string };
+  request?: { id: string; code: string; title: string } | null;
+  totalAmount: number | string;
+  expectedDeliveryDate?: Date | string | null;
+}
+
+export interface GoodsReceiptRow {
+  id: string;
+  code: string;
+  status: string;
+  purchaseOrder?: { id: string; code: string } | null;
+  receiptDate?: Date | string | null;
+}
+
 interface Props {
   projectId: string;
   initialSummary: ProcurementBoardSummary;
   initialRequests: PurchaseRequestRow[];
   initialQuotations: QuotationRow[];
   initialSuppliers: SupplierRow[];
+  initialPurchaseOrders: PurchaseOrderRow[];
+  initialGoodsReceipts: GoodsReceiptRow[];
   wbsNodes: { id: string; label: string }[];
   activities: { id: string; label: string }[];
   costItems: { id: string; label: string }[];
@@ -107,6 +127,8 @@ export function ProcurementView({
   initialRequests,
   initialQuotations,
   initialSuppliers,
+  initialPurchaseOrders,
+  initialGoodsReceipts,
   wbsNodes,
   activities,
   costItems,
@@ -115,30 +137,38 @@ export function ProcurementView({
   canApprove,
 }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"requests" | "quotations" | "comparison" | "suppliers">("requests");
+  const [activeTab, setActiveTab] = useState<"requests" | "quotations" | "comparison" | "suppliers" | "orders" | "receipts">("requests");
   const [comparisonSort, setComparisonSort] = useState<"price" | "leadTime" | "freight" | "discount">("price");
   const [summary, setSummary] = useState(initialSummary);
   const [requests, setRequests] = useState(initialRequests);
   const [quotations, setQuotations] = useState(initialQuotations);
   const [suppliers, setSuppliers] = useState(initialSuppliers);
+  const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
+  const [goodsReceipts, setGoodsReceipts] = useState(initialGoodsReceipts);
 
   const summaryBase = `/api/v1/projects/${projectId}/procurement/summary`;
   const requestBase = `/api/v1/projects/${projectId}/procurement/requests`;
   const quotationBase = `/api/v1/projects/${projectId}/procurement/quotations`;
   const supplierBase = `/api/v1/suppliers`;
+  const orderBase = `/api/v1/projects/${projectId}/procurement/orders`;
+  const receiptBase = `/api/v1/projects/${projectId}/procurement/receipts`;
 
   const loadAll = async () => {
     try {
-      const [s, r, q, sup] = await Promise.all([
+      const [s, r, q, sup, o, gr] = await Promise.all([
         apiRequest<{ summary: ProcurementBoardSummary }>(summaryBase),
         apiRequest<{ requests: PurchaseRequestRow[] }>(requestBase),
         apiRequest<{ quotations: QuotationRow[] }>(quotationBase),
         apiRequest<{ suppliers: SupplierRow[] }>(supplierBase),
+        apiRequest<{ orders: PurchaseOrderRow[] }>(orderBase),
+        apiRequest<{ receipts: GoodsReceiptRow[] }>(receiptBase),
       ]);
       setSummary(s.summary);
       setRequests(r.requests);
       setQuotations(q.quotations);
       setSuppliers(sup.suppliers);
+      setPurchaseOrders(o.orders);
+      setGoodsReceipts(gr.receipts);
       setError(null);
       router.refresh();
     } catch (caught) {
@@ -431,6 +461,22 @@ export function ProcurementView({
         >
           <Building2 className="h-4 w-4" />
           Fornecedores ({suppliers.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("orders")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === "orders" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Pedidos ({purchaseOrders.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("receipts")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === "receipts" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Recebimentos ({goodsReceipts.length})
         </button>
       </div>
 
@@ -801,6 +847,96 @@ export function ProcurementView({
                 </div>
               </Card>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: PEDIDOS DE COMPRA */}
+      {activeTab === "orders" && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold">Pedidos de Compra (PO)</h2>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-2.5">Código</th>
+                  <th className="px-4 py-2.5">Fornecedor</th>
+                  <th className="px-4 py-2.5">Requisição</th>
+                  <th className="px-4 py-2.5">Entrega Prevista</th>
+                  <th className="px-4 py-2.5">Total Geral</th>
+                  <th className="px-4 py-2.5">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {purchaseOrders.map((o) => (
+                  <tr key={o.id} className="hover:bg-muted/10">
+                    <td className="px-4 py-2.5 font-mono text-xs font-medium">{o.code}</td>
+                    <td className="px-4 py-2.5 font-medium">{o.supplier?.name ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-xs">{o.request ? `${o.request.code} - ${o.request.title}` : "—"}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                      {o.expectedDeliveryDate ? new Date(o.expectedDeliveryDate).toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td className="px-4 py-2.5 font-mono text-xs font-semibold">
+                      {Number(o.totalAmount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant="secondary">{o.status}</Badge>
+                    </td>
+                  </tr>
+                ))}
+                {purchaseOrders.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
+                      Nenhum pedido de compra cadastrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: RECEBIMENTOS */}
+      {activeTab === "receipts" && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold">Recebimentos (GR)</h2>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-2.5">Código</th>
+                  <th className="px-4 py-2.5">Pedido</th>
+                  <th className="px-4 py-2.5">Data</th>
+                  <th className="px-4 py-2.5">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {goodsReceipts.map((g) => (
+                  <tr key={g.id} className="hover:bg-muted/10">
+                    <td className="px-4 py-2.5 font-mono text-xs font-medium">{g.code}</td>
+                    <td className="px-4 py-2.5 text-xs">{g.purchaseOrder?.code ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                      {g.receiptDate ? new Date(g.receiptDate).toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant="secondary">{g.status}</Badge>
+                    </td>
+                  </tr>
+                ))}
+                {goodsReceipts.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+                      Nenhum recebimento cadastrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

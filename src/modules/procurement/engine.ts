@@ -368,6 +368,106 @@ export interface ProcurementBoardSummary {
   activeSuppliers: number;
 }
 
+// ---------------------------------------------------------------------------
+// Pedido de Compra (PurchaseOrder) — Fatia 2
+// ---------------------------------------------------------------------------
+
+export const PURCHASE_ORDER_STATUSES = [
+  "DRAFT",
+  "ISSUED",
+  "PARTIALLY_RECEIVED",
+  "FULLY_RECEIVED",
+  "CLOSED",
+  "CANCELLED",
+] as const;
+export type PurchaseOrderStatus = (typeof PURCHASE_ORDER_STATUSES)[number];
+
+export const PURCHASE_ORDER_STATUS_LABELS_PT: Record<PurchaseOrderStatus, string> = {
+  DRAFT: "Rascunho",
+  ISSUED: "Emitido",
+  PARTIALLY_RECEIVED: "Recebido parcial",
+  FULLY_RECEIVED: "Recebido total",
+  CLOSED: "Encerrado",
+  CANCELLED: "Cancelado",
+};
+
+export const PURCHASE_ORDER_ACTIONS = [
+  "ISSUE",
+  "RECEIVE",
+  "CLOSE",
+  "CANCEL",
+  "REOPEN",
+] as const;
+export type PurchaseOrderAction = (typeof PURCHASE_ORDER_ACTIONS)[number];
+
+export const PURCHASE_ORDER_ACTION_LABELS_PT: Record<PurchaseOrderAction, string> = {
+  ISSUE: "Emitir ao fornecedor",
+  RECEIVE: "Registrar recebimento",
+  CLOSE: "Encerrar pedido",
+  CANCEL: "Cancelar pedido",
+  REOPEN: "Reabrir",
+};
+
+export function isPurchaseOrderEditable(status: PurchaseOrderStatus): boolean {
+  return status === "DRAFT";
+}
+
+export interface PurchaseOrderTransitionInput {
+  currentStatus: PurchaseOrderStatus;
+  action: PurchaseOrderAction;
+  fullyReceived?: boolean;
+}
+
+export function nextPurchaseOrderStatus(
+  input: PurchaseOrderTransitionInput
+): { nextStatus: PurchaseOrderStatus } | { error: string } {
+  const { currentStatus, action, fullyReceived = false } = input;
+  switch (action) {
+    case "ISSUE":
+      if (currentStatus !== "DRAFT") {
+        return { error: `Emissão exige status 'Rascunho', atual é '${PURCHASE_ORDER_STATUS_LABELS_PT[currentStatus]}'.` };
+      }
+      return { nextStatus: "ISSUED" };
+    case "RECEIVE":
+      if (currentStatus !== "ISSUED" && currentStatus !== "PARTIALLY_RECEIVED") {
+        return { error: `Recebimento exige pedido emitido ou parcialmente recebido.` };
+      }
+      return { nextStatus: fullyReceived ? "FULLY_RECEIVED" : "PARTIALLY_RECEIVED" };
+    case "CLOSE":
+      if (currentStatus !== "FULLY_RECEIVED") {
+        return { error: `Encerramento exige pedido totalmente recebido.` };
+      }
+      return { nextStatus: "CLOSED" };
+    case "CANCEL":
+      if (currentStatus === "CLOSED" || currentStatus === "FULLY_RECEIVED") {
+        return { error: `Pedido já recebido/encerrado não pode ser cancelado.` };
+      }
+      if (currentStatus === "CANCELLED") {
+        return { error: "Pedido já está cancelado." };
+      }
+      return { nextStatus: "CANCELLED" };
+    case "REOPEN":
+      if (currentStatus !== "CANCELLED") {
+        return { error: "Apenas pedidos cancelados podem ser reabertos." };
+      }
+      return { nextStatus: "DRAFT" };
+    default:
+      return { error: `Ação desconhecida: ${action}` };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Recebimento (GoodsReceipt) — Fatia 2
+// ---------------------------------------------------------------------------
+
+export const GOODS_RECEIPT_STATUSES = ["DRAFT", "CONFIRMED"] as const;
+export type GoodsReceiptStatus = (typeof GOODS_RECEIPT_STATUSES)[number];
+
+export const GOODS_RECEIPT_STATUS_LABELS_PT: Record<GoodsReceiptStatus, string> = {
+  DRAFT: "Rascunho",
+  CONFIRMED: "Confirmado",
+};
+
 export function summarizeProcurementBoard(
   requests: { status: PurchaseRequestStatus; requiredDate?: Date | string | null }[],
   quotations: { status: QuotationStatus }[],

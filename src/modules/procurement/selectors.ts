@@ -161,6 +161,42 @@ export async function getBidComparisonByRequestId(projectId: string, requestId: 
 }
 
 // ---------------------------------------------------------------------------
+// Pedido de Compra (PurchaseOrder)
+// ---------------------------------------------------------------------------
+export async function listPurchaseOrders(projectId: string, filters?: { status?: string }) {
+  return prisma.purchaseOrder.findMany({
+    where: { projectId, deletedAt: null, ...(filters?.status ? { status: filters.status as never } : {}) },
+    include: { supplier: true, items: true, request: { select: { id: true, code: true, title: true } }, quotation: { select: { id: true, code: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getPurchaseOrderById(projectId: string, orderId: string) {
+  return prisma.purchaseOrder.findFirst({
+    where: { id: orderId, projectId, deletedAt: null },
+    include: { supplier: true, items: true, request: { include: { items: true } }, quotation: { include: { items: true, supplier: true } }, goodsReceipts: { include: { items: true } } },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Recebimento (GoodsReceipt)
+// ---------------------------------------------------------------------------
+export async function listGoodsReceipts(projectId: string, filters?: { purchaseOrderId?: string }) {
+  return prisma.goodsReceipt.findMany({
+    where: { projectId, deletedAt: null, ...(filters?.purchaseOrderId ? { purchaseOrderId: filters.purchaseOrderId } : {}) },
+    include: { purchaseOrder: { select: { id: true, code: true } }, items: { include: { purchaseOrderItem: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getGoodsReceiptById(projectId: string, receiptId: string) {
+  return prisma.goodsReceipt.findFirst({
+    where: { id: receiptId, projectId, deletedAt: null },
+    include: { purchaseOrder: { include: { items: true, supplier: true } }, items: { include: { purchaseOrderItem: true } } },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Quadro Geral de Suprimentos (Board Summary)
 // ---------------------------------------------------------------------------
 

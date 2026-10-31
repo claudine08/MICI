@@ -3,6 +3,8 @@ import { can, toPermissionSet } from "@/core/rbac";
 import { getProjectDetail } from "@/modules/portfolio/selectors";
 import {
   getProcurementBoard,
+  listGoodsReceipts,
+  listPurchaseOrders,
   listPurchaseRequests,
   listQuotations,
   listSuppliers,
@@ -13,6 +15,8 @@ import { listActivities } from "@/modules/schedule/selectors";
 import { listCostItems } from "@/modules/cost/selectors";
 import { ProcurementView } from "@/components/procurement/procurement-view";
 import type {
+  GoodsReceiptRow,
+  PurchaseOrderRow,
   PurchaseRequestRow,
   QuotationRow,
   SupplierRow,
@@ -38,12 +42,14 @@ export default async function ProjetoSuprimentosPage({
 
   const project = await getProjectDetail(context.organizationId, id);
 
-  const [summary, requests, quotations, suppliers, tree, activityRows, costItemRows] =
+  const [summary, requests, quotations, suppliers, purchaseOrders, goodsReceipts, tree, activityRows, costItemRows] =
     await Promise.all([
       getProcurementBoard(context.organizationId, id),
       listPurchaseRequests(context.organizationId, id),
       listQuotations(id),
       listSuppliers(context.organizationId),
+      listPurchaseOrders(id),
+      listGoodsReceipts(id),
       getWbsTree(context.organizationId, id),
       listActivities(context.organizationId, id),
       listCostItems(context.organizationId, id),
@@ -84,6 +90,8 @@ export default async function ProjetoSuprimentosPage({
         initialRequests={requests as unknown as PurchaseRequestRow[]}
         initialQuotations={quotations as unknown as QuotationRow[]}
         initialSuppliers={suppliers as unknown as SupplierRow[]}
+        initialPurchaseOrders={purchaseOrders as unknown as PurchaseOrderRow[]}
+        initialGoodsReceipts={goodsReceipts as unknown as GoodsReceiptRow[]}
         wbsNodes={wbsNodes}
         activities={activities}
         costItems={costItems}

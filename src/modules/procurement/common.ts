@@ -75,9 +75,11 @@ export async function assertProcurementProject(organizationId: string, projectId
 // - PR001, PR002... para Requisições de Compra (escopo do projeto)
 // - QT001, QT002... para Cotações (escopo do projeto)
 // - BC001, BC002... para Mapas Comparativos (escopo do projeto)
+// - PO001, PO002... para Pedidos de Compra (escopo do projeto)
+// - GR001, GR002... para Recebimentos (escopo do projeto)
 export async function nextProcurementCode(
   scopeId: string,
-  prefix: "SP" | "PR" | "QT" | "BC"
+  prefix: "SP" | "PR" | "QT" | "BC" | "PO" | "GR"
 ): Promise<string> {
   let rows: { code: string }[];
   if (prefix === "SP") {
@@ -93,6 +95,16 @@ export async function nextProcurementCode(
     });
   } else if (prefix === "QT") {
     rows = await prisma.quotation.findMany({
+      where: { projectId: scopeId },
+      select: { code: true },
+    });
+  } else if (prefix === "PO") {
+    rows = await prisma.purchaseOrder.findMany({
+      where: { projectId: scopeId },
+      select: { code: true },
+    });
+  } else if (prefix === "GR") {
+    rows = await prisma.goodsReceipt.findMany({
       where: { projectId: scopeId },
       select: { code: true },
     });

@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  GOODS_RECEIPT_STATUSES,
+  PURCHASE_ORDER_ACTIONS,
+  PURCHASE_ORDER_STATUSES,
   PURCHASE_REQUEST_ACTIONS,
   QUOTATION_ACTIONS,
   SUPPLIER_CATEGORIES,
@@ -168,5 +171,81 @@ export const createOrUpdateBidComparisonSchema = z.object({
 export const completeBidComparisonSchema = z.object({
   selectedQuotationId: z.string().uuid("Selecione a cotação vencedora para concluir."),
   selectionReason: z.string().trim().min(5, "Justificativa de escolha obrigatória.").max(4000),
+});
+
+// ---------------------------------------------------------------------------
+// Pedido de Compra (PurchaseOrder) — Fatia 2
+// ---------------------------------------------------------------------------
+
+export const purchaseOrderStatusSchema = z.enum(PURCHASE_ORDER_STATUSES);
+export const purchaseOrderActionSchema = z.enum(PURCHASE_ORDER_ACTIONS);
+
+export const purchaseOrderItemInputSchema = z.object({
+  id: z.string().uuid().optional(),
+  description: z.string().trim().min(1, "Descrição do item obrigatória.").max(500),
+  quantity: z.number().positive("Quantidade deve ser maior que zero."),
+  unit: z.string().trim().min(1, "Unidade obrigatória.").max(32),
+  unitPrice: z.number().nonnegative("Preço unitário deve ser não-negativo."),
+  requestItemId: z.string().uuid().optional(),
+  quotationItemId: z.string().uuid().optional(),
+  notes: z.string().trim().max(1000).optional(),
+});
+
+export const createPurchaseOrderSchema = z.object({
+  code: procurementCode.optional(),
+  requestId: z.string().uuid("Requisição de compra obrigatória."),
+  supplierId: z.string().uuid("Fornecedor obrigatório."),
+  quotationId: z.string().uuid().optional(),
+  issueDate: isoDate.optional(),
+  expectedDeliveryDate: isoDate.optional(),
+  paymentTerms: z.string().trim().max(200).optional(),
+  shippingTerms: z.string().trim().max(100).optional(),
+  shippingCost: z.number().nonnegative().default(0),
+  discount: z.number().nonnegative().default(0),
+  notes: z.string().trim().max(4000).optional(),
+  wbsNodeId: z.string().uuid().optional(),
+  activityId: z.string().uuid().optional(),
+  costItemId: z.string().uuid().optional(),
+  items: z.array(purchaseOrderItemInputSchema).min(1, "Pedido deve conter ao menos 1 item.").optional(),
+  clientUuid,
+});
+
+export const updatePurchaseOrderSchema = z.object({
+  supplierId: z.string().uuid().optional(),
+  issueDate: isoDate.optional().nullable(),
+  expectedDeliveryDate: isoDate.optional().nullable(),
+  paymentTerms: z.string().trim().max(200).optional().nullable(),
+  shippingTerms: z.string().trim().max(100).optional().nullable(),
+  shippingCost: z.number().nonnegative().optional(),
+  discount: z.number().nonnegative().optional(),
+  notes: z.string().trim().max(4000).optional().nullable(),
+  items: z.array(purchaseOrderItemInputSchema).min(1).optional(),
+});
+
+export const transitionPurchaseOrderSchema = z.object({
+  action: purchaseOrderActionSchema,
+  reason: z.string().trim().max(1000).optional(),
+});
+
+// ---------------------------------------------------------------------------
+// Recebimento (GoodsReceipt) — Fatia 2
+// ---------------------------------------------------------------------------
+
+export const goodsReceiptStatusSchema = z.enum(GOODS_RECEIPT_STATUSES);
+
+export const goodsReceiptItemInputSchema = z.object({
+  purchaseOrderItemId: z.string().uuid("Item do pedido obrigatório."),
+  quantityReceived: z.number().positive("Quantidade recebida deve ser maior que zero."),
+  quantityRejected: z.number().nonnegative().default(0),
+  notes: z.string().trim().max(1000).optional(),
+});
+
+export const createGoodsReceiptSchema = z.object({
+  code: procurementCode.optional(),
+  purchaseOrderId: z.string().uuid("Pedido de compra obrigatório."),
+  receiptDate: isoDate.optional(),
+  notes: z.string().trim().max(4000).optional(),
+  items: z.array(goodsReceiptItemInputSchema).min(1, "Recebimento deve conter ao menos 1 item."),
+  clientUuid,
 });
 

@@ -537,6 +537,8 @@ model Project {
   purchaseRequests PurchaseRequest[]
   quotations      Quotation[]
   bidComparisons  BidComparison[]
+  purchaseOrders  PurchaseOrder[]
+  goodsReceipts   GoodsReceipt[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -797,6 +799,7 @@ model WBSNode {
   inspections  Inspection[]
   punchItems   PunchItem[]
   purchaseRequests PurchaseRequest[]
+  purchaseOrders PurchaseOrder[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId, parentId])
@@ -906,6 +909,7 @@ model ScheduleActivity {
   inspections   Inspection[]
   punchItems    PunchItem[]
   purchaseRequests PurchaseRequest[]
+  purchaseOrders PurchaseOrder[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -1017,6 +1021,7 @@ model CostItem {
   actuals     CostActual[]
   risks       Risk[]
   purchaseRequests PurchaseRequest[]
+  purchaseOrders PurchaseOrder[]
 
   changeRequestId String? @map("change_request_id") @db.Uuid
 
@@ -2219,6 +2224,7 @@ model Supplier {
 
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   quotations     Quotation[]
+  purchaseOrders PurchaseOrder[]
 
   @@unique([organizationId, code])
   @@unique([organizationId, clientUuid])
@@ -2257,6 +2263,7 @@ model PurchaseRequest {
   items          PurchaseRequestItem[]
   quotations     Quotation[]
   bidComparisons BidComparison[]
+  purchaseOrders PurchaseOrder[]
 
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])
@@ -2281,6 +2288,7 @@ model PurchaseRequestItem {
 
   request             PurchaseRequest     @relation(fields: [requestId], references: [id], onDelete: Cascade)
   quotationItems      QuotationItem[]
+  purchaseOrderItems  PurchaseOrderItem[]
 
   @@index([requestId])
   @@map("purchase_request_items")
@@ -2318,6 +2326,7 @@ model Quotation {
   supplier       Supplier        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   items          QuotationItem[]
   bidComparisons BidComparison[]
+  purchaseOrders PurchaseOrder[]
 
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])
@@ -2345,6 +2354,7 @@ model QuotationItem {
 
   quotation     Quotation            @relation(fields: [quotationId], references: [id], onDelete: Cascade)
   requestItem   PurchaseRequestItem? @relation(fields: [requestItemId], references: [id], onDelete: SetNull)
+  purchaseOrderItems PurchaseOrderItem[]
 
   @@index([quotationId])
   @@index([requestItemId])
@@ -2382,4 +2392,145 @@ model BidComparison {
   @@index([organizationId, projectId])
   @@index([requestId])
   @@map("bid_comparisons")
+}
+
+// ---------------------------------------------------------------------------
+// Procurement Fatia 2 (E14): Pedido de Compra (PO) e Recebimento (GR).
+// ---------------------------------------------------------------------------
+enum PurchaseOrderStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_RECEIVED
+  FULLY_RECEIVED
+  CLOSED
+  CANCELLED
+}
+
+enum GoodsReceiptStatus {
+  DRAFT
+  CONFIRMED
+}
+
+model PurchaseOrder {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  projectId      String              @map("project_id") @db.Uuid
+  requestId      String?             @map("request_id") @db.Uuid
+  quotationId    String?             @map("quotation_id") @db.Uuid
+  supplierId     String              @map("supplier_id") @db.Uuid
+  code           String              @db.VarChar(32)
+  status         PurchaseOrderStatus @default(DRAFT)
+  issueDate      DateTime?           @map("issue_date") @db.Date
+  expectedDeliveryDate DateTime?     @map("expected_delivery_date") @db.Date
+  paymentTerms   String?             @map("payment_terms") @db.VarChar(200)
+  shippingTerms  String?             @map("shipping_terms") @db.VarChar(100)
+  shippingCost   Decimal             @default(0) @map("shipping_cost") @db.Decimal(14, 2)
+  discount       Decimal             @default(0) @map("discount") @db.Decimal(14, 2)
+  totalAmount    Decimal             @default(0) @map("total_amount") @db.Decimal(14, 2)
+  notes          String?             @db.Text
+  clientUuid     String?             @map("client_uuid") @db.Uuid
+
+  createdAt      DateTime            @default(now()) @map("created_at")
+  createdBy      String?             @map("created_by") @db.Uuid
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  updatedBy      String?             @map("updated_by") @db.Uuid
+  version        Int                 @default(1)
+  deletedAt      DateTime?           @map("deleted_at")
+  deletedBy      String?             @map("deleted_by") @db.Uuid
+
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  request        PurchaseRequest?    @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  quotation      Quotation?          @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  supplier       Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  wbsNode        WBSNode?            @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity       ScheduleActivity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  costItem       CostItem?           @relation(fields: [costItemId], references: [id], onDelete: SetNull)
+  items          PurchaseOrderItem[]
+  goodsReceipts  GoodsReceipt[]
+
+  wbsNodeId      String?             @map("wbs_node_id") @db.Uuid
+  activityId     String?             @map("activity_id") @db.Uuid
+  costItemId     String?             @map("cost_item_id") @db.Uuid
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([requestId])
+  @@index([supplierId])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id               String            @id @default(uuid()) @db.Uuid
+  purchaseOrderId  String            @map("purchase_order_id") @db.Uuid
+  requestItemId    String?           @map("request_item_id") @db.Uuid
+  quotationItemId  String?           @map("quotation_item_id") @db.Uuid
+  description      String            @db.VarChar(500)
+  quantity         Decimal           @db.Decimal(14, 4)
+  unit             String            @db.VarChar(32)
+  unitPrice        Decimal           @map("unit_price") @db.Decimal(14, 2)
+  totalPrice       Decimal           @map("total_price") @db.Decimal(14, 2)
+  receivedQuantity Decimal           @default(0) @map("received_quantity") @db.Decimal(14, 4)
+  notes            String?           @db.Text
+
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  purchaseOrder    PurchaseOrder     @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  requestItem      PurchaseRequestItem? @relation(fields: [requestItemId], references: [id], onDelete: SetNull)
+  quotationItem    QuotationItem?    @relation(fields: [quotationItemId], references: [id], onDelete: SetNull)
+  goodsReceiptItems GoodsReceiptItem[]
+
+  @@index([purchaseOrderId])
+  @@map("purchase_order_items")
+}
+
+model GoodsReceipt {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  projectId      String            @map("project_id") @db.Uuid
+  purchaseOrderId String           @map("purchase_order_id") @db.Uuid
+  code           String            @db.VarChar(32)
+  status         GoodsReceiptStatus @default(DRAFT)
+  receiptDate    DateTime          @map("receipt_date") @db.Date
+  receivedById   String?           @map("received_by") @db.Uuid
+  notes          String?           @db.Text
+  clientUuid     String?           @map("client_uuid") @db.Uuid
+
+  createdAt      DateTime          @default(now()) @map("created_at")
+  createdBy      String?           @map("created_by") @db.Uuid
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  updatedBy      String?           @map("updated_by") @db.Uuid
+  version        Int               @default(1)
+  deletedAt      DateTime?         @map("deleted_at")
+  deletedBy      String?           @map("deleted_by") @db.Uuid
+
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  purchaseOrder  PurchaseOrder     @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  items          GoodsReceiptItem[]
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([purchaseOrderId])
+  @@map("goods_receipts")
+}
+
+model GoodsReceiptItem {
+  id                  String            @id @default(uuid()) @db.Uuid
+  goodsReceiptId      String            @map("goods_receipt_id") @db.Uuid
+  purchaseOrderItemId String            @map("purchase_order_item_id") @db.Uuid
+  quantityReceived    Decimal           @map("quantity_received") @db.Decimal(14, 4)
+  quantityRejected    Decimal           @default(0) @map("quantity_rejected") @db.Decimal(14, 4)
+  notes               String?           @db.Text
+
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  goodsReceipt        GoodsReceipt      @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
+  purchaseOrderItem   PurchaseOrderItem @relation(fields: [purchaseOrderItemId], references: [id], onDelete: Cascade)
+
+  @@index([goodsReceiptId])
+  @@index([purchaseOrderItemId])
+  @@map("goods_receipt_items")
 }
