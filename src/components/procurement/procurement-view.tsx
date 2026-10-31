@@ -999,7 +999,7 @@ export function ProcurementView({
             <div className="mt-2 border-t border-border pt-2">
               <Label className="text-xs font-semibold">Itens Precificados:</Label>
               {quoteItems.map((item, idx) => (
-                <div key={idx} className="mt-2 grid grid-cols-5 gap-2">
+                <div key={idx} className="mt-2 grid grid-cols-6 gap-2">
                   <Input
                     className="col-span-2"
                     placeholder="Descrição do item"
@@ -1043,6 +1043,18 @@ export function ProcurementView({
                   />
                 </div>
               ))}
+              <div className="mt-2 flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm">
+                <span className="text-muted-foreground">Total da cotação (itens + frete − desconto):</span>
+                <span className="font-mono font-semibold">
+                  {quoteItems
+                    .reduce((acc, it) => acc + (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0), 0)
+                    .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  {" "}
+                  <span className="text-xs text-muted-foreground">
+                    (+ frete R$ {Number(quoteShippingCost).toFixed(2)} − desconto R$ {Number(quoteDiscount).toFixed(2)})
+                  </span>
+                </span>
+              </div>
               <Button
                 type="button"
                 variant="outline"
