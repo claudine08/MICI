@@ -70,6 +70,83 @@ export default async function ProjetoSuprimentosPage({
     label: `${ci.code} — ${ci.description}`,
   }));
 
+  const mappedRequests: PurchaseRequestRow[] = requests.map((r) => ({
+    id: r.id,
+    code: r.code,
+    title: r.title,
+    description: r.description,
+    priority: r.priority as PurchaseRequestRow["priority"],
+    status: r.status as PurchaseRequestRow["status"],
+    requiredDate: r.requiredDate,
+    costCenter: r.costCenter,
+    wbsNodeId: r.wbsNodeId,
+    activityId: r.activityId,
+    costItemId: r.costItemId,
+    items: (r.items ?? []).map((it) => ({
+      id: it.id,
+      itemNumber: it.itemNumber,
+      description: it.description,
+      quantity: Number(it.quantity),
+      unit: it.unit,
+      estimatedUnitPrice: it.estimatedUnitPrice != null ? Number(it.estimatedUnitPrice) : null,
+      estimatedTotalPrice: it.estimatedTotalPrice != null ? Number(it.estimatedTotalPrice) : null,
+    })),
+    _count: r._count,
+  }));
+
+  const mappedQuotations: QuotationRow[] = quotations.map((q) => ({
+    id: q.id,
+    requestId: q.requestId,
+    supplierId: q.supplierId,
+    code: q.code,
+    status: q.status as QuotationRow["status"],
+    leadTimeDays: q.leadTimeDays,
+    paymentTerms: q.paymentTerms,
+    shippingTerms: q.shippingTerms,
+    shippingCost: q.shippingCost != null ? Number(q.shippingCost) : undefined,
+    discount: q.discount != null ? Number(q.discount) : undefined,
+    totalAmount: Number(q.totalAmount),
+    supplier: q.supplier ? { id: q.supplier.id, name: q.supplier.name } : undefined,
+    request: q.request ? { id: q.request.id, code: q.request.code, title: q.request.title } : undefined,
+  }));
+
+  const mappedSuppliers: SupplierRow[] = suppliers.map((s) => ({
+    id: s.id,
+    code: s.code,
+    name: s.name,
+    tradeName: s.tradeName,
+    taxId: s.taxId,
+    category: s.category,
+    email: s.email,
+    phone: s.phone,
+    status: s.status as SupplierRow["status"],
+  }));
+
+  const mappedOrders: PurchaseOrderRow[] = purchaseOrders.map((o) => ({
+    id: o.id,
+    code: o.code,
+    status: o.status,
+    supplier: o.supplier ? { id: o.supplier.id, name: o.supplier.name } : undefined,
+    request: o.request ? { id: o.request.id, code: o.request.code, title: o.request.title } : null,
+    totalAmount: Number(o.totalAmount),
+    expectedDeliveryDate: o.expectedDeliveryDate,
+    items: (o.items ?? []).map((it) => ({
+      id: it.id,
+      description: it.description,
+      quantity: Number(it.quantity),
+      receivedQuantity: Number(it.receivedQuantity),
+      unit: it.unit,
+    })),
+  }));
+
+  const mappedReceipts: GoodsReceiptRow[] = goodsReceipts.map((g) => ({
+    id: g.id,
+    code: g.code,
+    status: g.status,
+    purchaseOrder: g.purchaseOrder ? { id: g.purchaseOrder.id, code: g.purchaseOrder.code } : null,
+    receiptDate: g.receiptDate,
+  }));
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex flex-col gap-1">
@@ -87,11 +164,11 @@ export default async function ProjetoSuprimentosPage({
       <ProcurementView
         projectId={id}
         initialSummary={summary}
-        initialRequests={requests as unknown as PurchaseRequestRow[]}
-        initialQuotations={quotations as unknown as QuotationRow[]}
-        initialSuppliers={suppliers as unknown as SupplierRow[]}
-        initialPurchaseOrders={purchaseOrders as unknown as PurchaseOrderRow[]}
-        initialGoodsReceipts={goodsReceipts as unknown as GoodsReceiptRow[]}
+        initialRequests={mappedRequests}
+        initialQuotations={mappedQuotations}
+        initialSuppliers={mappedSuppliers}
+        initialPurchaseOrders={mappedOrders}
+        initialGoodsReceipts={mappedReceipts}
         wbsNodes={wbsNodes}
         activities={activities}
         costItems={costItems}
