@@ -94,6 +94,7 @@ export interface PurchaseOrderRow {
   request?: { id: string; code: string; title: string } | null;
   totalAmount: number | string;
   expectedDeliveryDate?: Date | string | null;
+  items?: { id: string; description: string; quantity: number | string; receivedQuantity: number | string; unit: string }[];
 }
 
 export interface GoodsReceiptRow {
@@ -135,6 +136,7 @@ export function ProcurementView({
   canCreate,
   canEdit,
   canApprove,
+  canDelete,
 }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"requests" | "quotations" | "comparison" | "suppliers" | "orders" | "receipts">("requests");
@@ -183,6 +185,26 @@ export function ProcurementView({
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isNewQuotationOpen, setIsNewQuotationOpen] = useState(false);
   const [isNewSupplierOpen, setIsNewSupplierOpen] = useState(false);
+  const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
+  const [isNewReceiptOpen, setIsNewReceiptOpen] = useState(false);
+
+  // Form states - Purchase Order
+  const [poRequestId, setPoRequestId] = useState("");
+  const [poSupplierId, setPoSupplierId] = useState("");
+  const [poQuotationId, setPoQuotationId] = useState("");
+  const [poIssueDate, setPoIssueDate] = useState("");
+  const [poExpectedDeliveryDate, setPoExpectedDeliveryDate] = useState("");
+  const [poPaymentTerms, setPoPaymentTerms] = useState("");
+  const [poShippingTerms, setPoShippingTerms] = useState("");
+  const [poShippingCost, setPoShippingCost] = useState<number>(0);
+  const [poDiscount, setPoDiscount] = useState<number>(0);
+  const [poNotes, setPoNotes] = useState("");
+
+  // Form states - Goods Receipt
+  const [grPurchaseOrderId, setGrPurchaseOrderId] = useState("");
+  const [grReceiptDate, setGrReceiptDate] = useState("");
+  const [grNotes, setGrNotes] = useState("");
+  const [grItems, setGrItems] = useState<{ purchaseOrderItemId: string; description: string; quantity: number; remaining: number; quantityReceived: number }[]>([]);
   const [selectedRequestForDetail, setSelectedRequestForDetail] = useState<PurchaseRequestRow | null>(null);
   const [selectedRequestForComparison, setSelectedRequestForComparison] = useState<string>(
     requests[0]?.id ?? ""
@@ -307,6 +329,116 @@ export function ProcurementView({
       await loadAll();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Falha ao cadastrar fornecedor.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await apiRequest(`/api/v1/projects/${projectId}/procurement/orders`, {
+        method: "POST",
+        body: JSON.stringify({
+          requestId: poRequestId,
+          supplierId: poSupplierId,
+          quotationId: poQuotationId || undefined,
+          issueDate: poIssueDate || undefined,
+          expectedDeliveryDate: poExpectedDeliveryDate || undefined,
+          paymentTerms: poPaymentTerms || undefined,
+          shippingTerms: poShippingTerms || undefined,
+          shippingCost: Number(poShippingCost),
+          discount: Number(poDiscount),
+          notes: poNotes || undefined,
+          clientUuid: crypto.randomUUID(),
+        }),
+      });
+      setIsNewOrderOpen(false);
+      await loadAll();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Falha ao criar pedido de compra.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOrderTransition = async (orderId: string, action: string) => {
+    setError(null);
+    setLoading(true);
+    try {
+      await apiRequest(`/api/v1/projects/${projectId}/procurement/orders/${orderId}/status`, {
+        method: "POST",
+        body: JSON.stringify({ action }),
+      });
+      await loadAll();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Falha ao atualizar pedido.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carrega itens do pedido selecionado para o formulário de recebimento
+  const handleSelectOrderForReceipt = (orderId: string) => {
+    setGrPurchaseOrderId(orderId);
+    const order = purchaseOrders.find((o) => o.id === orderId);
+    if (order?.items) {
+      setGrItems(
+        order.items.map((it) => ({
+          purchaseOrderItemId: it.id,
+          description: it.description,
+          quantity: Number(it.quantity),
+          remaining: Number(it.quantity) - Number(it.receivedQuantity ?? 0),
+          quantityReceived: 0,
+        }))
+      );
+    } else {
+      setGrItems([]);
+    }
+  };
+
+  const handleCreateReceipt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await apiRequest(`/api/v1/projects/${projectId}/procurement/receipts`, {
+        method: "POST",
+        body: JSON.stringify({
+          purchaseOrderId: grPurchaseOrderId,
+          receiptDate: grReceiptDate || undefined,
+          notes: grNotes || undefined,
+          items: grItems
+            .filter((it) => it.quantityReceived > 0)
+            .map((it) => ({
+              purchaseOrderItemId: it.purchaseOrderItemId,
+              quantityReceived: it.quantityReceived,
+              quantityRejected: 0,
+            })),
+          clientUuid: crypto.randomUUID(),
+        }),
+      });
+      setIsNewReceiptOpen(false);
+      await loadAll();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Falha ao criar recebimento.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmReceipt = async (receiptId: string) => {
+    setError(null);
+    setLoading(true);
+    try {
+      await apiRequest(`/api/v1/projects/${projectId}/procurement/receipts/${receiptId}/confirm`, {
+        method: "POST",
+      });
+      await loadAll();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Falha ao confirmar recebimento.");
     } finally {
       setLoading(false);
     }
@@ -856,6 +988,11 @@ export function ProcurementView({
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">Pedidos de Compra (PO)</h2>
+            {canCreate && (
+              <Button onClick={() => setIsNewOrderOpen(true)} size="sm">
+                <Plus className="mr-1 h-4 w-4" /> Novo Pedido
+              </Button>
+            )}
           </div>
           <div className="overflow-x-auto rounded-lg border border-border bg-surface">
             <table className="w-full text-left text-sm">
@@ -867,6 +1004,7 @@ export function ProcurementView({
                   <th className="px-4 py-2.5">Entrega Prevista</th>
                   <th className="px-4 py-2.5">Total Geral</th>
                   <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -884,11 +1022,28 @@ export function ProcurementView({
                     <td className="px-4 py-2.5">
                       <Badge variant="secondary">{o.status}</Badge>
                     </td>
+                    <td className="px-4 py-2.5 text-right space-x-1">
+                      {o.status === "DRAFT" && canEdit && (
+                        <Button size="sm" variant="outline" onClick={() => handleOrderTransition(o.id, "ISSUE")} disabled={loading}>
+                          Emitir
+                        </Button>
+                      )}
+                      {o.status === "FULLY_RECEIVED" && canEdit && (
+                        <Button size="sm" variant="default" onClick={() => handleOrderTransition(o.id, "CLOSE")} disabled={loading}>
+                          Encerrar
+                        </Button>
+                      )}
+                      {(o.status === "DRAFT" || o.status === "ISSUED") && canDelete && (
+                        <Button size="sm" variant="ghost" onClick={() => handleOrderTransition(o.id, "CANCEL")} disabled={loading}>
+                          Cancelar
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {purchaseOrders.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
+                    <td colSpan={7} className="py-6 text-center text-sm text-muted-foreground">
                       Nenhum pedido de compra cadastrado.
                     </td>
                   </tr>
@@ -904,6 +1059,11 @@ export function ProcurementView({
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">Recebimentos (GR)</h2>
+            {canCreate && (
+              <Button onClick={() => setIsNewReceiptOpen(true)} size="sm">
+                <Plus className="mr-1 h-4 w-4" /> Novo Recebimento
+              </Button>
+            )}
           </div>
           <div className="overflow-x-auto rounded-lg border border-border bg-surface">
             <table className="w-full text-left text-sm">
@@ -913,6 +1073,7 @@ export function ProcurementView({
                   <th className="px-4 py-2.5">Pedido</th>
                   <th className="px-4 py-2.5">Data</th>
                   <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -926,11 +1087,18 @@ export function ProcurementView({
                     <td className="px-4 py-2.5">
                       <Badge variant="secondary">{g.status}</Badge>
                     </td>
+                    <td className="px-4 py-2.5 text-right space-x-1">
+                      {g.status === "DRAFT" && canEdit && (
+                        <Button size="sm" variant="default" onClick={() => handleConfirmReceipt(g.id)} disabled={loading}>
+                          Confirmar
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {goodsReceipts.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+                    <td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
                       Nenhum recebimento cadastrado.
                     </td>
                   </tr>
@@ -1390,6 +1558,181 @@ export function ProcurementView({
               </Button>
               <Button type="submit" disabled={loading}>
                 Cadastrar
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Dialog>
+
+      {/* DIALOG: NOVO PEDIDO DE COMPRA */}
+      <Dialog open={isNewOrderOpen} title="Novo Pedido de Compra" onClose={() => setIsNewOrderOpen(false)}>
+        <div className="flex flex-col gap-4 p-4">
+          <h2 className="text-base font-semibold">Novo Pedido de Compra</h2>
+          <form onSubmit={handleCreateOrder} className="flex flex-col gap-3">
+            <div>
+              <Label>Requisição Aprovada *</Label>
+              <select
+                required
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={poRequestId}
+                onChange={(e) => setPoRequestId(e.target.value)}
+              >
+                <option value="">Selecione a requisição...</option>
+                {requests
+                  .filter((r) => r.status === "APPROVED")
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.code} - {r.title}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <Label>Fornecedor *</Label>
+              <select
+                required
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={poSupplierId}
+                onChange={(e) => setPoSupplierId(e.target.value)}
+              >
+                <option value="">Selecione o fornecedor...</option>
+                {suppliers
+                  .filter((s) => s.status === "ACTIVE")
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.code} - {s.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <Label>Cotação Vencedora (opcional)</Label>
+              <select
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={poQuotationId}
+                onChange={(e) => setPoQuotationId(e.target.value)}
+              >
+                <option value="">Sem cotação vinculada</option>
+                {quotations
+                  .filter((q) => q.status === "SELECTED" && (!poRequestId || q.requestId === poRequestId))
+                  .map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.code} - {q.supplier?.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Data de Emissão</Label>
+                <Input type="date" value={poIssueDate} onChange={(e) => setPoIssueDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>Entrega Prevista</Label>
+                <Input type="date" value={poExpectedDeliveryDate} onChange={(e) => setPoExpectedDeliveryDate(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Condições Pagto</Label>
+                <Input placeholder="Ex.: 30 DDL" value={poPaymentTerms} onChange={(e) => setPoPaymentTerms(e.target.value)} />
+              </div>
+              <div>
+                <Label>Termo de Frete</Label>
+                <Input placeholder="CIF / FOB" value={poShippingTerms} onChange={(e) => setPoShippingTerms(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Custo de Frete (R$)</Label>
+                <Input type="number" step="any" value={poShippingCost} onChange={(e) => setPoShippingCost(Number(e.target.value))} />
+              </div>
+              <div>
+                <Label>Desconto (R$)</Label>
+                <Input type="number" step="any" value={poDiscount} onChange={(e) => setPoDiscount(Number(e.target.value))} />
+              </div>
+            </div>
+            <div>
+              <Label>Observações</Label>
+              <Input placeholder="Observações do pedido" value={poNotes} onChange={(e) => setPoNotes(e.target.value)} />
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setIsNewOrderOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                Salvar Pedido
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Dialog>
+
+      {/* DIALOG: NOVO RECEBIMENTO */}
+      <Dialog open={isNewReceiptOpen} title="Novo Recebimento" onClose={() => setIsNewReceiptOpen(false)}>
+        <div className="flex flex-col gap-4 p-4">
+          <h2 className="text-base font-semibold">Novo Recebimento</h2>
+          <form onSubmit={handleCreateReceipt} className="flex flex-col gap-3">
+            <div>
+              <Label>Pedido de Compra *</Label>
+              <select
+                required
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={grPurchaseOrderId}
+                onChange={(e) => handleSelectOrderForReceipt(e.target.value)}
+              >
+                <option value="">Selecione o pedido...</option>
+                {purchaseOrders
+                  .filter((o) => o.status === "ISSUED" || o.status === "PARTIALLY_RECEIVED")
+                  .map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.code} - {o.supplier?.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <Label>Data de Recebimento</Label>
+              <Input type="date" value={grReceiptDate} onChange={(e) => setGrReceiptDate(e.target.value)} />
+            </div>
+            <div>
+              <Label>Observações</Label>
+              <Input placeholder="Observações do recebimento" value={grNotes} onChange={(e) => setGrNotes(e.target.value)} />
+            </div>
+            {grItems.length > 0 && (
+              <div className="mt-2 border-t border-border pt-2">
+                <Label className="text-xs font-semibold">Itens a Receber:</Label>
+                <div className="mt-2 grid grid-cols-4 gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span className="col-span-2">Descrição</span>
+                  <span>Saldo</span>
+                  <span>Qtd Recebida</span>
+                </div>
+                {grItems.map((it, idx) => (
+                  <div key={it.purchaseOrderItemId} className="mt-1 grid grid-cols-4 gap-2">
+                    <Input className="col-span-2" value={it.description} disabled />
+                    <Input value={it.remaining} disabled />
+                    <Input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max={it.remaining}
+                      value={it.quantityReceived}
+                      onChange={(e) => {
+                        const next = [...grItems];
+                        next[idx].quantityReceived = Number(e.target.value);
+                        setGrItems(next);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setIsNewReceiptOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading || grItems.filter((i) => i.quantityReceived > 0).length === 0}>
+                Salvar Recebimento
               </Button>
             </div>
           </form>
