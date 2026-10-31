@@ -116,6 +116,7 @@ export function ProcurementView({
 }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"requests" | "quotations" | "comparison" | "suppliers">("requests");
+  const [comparisonSort, setComparisonSort] = useState<"price" | "leadTime" | "freight" | "discount">("price");
   const [summary, setSummary] = useState(initialSummary);
   const [requests, setRequests] = useState(initialRequests);
   const [quotations, setQuotations] = useState(initialQuotations);
@@ -314,7 +315,10 @@ export function ProcurementView({
   };
 
   const handleCompleteComparison = async (requestId: string) => {
-    if (!selectedWinnerQuotationId) {
+    const quotes = quotations.filter((q) => q.requestId === requestId);
+    const lowestId = [...quotes].sort((a, b) => Number(a.totalAmount) - Number(b.totalAmount))[0]?.id ?? "";
+    const winnerId = selectedWinnerQuotationId || lowestId;
+    if (!winnerId) {
       setError("Selecione a cotação vencedora.");
       return;
     }
@@ -324,7 +328,7 @@ export function ProcurementView({
       await apiRequest(`/api/v1/projects/${projectId}/procurement/requests/${requestId}/comparison/complete`, {
         method: "POST",
         body: JSON.stringify({
-          selectedQuotationId: selectedWinnerQuotationId,
+          selectedQuotationId: winnerId,
           selectionReason: comparisonSelectionReason || "Menor preço global e atendimento ao prazo.",
         }),
       });
@@ -338,8 +342,21 @@ export function ProcurementView({
 
   const activeComparisonRequest = requests.find((r) => r.id === selectedRequestForComparison);
   const comparisonQuotes = quotations.filter((q) => q.requestId === selectedRequestForComparison);
-  const sortedQuotes = [...comparisonQuotes].sort((a, b) => Number(a.totalAmount) - Number(b.totalAmount));
-  const lowestTotal = sortedQuotes[0] ? Number(sortedQuotes[0].totalAmount) : 0;
+  const comparisonLowestPriceId = [...comparisonQuotes].sort((a, b) => Number(a.totalAmount) - Number(b.totalAmount))[0]?.id ?? "";
+  const effectiveWinnerId = selectedWinnerQuotationId || comparisonLowestPriceId;
+  const sortedQuotes = [...comparisonQuotes].sort((a, b) => {
+    if (comparisonSort === "leadTime") return (a.leadTimeDays ?? 9999) - (b.leadTimeDays ?? 9999);
+    if (comparisonSort === "freight") return Number(a.shippingCost ?? 0) - Number(b.shippingCost ?? 0);
+    if (comparisonSort === "discount") return Number(b.discount ?? 0) - Number(a.discount ?? 0);
+    return Number(a.totalAmount) - Number(b.totalAmount);
+  });
+  const lowestTotal = [...comparisonQuotes].sort((a, b) => Number(a.totalAmount) - Number(b.totalAmount))[0]
+    ? Number([...comparisonQuotes].sort((a, b) => Number(a.totalAmount) - Number(b.totalAmount))[0].totalAmount)
+    : 0;
+  const fastestQuoteId = [...comparisonQuotes]
+    .filter((q) => (q.leadTimeDays ?? 0) > 0)
+    .sort((a, b) => (a.leadTimeDays ?? 0) - (b.leadTimeDays ?? 0))[0]?.id;
+  const lowestPriceId = [...comparisonQuotes].sort((a, b) => Number(a.totalAmount) - Number(b.totalAmount))[0]?.id;
 
   return (
     <div className="flex flex-col gap-6">
@@ -627,28 +644,54 @@ export function ProcurementView({
                     <tr>
                       <th className="px-4 py-2.5">Fornecedor</th>
                       <th className="px-4 py-2.5">Código Cotação</th>
-                      <th className="px-4 py-2.5">Prazo Entrega</th>
+                      <th
+                        className="cursor-pointer px-4 py-2.5 hover:text-foreground"
+                        onClick={() => setComparisonSort("leadTime")}
+                      >
+                        Prazo Entrega {comparisonSort === "leadTime" ? "▲" : ""}
+                      </th>
                       <th className="px-4 py-2.5">Condições Pagto</th>
-                      <th className="px-4 py-2.5">Frete</th>
-                      <th className="px-4 py-2.5">Desconto</th>
-                      <th className="px-4 py-2.5">Total Geral</th>
+                      <th
+                        className="cursor-pointer px-4 py-2.5 hover:text-foreground"
+                        onClick={() => setComparisonSort("freight")}
+                      >
+                        Frete {comparisonSort === "freight" ? "▲" : ""}
+                      </th>
+                      <th
+                        className="cursor-pointer px-4 py-2.5 hover:text-foreground"
+                        onClick={() => setComparisonSort("discount")}
+                      >
+                        Desconto {comparisonSort === "discount" ? "▼" : ""}
+                      </th>
+                      <th
+                        className="cursor-pointer px-4 py-2.5 hover:text-foreground"
+                        onClick={() => setComparisonSort("price")}
+                      >
+                        Total Geral {comparisonSort === "price" ? "▲" : ""}
+                      </th>
                       <th className="px-4 py-2.5">Diferença p/ Menor</th>
                       <th className="px-4 py-2.5 text-center">Seleção</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {sortedQuotes.map((q, idx) => {
+                    {sortedQuotes.map((q) => {
                       const amount = Number(q.totalAmount);
                       const diffPercent = lowestTotal > 0 ? ((amount - lowestTotal) / lowestTotal) * 100 : 0;
-                      const isLowest = idx === 0;
+                      const isLowestPrice = q.id === lowestPriceId;
+                      const isFastest = q.id === fastestQuoteId;
 
                       return (
-                        <tr key={q.id} className={isLowest ? "bg-emerald-50/30 dark:bg-emerald-950/20" : ""}>
+                        <tr key={q.id} className={isLowestPrice ? "bg-emerald-50/30 dark:bg-emerald-950/20" : ""}>
                           <td className="px-4 py-2.5 font-medium">
                             {q.supplier?.name}
-                            {isLowest && (
+                            {isLowestPrice && (
                               <Badge variant="default" className="ml-2 bg-emerald-600 text-xs">
                                 Menor Preço
+                              </Badge>
+                            )}
+                            {isFastest && (
+                              <Badge variant="outline" className="ml-2 border-blue-500 text-blue-600 text-xs">
+                                Menor Prazo
                               </Badge>
                             )}
                           </td>
@@ -663,7 +706,7 @@ export function ProcurementView({
                             {amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </td>
                           <td className="px-4 py-2.5 text-xs">
-                            {isLowest ? (
+                            {isLowestPrice ? (
                               <span className="text-emerald-600 font-medium">0% (Referência)</span>
                             ) : (
                               <span className="text-amber-600 font-medium">+{diffPercent.toFixed(1)}%</span>
@@ -673,7 +716,7 @@ export function ProcurementView({
                             <input
                               type="radio"
                               name="winnerQuotation"
-                              checked={selectedWinnerQuotationId === q.id || (!selectedWinnerQuotationId && isLowest)}
+                              checked={effectiveWinnerId === q.id}
                               onChange={() => setSelectedWinnerQuotationId(q.id)}
                               disabled={activeComparisonRequest.status === "COMPARED" || activeComparisonRequest.status === "APPROVED"}
                             />
