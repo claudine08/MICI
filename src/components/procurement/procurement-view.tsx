@@ -1022,8 +1022,14 @@ export function ProcurementView({
             {/* Quotation items */}
             <div className="mt-2 border-t border-border pt-2">
               <Label className="text-xs font-semibold">Itens Precificados:</Label>
+              <div className="mt-2 grid grid-cols-6 gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className="col-span-2">Descrição</span>
+                <span>Qtd</span>
+                <span>Unidade</span>
+                <span className="col-span-2 text-primary">Preço Unit (R$)</span>
+              </div>
               {quoteItems.map((item, idx) => (
-                <div key={idx} className="mt-2 grid grid-cols-6 gap-2">
+                <div key={idx} className="mt-1 grid grid-cols-6 gap-2">
                   <Input
                     className="col-span-2"
                     placeholder="Descrição do item"
@@ -1037,6 +1043,7 @@ export function ProcurementView({
                   <Input
                     type="number"
                     step="any"
+                    min="0"
                     placeholder="Qtd"
                     value={item.quantity}
                     onChange={(e) => {
@@ -1046,7 +1053,7 @@ export function ProcurementView({
                     }}
                   />
                   <Input
-                    placeholder="Unidade"
+                    placeholder="Un"
                     value={item.unit}
                     onChange={(e) => {
                       const next = [...quoteItems];
@@ -1057,8 +1064,10 @@ export function ProcurementView({
                   <Input
                     type="number"
                     step="any"
-                    placeholder="Preço Unit (R$)"
+                    min="0"
+                    placeholder="0,00"
                     value={item.unitPrice}
+                    className="col-span-2 border-primary/40 bg-primary/5 font-semibold text-primary focus-visible:ring-primary"
                     onChange={(e) => {
                       const next = [...quoteItems];
                       next[idx].unitPrice = Number(e.target.value);
