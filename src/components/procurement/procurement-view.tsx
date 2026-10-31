@@ -116,10 +116,34 @@ export function ProcurementView({
 }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"requests" | "quotations" | "comparison" | "suppliers">("requests");
-  const [summary] = useState(initialSummary);
-  const [requests] = useState(initialRequests);
-  const [quotations] = useState(initialQuotations);
-  const [suppliers] = useState(initialSuppliers);
+  const [summary, setSummary] = useState(initialSummary);
+  const [requests, setRequests] = useState(initialRequests);
+  const [quotations, setQuotations] = useState(initialQuotations);
+  const [suppliers, setSuppliers] = useState(initialSuppliers);
+
+  const summaryBase = `/api/v1/projects/${projectId}/procurement/summary`;
+  const requestBase = `/api/v1/projects/${projectId}/procurement/requests`;
+  const quotationBase = `/api/v1/projects/${projectId}/procurement/quotations`;
+  const supplierBase = `/api/v1/suppliers`;
+
+  const loadAll = async () => {
+    try {
+      const [s, r, q, sup] = await Promise.all([
+        apiRequest<{ summary: ProcurementBoardSummary }>(summaryBase),
+        apiRequest<{ requests: PurchaseRequestRow[] }>(requestBase),
+        apiRequest<{ quotations: QuotationRow[] }>(quotationBase),
+        apiRequest<{ suppliers: SupplierRow[] }>(supplierBase),
+      ]);
+      setSummary(s.summary);
+      setRequests(r.requests);
+      setQuotations(q.quotations);
+      setSuppliers(sup.suppliers);
+      setError(null);
+      router.refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao carregar os dados de suprimentos.");
+    }
+  };
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -193,7 +217,7 @@ export function ProcurementView({
         }),
       });
       setIsNewRequestOpen(false);
-      router.refresh();
+      await loadAll();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Falha ao criar requisição.");
     } finally {
@@ -221,7 +245,7 @@ export function ProcurementView({
         }),
       });
       setIsNewQuotationOpen(false);
-      router.refresh();
+      await loadAll();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Falha ao criar cotação.");
     } finally {
@@ -249,7 +273,7 @@ export function ProcurementView({
         }),
       });
       setIsNewSupplierOpen(false);
-      router.refresh();
+      await loadAll();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Falha ao cadastrar fornecedor.");
     } finally {
@@ -265,7 +289,7 @@ export function ProcurementView({
         method: "POST",
         body: JSON.stringify({ action }),
       });
-      router.refresh();
+      await loadAll();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Falha ao atualizar status da requisição.");
     } finally {
@@ -281,7 +305,7 @@ export function ProcurementView({
         method: "POST",
         body: JSON.stringify({ action }),
       });
-      router.refresh();
+      await loadAll();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Falha ao atualizar cotação.");
     } finally {
@@ -304,7 +328,7 @@ export function ProcurementView({
           selectionReason: comparisonSelectionReason || "Menor preço global e atendimento ao prazo.",
         }),
       });
-      router.refresh();
+      await loadAll();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Falha ao concluir mapa comparativo.");
     } finally {
