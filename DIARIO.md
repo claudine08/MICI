@@ -1438,11 +1438,11 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
   Fatia 2 em produção; working tree limpa, `main` pushada. **Próximo épico:
   E14 Procurement** (decisão do usuário).
 
-## 30/10/2026 � E14 Procurement, Fatia 1
+## 30/10/2026 � E14 Procurement, Fatia 1
 
-- Fornecedores (SP), Requisi��es de Compra (PR), Cota��es (QT) e Mapa Comparativo (BC) em produ��o.
+- Fornecedores (SP), Requisi��es de Compra (PR), Cota��es (QT) e Mapa Comparativo (BC) em produ��o.
 - Commit feat 2ea90bb, migration phase15_procurement no Neon, deploy mici-5w7tzxsmi-homeland1, smoke verde.
-- Gate: lint, typecheck, 263 unit, 285 integra��o, build OK.
+- Gate: lint, typecheck, 263 unit, 285 integra��o, build OK.
 
 ---
 
@@ -1569,4 +1569,12 @@ Estado final da sessão:
 - Migrations no Neon: 19 (até phase17_cost_tracking).
 - Working tree limpa; main sincronizado com origin/main.
 - RAG leve atualizado (192 chunks em 7 arquivos).
+
+## 02/11/2026 — E15 Commissioning implementado e deployado
+
+- Módulo `src/modules/commissioning/` (plano, item de teste/reteste, aceite formal) + migration `phase18_commissioning` + RBAC `COMMISSIONING`.
+- API em `/api/v1/projects/[id]/commissioning/*` e UI `/projetos/[id]/commissioning`.
+- Deploy Vercel: produção `mici-theta.vercel.app`; migration aplicada no Neon; permissões sincronizadas.
+- Smoke autenticado: GET plans → 200; rotas sem sessão → 401.
+- Testes: 268 unit + 302 integração verdes.
 - Próxima frente (amanhã): E15 Commissioning (a cargo do usuário) ou ajustes no dashboard.

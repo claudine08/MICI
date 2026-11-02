@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 02/11/2026 (encerramento do dia). E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em producao. Links de drill-down no painel. Migrations no Neon: 19. Working tree limpa. Proxima frente: E15 Commissioning (a cargo do usuario).
+**Ultima atualizacao:** 02/11/2026 (retomada). E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em producao. E15 Commissioning implementado (local): plano, itens de teste/reteste, aceite formal; migration `phase18_commissioning` aplicada no banco local; build/typecheck/lint/testes verdes. Pendente: deploy, smoke, docs. Proxima frente apos deploy: E16 Sustainability.
 
 ---
 
@@ -90,7 +90,7 @@ Schedule (E07):
 | Ã‰pico | Escopo curto |
 |---|---|
 | E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2+3 implementadas (graficos visuais com Recharts)) |
-| E15 Commissioning | Plano, teste, reteste, aceite |
+| E15 Commissioning | Plano, teste, reteste, aceite — ✅ implementado (local, pendente deploy) |
 | E16 Sustainability | PSP, baseline, metas, mediÃ§Ãµes, resÃ­duo, relatÃ³rio |
 | E17 Dashboard | PortfÃ³lio, executivo, projeto, campo (genÃ©rico) |
 | E18 AI | AI Gateway, prompts, extraÃ§Ã£o, resumo diÃ¡rio, classificaÃ§Ã£o, busca |
@@ -106,7 +106,8 @@ Schedule (E07):
 - Procurement (E14): `src/modules/procurement/*`
 - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashflow/{export,import}` Â· mÃ³dulos `cost/{items,commitments,actuals}.ts` (WBS/atividade/PO/GR) Â· doc `custos.md`. Â· rotas `api/v1/projects/[id]/procurement/*` e `api/v1/suppliers/*` Â· UI `src/components/procurement/*` e `src/app/(app)/suprimentos` e `src/app/(app)/projetos/[id]/suprimentos` Â· doc `suprimentos.md` Â· testes `tests/{unit/procurement-engine,integration/procurement}.test.ts`.
 - Campo (E12/backlog): `src/modules/field/*` Â· rotas `api/v1/projects/[id]/field/*` Â· UI `src/components/field/field-view.tsx` Â· fila offline `src/lib/offline-queue.ts` + `public/sw.js` + `src/app/manifest.ts` Â· testes `tests/{unit/offline-queue,unit/field-engine,integration/field}.test.ts`.
-- Qualidade (E13): `src/modules/quality/*` (inclui `punch-items.ts`) Â· `qualidade.md` Â· testes `tests/{unit/quality-engine,integration/quality}.test.ts`.
+- Qualidade (E13): `src/modules/quality/*` (inclui `punch-items.ts`)
+- Comissionamento (E15): `src/modules/commissioning/*` · `comissionamento.md` · rotas `api/v1/projects/[id]/commissioning/*` · UI `src/components/commissioning/commissioning-view.tsx` e `src/app/(app)/projetos/[id]/commissioning` Â· `qualidade.md` Â· testes `tests/{unit/quality-engine,integration/quality}.test.ts`.
 - Auth/permissÃµes: `src/lib/auth.ts` Â· guards nas rotas Â· seed em `prisma/seed.ts`.
 - Schema completo: `prisma/schema.prisma` (~2500 linhas).
 - RAG de docs: `scripts/rag-index.mjs`, `scripts/rag-query.mjs`, `docs/rag-index.{json,md}`.

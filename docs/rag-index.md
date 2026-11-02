@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 208.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 209.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -13,9 +13,9 @@
 | `devcurrent-5-e08-cost-tracking-cash-flow-a-a-implementado-0` | 5. E08+ Cost Tracking & Cash Flow â€” âœ… IMPLEMENTADO (01/11) | devcurrent.md:59-77 | ExtensÃ£o do mÃ³dulo de Custos (E08) + integraÃ§Ã£o com Procurement (E14) + Schedule (E07): - **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e... |
 | `devcurrent-6-e14-procurement-a-a-completo-fatia-1-fatia-2` | 6. E14 Procurement â€” âœ… COMPLETO (Fatia 1 + Fatia 2) | devcurrent.md:78-87 | - **Fatia 1** (produÃ§Ã£o 30/10): fornecedores (SP), requisiÃ§Ãµes (PR), cotaÃ§Ãµes (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procur... |
 | `devcurrent-6-restante-do-roadmap-apa-s-e14` | 6. Restante do roadmap (apÃ³s E14) | devcurrent.md:88-103 | \| Ã‰pico \| Escopo curto \| \|---\|---\| \| E19 Project Dashboard \| Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat... |
-| `devcurrent-7-ponteiros-ra-pidos-de-ca-digo` | 7. Ponteiros rÃ¡pidos de cÃ³digo | devcurrent.md:104-113 | - Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf... |
-| `devcurrent-8-rag-a-a-ndice-de-chunks-auto-gerado` | 8. RAG â€” Ã­ndice de chunks (auto-gerado) | devcurrent.md:114-123 | - Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind... |
-| `devcurrent-9-riscos-conhecidos` | 9. Riscos conhecidos | devcurrent.md:124-132 | - Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n... |
+| `devcurrent-7-ponteiros-ra-pidos-de-ca-digo` | 7. Ponteiros rÃ¡pidos de cÃ³digo | devcurrent.md:104-114 | - Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf... |
+| `devcurrent-8-rag-a-a-ndice-de-chunks-auto-gerado` | 8. RAG â€” Ã­ndice de chunks (auto-gerado) | devcurrent.md:115-124 | - Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind... |
+| `devcurrent-9-riscos-conhecidos` | 9. Riscos conhecidos | devcurrent.md:125-133 | - Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n... |
 | `fluxo-1-visao-geral-do-ciclo-mvp` | 1. Visão geral do ciclo (MVP) | docs/fluxo-e01-e14.md:3-12 | ``` Oportunidade → Requisitos → Orçamento → Projeto → Baseline → Execução → Avanço → Custo → Risco → Mudança → Qualidade → Comissionamento → Aceite → Encerra... |
 | `fluxo-2-epicos-e-o-que-cada-um-entrega` | 2. Épicos e o que cada um entrega | docs/fluxo-e01-e14.md:13-31 | \| Épico \| Módulo \| Entrega-chave \| \|---\|---\|---\| \| E01 Foundation \| `src/lib`, `prisma` \| Next 16 + TS + Tailwind 4, Prisma 7, Auth.js v5, RBAC 18×25×8, outb... |
 | `fluxo-3-fluxo-end-to-end-com-modulos` | 3. Fluxo end-to-end (com módulos) | docs/fluxo-e01-e14.md:32-33 | (secao sem corpo) |
@@ -145,7 +145,8 @@
 | `diario-02-11-2026-e19-project-dashboard-fatia-3` | 02/11/2026 - E19 Project Dashboard, Fatia 3 | DIARIO.md:1529-1539 | - Graficos visuais com Recharts (v3.10.1): - CurveSChart (LineChart PV/EV/AC), BurndownChart (atividades restantes), RiskHeatmap (grid colorido). - Substitui... |
 | `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-3` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 3) | DIARIO.md:1540-1549 | - Deploy Vercel: mici-f2euprnxn-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
 | `diario-02-11-2026-deploy-em-producao-links-para-drill-d` | 02/11/2026 - Deploy em producao (links para drill-down no painel) | DIARIO.md:1550-1560 | - Deploy Vercel: mici-m83oy22mh-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
-| `diario-02-11-2026-encerramento-do-dia` | 02/11/2026 - Encerramento do dia | DIARIO.md:1561-1573 | Estado final da sessão: - E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em produção. - Links de drill-down par... |
+| `diario-02-11-2026-encerramento-do-dia` | 02/11/2026 - Encerramento do dia | DIARIO.md:1561-1572 | Estado final da sessão: - E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em produção. - Links de drill-down par... |
+| `diario-02-11-2026-e15-commissioning-implementado-e-depl` | 02/11/2026 — E15 Commissioning implementado e deployado | DIARIO.md:1573-1581 | - Módulo `src/modules/commissioning/` (plano, item de teste/reteste, aceite formal) + migration `phase18_commissioning` + RBAC `COMMISSIONING`. - API em `/ap... |
 | `roadmap-gate-de-verificacao-entre-fases` | Gate de verificação entre fases | ROADMAP.md:11-27 | Antes de iniciar uma fase, a fase anterior deve passar na suíte completa: `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `n... |
 | `roadmap-correcao-de-ambiente-e-sessao-07-10-2026` | Correção de ambiente e sessão (07/10/2026) | ROADMAP.md:28-60 | Bug reportado em `/selecionar-organizacao`: aviso **"Sessão expirada ou ausente."** junto de "Olá, Paulo" e "Você ainda não participa de nenhuma organização"... |
 | `roadmap-producao-sync-de-dados-auth-url-14-10-2026` | Produção: sync de dados + AUTH_URL (14/10/2026) | ROADMAP.md:61-89 | Login no Vercel falhava (`CredentialsSignin`) e os 302 do Auth.js apontavam para `http://localhost:3000`. Duas causas independentes: - [x] **Senhas dos perfi... |

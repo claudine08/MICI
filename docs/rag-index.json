@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T02:58:14.321Z",
+  "generatedAt": "2026-11-02T20:49:33.113Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 208,
+  "chunkCount": 209,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -101,7 +101,7 @@
       "level": 2,
       "file": "devcurrent.md",
       "startLine": 104,
-      "endLine": 113,
+      "endLine": 114,
       "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf...",
       "tags": [
         "devcurrent"
@@ -112,8 +112,8 @@
       "title": "8. RAG â€” Ã­ndice de chunks (auto-gerado)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 114,
-      "endLine": 123,
+      "startLine": 115,
+      "endLine": 124,
       "summary": "- Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind...",
       "tags": [
         "devcurrent"
@@ -124,8 +124,8 @@
       "title": "9. Riscos conhecidos",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 124,
-      "endLine": 132,
+      "startLine": 125,
+      "endLine": 133,
       "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n...",
       "tags": [
         "devcurrent"
@@ -1685,8 +1685,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1561,
-      "endLine": 1573,
+      "endLine": 1572,
       "summary": "Estado final da sessão: - E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em produção. - Links de drill-down par...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-e15-commissioning-implementado-e-depl",
+      "title": "02/11/2026 — E15 Commissioning implementado e deployado",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1573,
+      "endLine": 1581,
+      "summary": "- Módulo `src/modules/commissioning/` (plano, item de teste/reteste, aceite formal) + migration `phase18_commissioning` + RBAC `COMMISSIONING`. - API em `/ap...",
       "tags": [
         "diario"
       ]
