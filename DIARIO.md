@@ -1490,3 +1490,13 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
 - Smoke autenticado: login 302 -> /api/v1/health 200 -> /api/v1/projects 200 ->
   /api/v1/projects/[id]/cost/cashflow/export 200 (CSV); sem sessao -> 401.
 - Working tree limpa; main pushada.
+
+---
+
+## 02/11/2026 - Deploy em producao (E19 dashboard fatia 1)
+
+- Deploy Vercel: mici-ddq4bapgz-homeland1 (Production, Ready), alias
+  mici-theta.vercel.app. Sem migration nova (E19 fatia 1 nao altera schema).
+- Smoke autenticado: login 302 -> /api/v1/health 200 -> /api/v1/dashboard/portfolio 200
+  (JSON com KPIs e projetos); sem sessao -> 401.
+- Working tree limpa; main pushada.

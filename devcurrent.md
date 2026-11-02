@@ -11,10 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ãšltima atualizaÃ§Ã£o:** 02/11/2026 (E08+ Cost Tracking & Cash Flow em
-produÃ§Ã£o: migration `phase17_cost_tracking` aplicada no Neon (19 migrations),
-deploy `mici-c6kzjgsfv-homeland1`, smoke verde â€” health/projects/cashflow
-export 200, sem sessÃ£o 401. PrÃ³xima frente: **E15 Commissioning**.)
+**Ultima atualizacao:** 02/11/2026 (E19 Dashboard Fatia 1 em producao: mici-ddq4bapgz-homeland1, smoke verde - health/dashboard 200, sem sessao 401. Proxima frente: E19 Fatia 2 ou E15 Commissioning (a cargo do usuario).)
 
 ---
 
