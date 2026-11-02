@@ -19,6 +19,7 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
   const [requests, setRequests] = useState(initialRequests);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const run = async () => {
     setError(""); setOutput("");
@@ -68,18 +69,30 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
         <h2 className="mb-3 text-sm font-semibold">Histórico de requisições</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2 pr-3">Data</th><th className="py-2 pr-3">Prompt</th><th className="py-2 pr-3">Status</th><th className="py-2 pr-3">Modelo</th><th className="py-2 pr-3">Tokens</th></tr></thead>
+            <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2 pr-3">Data</th><th className="py-2 pr-3">Prompt</th><th className="py-2 pr-3">Status</th><th className="py-2 pr-3">Modelo</th><th className="py-2 pr-3">Tokens</th><th className="py-2 pr-3"></th></tr></thead>
             <tbody>
               {requests.map((r) => (
-                <tr key={r.id} className="border-b">
-                  <td className="py-2 pr-3 text-xs">{r.createdAt.slice(0, 19).replace("T", " ")}</td>
-                  <td className="py-2 pr-3 font-mono text-xs">{r.promptCode}</td>
-                  <td className="py-2 pr-3"><span className={r.status === "SUCCESS" ? "text-emerald-600" : "text-red-600"}>{r.status}</span></td>
-                  <td className="py-2 pr-3 text-xs">{r.model}</td>
-                  <td className="py-2 pr-3 text-xs">{r.tokensIn ?? "—"} / {r.tokensOut ?? "—"}</td>
-                </tr>
+                <>
+                  <tr key={r.id} className="border-b cursor-pointer hover:bg-muted/50" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
+                    <td className="py-2 pr-3 text-xs">{r.createdAt.slice(0, 19).replace("T", " ")}</td>
+                    <td className="py-2 pr-3 font-mono text-xs">{r.promptCode}</td>
+                    <td className="py-2 pr-3"><span className={r.status === "SUCCESS" ? "text-emerald-600" : "text-red-600"}>{r.status}</span></td>
+                    <td className="py-2 pr-3 text-xs">{r.model}</td>
+                    <td className="py-2 pr-3 text-xs">{r.tokensIn ?? "—"} / {r.tokensOut ?? "—"}</td>
+                    <td className="py-2 pr-3 text-xs text-muted-foreground">{expandedId === r.id ? "▲" : "▼"}</td>
+                  </tr>
+                  {expandedId === r.id && (
+                    <tr key={r.id + "-detail"} className="border-b bg-muted/30">
+                      <td colSpan={6} className="p-3 text-xs">
+                        <div className="mb-2"><strong>Input:</strong><div className="whitespace-pre-wrap rounded border bg-background p-2 mt-1">{r.input}</div></div>
+                        <div><strong>Output:</strong><div className="whitespace-pre-wrap rounded border bg-background p-2 mt-1">{r.output ?? "—"}</div></div>
+                        {r.errorMessage && <div className="mt-2 text-red-600"><strong>Erro:</strong> {r.errorMessage}</div>}
+                      </td>
+                    </tr>
+                  )}
+                </>
               ))}
-              {requests.length === 0 && <tr><td colSpan={5} className="py-4 text-center text-muted-foreground">Nenhuma requisição.</td></tr>}
+              {requests.length === 0 && <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma requisição.</td></tr>}
             </tbody>
           </table>
         </div>
