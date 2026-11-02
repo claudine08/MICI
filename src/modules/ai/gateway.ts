@@ -34,12 +34,20 @@ function mockResponse(model: string, userInput: string): { output: string; token
   };
 }
 
-async function callOpenAI(model: string, systemPrompt: string, userInput: string): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+async function callLlm(model: string, systemPrompt: string, userInput: string): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
+  const openCodeKey = process.env.OPENCODE_API_KEY;
+  const openAiKey = process.env.OPENAI_API_KEY;
+
+  if (!openCodeKey && !openAiKey) {
     return mockResponse(model, userInput);
   }
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+
+  const baseUrl = openCodeKey
+    ? (process.env.OPENCODE_BASE_URL || "https://opencode.ai/zen/v1")
+    : "https://api.openai.com/v1";
+  const apiKey = openCodeKey || openAiKey!;
+
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -87,7 +95,7 @@ export async function runAi(input: AiRunInput): Promise<AiRunResult> {
   });
 
   try {
-    const result = await callOpenAI(model, systemPrompt, input.input);
+    const result = await callLlm(model, systemPrompt, input.input);
     const updated = await prisma.aiRequest.update({
       where: { id: request.id },
       data: {
