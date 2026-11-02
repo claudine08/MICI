@@ -76,6 +76,33 @@ async function assertCommitmentLink(
   }
 }
 
+async function assertWbsLink(organizationId: string, projectId: string, wbsNodeId: string | null) {
+  if (!wbsNodeId) return;
+  const node = await prisma.wBSNode.findFirst({
+    where: { id: wbsNodeId, organizationId, projectId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!node) throw new AppError("VALIDATION_ERROR", "Nó de WBS inválido para este projeto.");
+}
+
+async function assertActivityLink(organizationId: string, projectId: string, activityId: string | null) {
+  if (!activityId) return;
+  const act = await prisma.scheduleActivity.findFirst({
+    where: { id: activityId, organizationId, projectId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!act) throw new AppError("VALIDATION_ERROR", "Atividade inválida para este projeto.");
+}
+
+async function assertGoodsReceiptLink(organizationId: string, projectId: string, goodsReceiptId: string | null) {
+  if (!goodsReceiptId) return;
+  const gr = await prisma.goodsReceipt.findFirst({
+    where: { id: goodsReceiptId, projectId, organizationId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!gr) throw new AppError("VALIDATION_ERROR", "Recebimento inválido para este projeto.");
+}
+
 async function nextCode(projectId: string): Promise<string> {
   const rows = await prisma.costActual.findMany({ where: { projectId }, select: { code: true } });
   let max = 0;
@@ -94,12 +121,18 @@ export interface CreateActualInput {
   incurredAt: string;
   costItemId?: string | null;
   commitmentId?: string | null;
+  wbsNodeId?: string | null;
+  activityId?: string | null;
+  goodsReceiptId?: string | null;
 }
 
 export async function createActual(input: ActorContext & CreateActualInput) {
   await assertCostProject(input.organizationId, input.projectId);
   await assertItemLink(input.organizationId, input.projectId, input.costItemId ?? null);
   await assertCommitmentLink(input.organizationId, input.projectId, input.commitmentId ?? null);
+  await assertWbsLink(input.organizationId, input.projectId, input.wbsNodeId ?? null);
+  await assertActivityLink(input.organizationId, input.projectId, input.activityId ?? null);
+  await assertGoodsReceiptLink(input.organizationId, input.projectId, input.goodsReceiptId ?? null);
 
   let code = input.code?.trim();
   if (code) {
@@ -124,6 +157,9 @@ export async function createActual(input: ActorContext & CreateActualInput) {
       incurredAt: parseDay(input.incurredAt),
       costItemId: input.costItemId ?? null,
       commitmentId: input.commitmentId ?? null,
+      wbsNodeId: input.wbsNodeId ?? null,
+      activityId: input.activityId ?? null,
+      goodsReceiptId: input.goodsReceiptId ?? null,
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },
@@ -168,6 +204,9 @@ export interface UpdateActualInput {
   incurredAt?: string;
   costItemId?: string | null;
   commitmentId?: string | null;
+  wbsNodeId?: string | null;
+  activityId?: string | null;
+  goodsReceiptId?: string | null;
 }
 
 export async function updateActual(input: ActorContext & UpdateActualInput) {
@@ -178,6 +217,15 @@ export async function updateActual(input: ActorContext & UpdateActualInput) {
   }
   if (input.commitmentId !== undefined) {
     await assertCommitmentLink(input.organizationId, row.projectId, input.commitmentId);
+  }
+  if (input.wbsNodeId !== undefined) {
+    await assertWbsLink(input.organizationId, row.projectId, input.wbsNodeId);
+  }
+  if (input.activityId !== undefined) {
+    await assertActivityLink(input.organizationId, row.projectId, input.activityId);
+  }
+  if (input.goodsReceiptId !== undefined) {
+    await assertGoodsReceiptLink(input.organizationId, row.projectId, input.goodsReceiptId);
   }
   if (input.code !== undefined && input.code.trim() !== row.code) {
     const existing = await prisma.costActual.findFirst({
@@ -198,6 +246,9 @@ export async function updateActual(input: ActorContext & UpdateActualInput) {
       ...(input.incurredAt !== undefined ? { incurredAt: parseDay(input.incurredAt) } : {}),
       ...(input.costItemId !== undefined ? { costItemId: input.costItemId } : {}),
       ...(input.commitmentId !== undefined ? { commitmentId: input.commitmentId } : {}),
+      ...(input.wbsNodeId !== undefined ? { wbsNodeId: input.wbsNodeId } : {}),
+      ...(input.activityId !== undefined ? { activityId: input.activityId } : {}),
+      ...(input.goodsReceiptId !== undefined ? { goodsReceiptId: input.goodsReceiptId } : {}),
       updatedBy: input.actorId,
       version: { increment: 1 },
     },

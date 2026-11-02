@@ -61,6 +61,33 @@ async function assertItemLink(organizationId: string, projectId: string, costIte
   }
 }
 
+async function assertWbsLink(organizationId: string, projectId: string, wbsNodeId: string | null) {
+  if (!wbsNodeId) return;
+  const node = await prisma.wBSNode.findFirst({
+    where: { id: wbsNodeId, organizationId, projectId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!node) throw new AppError("VALIDATION_ERROR", "Nó de WBS inválido para este projeto.");
+}
+
+async function assertActivityLink(organizationId: string, projectId: string, activityId: string | null) {
+  if (!activityId) return;
+  const act = await prisma.scheduleActivity.findFirst({
+    where: { id: activityId, organizationId, projectId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!act) throw new AppError("VALIDATION_ERROR", "Atividade inválida para este projeto.");
+}
+
+async function assertPurchaseOrderLink(organizationId: string, projectId: string, purchaseOrderId: string | null) {
+  if (!purchaseOrderId) return;
+  const po = await prisma.purchaseOrder.findFirst({
+    where: { id: purchaseOrderId, projectId, organizationId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!po) throw new AppError("VALIDATION_ERROR", "Pedido de compra inválido para este projeto.");
+}
+
 async function nextCode(projectId: string, prefix: "CC"): Promise<string> {
   const rows = await prisma.costCommitment.findMany({ where: { projectId }, select: { code: true } });
   let max = 0;
@@ -79,11 +106,17 @@ export interface CreateCommitmentInput {
   amount: number;
   committedAt: string;
   costItemId?: string | null;
+  wbsNodeId?: string | null;
+  activityId?: string | null;
+  purchaseOrderId?: string | null;
 }
 
 export async function createCommitment(input: ActorContext & CreateCommitmentInput) {
   await assertCostProject(input.organizationId, input.projectId);
   await assertItemLink(input.organizationId, input.projectId, input.costItemId ?? null);
+  await assertWbsLink(input.organizationId, input.projectId, input.wbsNodeId ?? null);
+  await assertActivityLink(input.organizationId, input.projectId, input.activityId ?? null);
+  await assertPurchaseOrderLink(input.organizationId, input.projectId, input.purchaseOrderId ?? null);
 
   let code = input.code?.trim();
   if (code) {
@@ -108,6 +141,9 @@ export async function createCommitment(input: ActorContext & CreateCommitmentInp
       amount: input.amount,
       committedAt: parseDay(input.committedAt),
       costItemId: input.costItemId ?? null,
+      wbsNodeId: input.wbsNodeId ?? null,
+      activityId: input.activityId ?? null,
+      purchaseOrderId: input.purchaseOrderId ?? null,
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },
@@ -152,6 +188,9 @@ export interface UpdateCommitmentInput {
   amount?: number;
   committedAt?: string;
   costItemId?: string | null;
+  wbsNodeId?: string | null;
+  activityId?: string | null;
+  purchaseOrderId?: string | null;
   status?: "OPEN" | "CLOSED" | "CANCELLED";
 }
 
@@ -160,6 +199,15 @@ export async function updateCommitment(input: ActorContext & UpdateCommitmentInp
 
   if (input.costItemId !== undefined) {
     await assertItemLink(input.organizationId, row.projectId, input.costItemId);
+  }
+  if (input.wbsNodeId !== undefined) {
+    await assertWbsLink(input.organizationId, row.projectId, input.wbsNodeId);
+  }
+  if (input.activityId !== undefined) {
+    await assertActivityLink(input.organizationId, row.projectId, input.activityId);
+  }
+  if (input.purchaseOrderId !== undefined) {
+    await assertPurchaseOrderLink(input.organizationId, row.projectId, input.purchaseOrderId);
   }
   if (input.code !== undefined && input.code.trim() !== row.code) {
     const existing = await prisma.costCommitment.findFirst({
@@ -180,6 +228,9 @@ export async function updateCommitment(input: ActorContext & UpdateCommitmentInp
       ...(input.amount !== undefined ? { amount: input.amount } : {}),
       ...(input.committedAt !== undefined ? { committedAt: parseDay(input.committedAt) } : {}),
       ...(input.costItemId !== undefined ? { costItemId: input.costItemId } : {}),
+      ...(input.wbsNodeId !== undefined ? { wbsNodeId: input.wbsNodeId } : {}),
+      ...(input.activityId !== undefined ? { activityId: input.activityId } : {}),
+      ...(input.purchaseOrderId !== undefined ? { purchaseOrderId: input.purchaseOrderId } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
       updatedBy: input.actorId,
       version: { increment: 1 },

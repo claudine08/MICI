@@ -18,6 +18,7 @@ import {
   isPurchaseOrderEditable,
   nextPurchaseOrderStatus,
 } from "@/modules/procurement/engine";
+import { createCommitment } from "@/modules/cost/commitments";
 
 export async function createPurchaseOrder(
   projectId: string,
@@ -252,6 +253,34 @@ export async function transitionPurchaseOrderStatus(
     data: { status: result.nextStatus, updatedBy: actor.actorId, version: { increment: 1 } },
     include: { items: true },
   });
+
+  // Integracao Procurement -> Cost: ao emitir o PO, cria um compromisso de custo
+  // vinculado (idempotente por purchaseOrderId).
+  if (result.nextStatus === "ISSUED") {
+    const existingCommitment = await prisma.costCommitment.findFirst({
+      where: { purchaseOrderId: orderId, deletedAt: null },
+    });
+    if (!existingCommitment) {
+      const supplierRow = await prisma.supplier.findFirst({
+        where: { id: order.supplierId, deletedAt: null },
+        select: { name: true },
+      });
+      await createCommitment({
+        organizationId: actor.organizationId,
+        actorId: actor.actorId,
+        actorLabel: actor.actorLabel,
+        projectId,
+        description: `PO ${order.code} - ${supplierRow?.name ?? "fornecedor"}`,
+        supplier: supplierRow?.name ?? undefined,
+        amount: Number(order.totalAmount),
+        committedAt: new Date().toISOString().slice(0, 10),
+        costItemId: order.costItemId ?? undefined,
+        wbsNodeId: order.wbsNodeId ?? undefined,
+        activityId: order.activityId ?? undefined,
+        purchaseOrderId: orderId,
+      }).catch(() => null);
+    }
+  }
 
   await audit(actor, projectId, "PurchaseOrder", "STATUS_CHANGE", {
     objectId: orderId, oldValue: { status: order.status }, newValue: { status: updated.status }, reason: data.reason ?? null,

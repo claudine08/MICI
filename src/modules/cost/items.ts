@@ -63,6 +63,17 @@ async function assertWbsLink(organizationId: string, projectId: string, wbsNodeI
   }
 }
 
+async function assertActivityLink(organizationId: string, projectId: string, activityId: string | null) {
+  if (!activityId) return;
+  const act = await prisma.scheduleActivity.findFirst({
+    where: { id: activityId, organizationId, projectId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!act) {
+    throw new AppError("VALIDATION_ERROR", "Atividade inválida para este projeto.");
+  }
+}
+
 async function nextItemCode(projectId: string): Promise<string> {
   const codes = await prisma.costItem.findMany({
     where: { projectId },
@@ -85,6 +96,7 @@ export interface CreateCostItemInput {
   quantity: number;
   unitPrice: number;
   wbsNodeId?: string | null;
+  activityId?: string | null;
   origin?: string;
   fontePreco?: string;
   // Vincula o item à mudança que o originou (ajuste automático de custo no
@@ -95,6 +107,7 @@ export interface CreateCostItemInput {
 export async function createCostItem(input: ActorContext & CreateCostItemInput) {
   await assertCostProject(input.organizationId, input.projectId);
   await assertWbsLink(input.organizationId, input.projectId, input.wbsNodeId ?? null);
+  await assertActivityLink(input.organizationId, input.projectId, input.activityId ?? null);
 
   let code = input.code?.trim();
   if (code) {
@@ -123,6 +136,7 @@ export async function createCostItem(input: ActorContext & CreateCostItemInput) 
       unitPrice: input.unitPrice,
       amount,
       wbsNodeId: input.wbsNodeId ?? null,
+      activityId: input.activityId ?? null,
       origin: input.origin?.trim() || null,
       fontePreco: input.fontePreco?.trim() || null,
       changeRequestId: input.changeRequestId ?? null,
@@ -171,6 +185,7 @@ export interface UpdateCostItemInput {
   quantity?: number;
   unitPrice?: number;
   wbsNodeId?: string | null;
+  activityId?: string | null;
   origin?: string;
   fontePreco?: string;
 }
@@ -180,6 +195,9 @@ export async function updateCostItem(input: ActorContext & UpdateCostItemInput) 
 
   if (input.wbsNodeId !== undefined) {
     await assertWbsLink(input.organizationId, item.projectId, input.wbsNodeId);
+  }
+  if (input.activityId !== undefined) {
+    await assertActivityLink(input.organizationId, item.projectId, input.activityId);
   }
   if (input.code !== undefined && input.code.trim() !== item.code) {
     const existing = await prisma.costItem.findFirst({
@@ -205,6 +223,7 @@ export async function updateCostItem(input: ActorContext & UpdateCostItemInput) 
       ...(input.quantity !== undefined ? { quantity: input.quantity } : {}),
       ...(input.unitPrice !== undefined ? { unitPrice: input.unitPrice } : {}),
       ...(input.wbsNodeId !== undefined ? { wbsNodeId: input.wbsNodeId } : {}),
+      ...(input.activityId !== undefined ? { activityId: input.activityId } : {}),
       ...(input.origin !== undefined ? { origin: input.origin.trim() || null } : {}),
       ...(input.fontePreco !== undefined ? { fontePreco: input.fontePreco.trim() || null } : {}),
       amount,

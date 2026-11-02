@@ -1,10 +1,10 @@
-// MICI SaaS — Prisma schema
+// MICI SaaS â€” Prisma schema
 // Fase 0: Foundation + Identity/Tenancy
-// Fase 2: Portfólio (Client/Project/Template) + Gates (E03, E06, BR-001/002)
-// Fase 3: Requisitos/DRP (E04) + WBS (E05) — BR-008, BR-015, §20, §74
-// Referências: §10 (tenancy), §13 (identidade das entidades), §14 (projeto),
-// §15.1 (snapshot de clonagem), §17 (gates), §20 (DRP), §54 (auditoria),
-// §58 (tabelas), §59 (integridade de dados), §74 (WBS), ADR-009 (outbox), Anexo F.
+// Fase 2: PortfÃ³lio (Client/Project/Template) + Gates (E03, E06, BR-001/002)
+// Fase 3: Requisitos/DRP (E04) + WBS (E05) â€” BR-008, BR-015, Â§20, Â§74
+// ReferÃªncias: Â§10 (tenancy), Â§13 (identidade das entidades), Â§14 (projeto),
+// Â§15.1 (snapshot de clonagem), Â§17 (gates), Â§20 (DRP), Â§54 (auditoria),
+// Â§58 (tabelas), Â§59 (integridade de dados), Â§74 (WBS), ADR-009 (outbox), Anexo F.
 
 generator client {
   provider = "prisma-client"
@@ -85,7 +85,7 @@ enum GateStatus {
   @@map("gate_status")
 }
 
-// Blocos A–F do levantamento de F1 (§20).
+// Blocos Aâ€“F do levantamento de F1 (Â§20).
 enum RequirementCategory {
   OPERATION
   EQUIPMENT
@@ -130,7 +130,7 @@ enum WbsVersionSource {
   @@map("wbs_version_source")
 }
 
-// Cronograma (E07, §27).
+// Cronograma (E07, Â§27).
 enum ActivityType {
   TASK
   MILESTONE
@@ -166,7 +166,7 @@ enum ProgressMethod {
   @@map("progress_method")
 }
 
-// Baselines (E07-US04, §28).
+// Baselines (E07-US04, Â§28).
 enum BaselineType {
   SCOPE
   SCHEDULE
@@ -345,7 +345,7 @@ model MembershipRole {
 }
 
 // ---------------------------------------------------------------------------
-// Auditoria append-only (§54) — sem updated_at/sem updates
+// Auditoria append-only (Â§54) â€” sem updated_at/sem updates
 // ---------------------------------------------------------------------------
 
 model AuditEvent {
@@ -373,7 +373,7 @@ model AuditEvent {
 }
 
 // ---------------------------------------------------------------------------
-// Outbox de eventos de domínio (§53, ADR-009)
+// Outbox de eventos de domÃ­nio (Â§53, ADR-009)
 // ---------------------------------------------------------------------------
 
 model DomainEvent {
@@ -399,7 +399,7 @@ model DomainEvent {
 }
 
 // ---------------------------------------------------------------------------
-// Fila de jobs para Vercel Cron (decisão de stack do MVP)
+// Fila de jobs para Vercel Cron (decisÃ£o de stack do MVP)
 // ---------------------------------------------------------------------------
 
 model JobQueue {
@@ -423,7 +423,7 @@ model JobQueue {
 }
 
 // ---------------------------------------------------------------------------
-// Portfólio (E03): Client, ProjectTemplate, Project (§14, §15)
+// PortfÃ³lio (E03): Client, ProjectTemplate, Project (Â§14, Â§15)
 // ---------------------------------------------------------------------------
 
 model Client {
@@ -547,9 +547,9 @@ model Project {
 }
 
 // ---------------------------------------------------------------------------
-// Gates (E06, §17, BR-001/BR-002): GateDefinition/GateInstance/Critério/
-// Evidência/Aprovação. Instâncias fazem snapshot da configuração na criação
-// do projeto (§15.1 — alterar a definição não muda gates existentes).
+// Gates (E06, Â§17, BR-001/BR-002): GateDefinition/GateInstance/CritÃ©rio/
+// EvidÃªncia/AprovaÃ§Ã£o. InstÃ¢ncias fazem snapshot da configuraÃ§Ã£o na criaÃ§Ã£o
+// do projeto (Â§15.1 â€” alterar a definiÃ§Ã£o nÃ£o muda gates existentes).
 // ---------------------------------------------------------------------------
 
 model GateDefinition {
@@ -628,8 +628,8 @@ model GateInstance {
   @@map("gate_instances")
 }
 
-// Resultado de critério por instância, referenciado pelo código do snapshot
-// (sobrevive a edições posteriores da definição).
+// Resultado de critÃ©rio por instÃ¢ncia, referenciado pelo cÃ³digo do snapshot
+// (sobrevive a ediÃ§Ãµes posteriores da definiÃ§Ã£o).
 model GateCriterionResult {
   id              String    @id @default(uuid()) @db.Uuid
   gateInstanceId  String    @map("gate_instance_id") @db.Uuid
@@ -681,10 +681,10 @@ model GateApproval {
 }
 
 // ---------------------------------------------------------------------------
-// Requisitos / DRP (E04, §20, BR-008, BR-015)
-// Campos do DRP (§20): code, description, category, source, priority, owner,
+// Requisitos / DRP (E04, Â§20, BR-008, BR-015)
+// Campos do DRP (Â§20): code, description, category, source, priority, owner,
 // acceptance_criteria, required_evidence, status, wbs_node_id, document_links,
-// last_reviewed_at, revision. Toda edição cria uma RequirementRevision.
+// last_reviewed_at, revision. Toda ediÃ§Ã£o cria uma RequirementRevision.
 // ---------------------------------------------------------------------------
 
 model Requirement {
@@ -726,7 +726,7 @@ model Requirement {
   @@map("requirements")
 }
 
-// Histórico imutável (append-only) — uma linha por revisão do requisito.
+// HistÃ³rico imutÃ¡vel (append-only) â€” uma linha por revisÃ£o do requisito.
 model RequirementRevision {
   id             String  @id @default(uuid()) @db.Uuid
   organizationId String  @map("organization_id") @db.Uuid
@@ -762,7 +762,7 @@ model RequirementEvidence {
 }
 
 // ---------------------------------------------------------------------------
-// WBS (E05, §74): árvore por projeto com ordenação entre irmãos, operações de
+// WBS (E05, Â§74): Ã¡rvore por projeto com ordenaÃ§Ã£o entre irmÃ£os, operaÃ§Ãµes de
 // mover/reordenar/duplicar/importar/exportar e versionamento da estrutura.
 // ---------------------------------------------------------------------------
 
@@ -791,6 +791,8 @@ model WBSNode {
   requirements Requirement[]
   scheduleActivities ScheduleActivity[]
   costItems    CostItem[]
+  costCommitments CostCommitment[]
+  costActuals  CostActual[]
   risks        Risk[]
   fieldTasks   FieldTask[]
   constraints  Constraint[]
@@ -807,8 +809,8 @@ model WBSNode {
   @@map("wbs_nodes")
 }
 
-// Snapshot da árvore (E05-US05). Em importações preserva o payload original
-// (§0.1 regra 18) em rawPayload — permite auditar e restaurar o arquivo enviado.
+// Snapshot da Ã¡rvore (E05-US05). Em importaÃ§Ãµes preserva o payload original
+// (Â§0.1 regra 18) em rawPayload â€” permite auditar e restaurar o arquivo enviado.
 model WBSVersion {
   id             String           @id @default(uuid()) @db.Uuid
   organizationId String           @map("organization_id") @db.Uuid
@@ -830,9 +832,9 @@ model WBSVersion {
 }
 
 // ---------------------------------------------------------------------------
-// Cronograma (E07, §27): atividades, dependências FS/SS/FF/SF com lag/lead,
-// calendário de trabalho e caminho crítico. `critical`/`total_float` são
-// DERIVADOS: sempre recalculados pelo motor CPM antes de persistidos (§27).
+// Cronograma (E07, Â§27): atividades, dependÃªncias FS/SS/FF/SF com lag/lead,
+// calendÃ¡rio de trabalho e caminho crÃ­tico. `critical`/`total_float` sÃ£o
+// DERIVADOS: sempre recalculados pelo motor CPM antes de persistidos (Â§27).
 // Baseline (E07-US04) e forecast (E07-US05) ficam na fatia seguinte.
 // ---------------------------------------------------------------------------
 
@@ -842,7 +844,7 @@ model ProjectCalendar {
   projectId      String?  @map("project_id") @db.Uuid
   code           String   @db.VarChar(32)
   name           String   @db.VarChar(120)
-  // Dias úteis da semana (0=domingo…6=sábado) e feriados em AAAA-MM-DD.
+  // Dias Ãºteis da semana (0=domingoâ€¦6=sÃ¡bado) e feriados em AAAA-MM-DD.
   workingWeek    Json     @default("[1,2,3,4,5]") @map("working_week")
   holidays       Json     @default("[]")
   isDefault      Boolean  @default(false) @map("is_default")
@@ -910,6 +912,9 @@ model ScheduleActivity {
   punchItems    PunchItem[]
   purchaseRequests PurchaseRequest[]
   purchaseOrders PurchaseOrder[]
+  costItems CostItem[]
+  costCommitments CostCommitment[]
+  costActuals CostActual[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -942,8 +947,8 @@ model ScheduleDependency {
   @@map("schedule_dependencies")
 }
 
-// E07-US04 (§28): snapshot imutável do projeto em um momento.
-// APROVED é imutável — exclusão/alteração exige fluxo de mudança (E11).
+// E07-US04 (Â§28): snapshot imutÃ¡vel do projeto em um momento.
+// APROVED Ã© imutÃ¡vel â€” exclusÃ£o/alteraÃ§Ã£o exige fluxo de mudanÃ§a (E11).
 model Baseline {
   id             String         @id @default(uuid()) @db.Uuid
   organizationId String         @map("organization_id") @db.Uuid
@@ -952,14 +957,14 @@ model Baseline {
   version        Int
   status         BaselineStatus @default(DRAFT)
 
-  // Snapshot do dado no momento da captura (atividades + dependências,
-  // versão completa e desacoplada do estado atual do projeto).
+  // Snapshot do dado no momento da captura (atividades + dependÃªncias,
+  // versÃ£o completa e desacoplada do estado atual do projeto).
   snapshot Json
 
   reason String? @db.Text
 
-  // Rastreabilidade de baseline revision por mudança aprovada (E11, BR-005):
-  // vinculada na implementação do ChangeRequest quando aplicável.
+  // Rastreabilidade de baseline revision por mudanÃ§a aprovada (E11, BR-005):
+  // vinculada na implementaÃ§Ã£o do ChangeRequest quando aplicÃ¡vel.
   changeRequestId String? @map("change_request_id") @db.Uuid
 
   approvedAt DateTime? @map("approved_at")
@@ -977,10 +982,10 @@ model Baseline {
 }
 
 // ---------------------------------------------------------------------------
-// Custos (E08, §29): itens do orçamento, compromissos (contratos/POs) e
-// custos realizados. `amount` é derivado (quantity × unitPrice) e gravado
-// para agregação; o EVM (PV/EV/AC) é calculado a partir destes dados +
-// progresso físico das atividades vinculadas ao WBS.
+// Custos (E08, Â§29): itens do orÃ§amento, compromissos (contratos/POs) e
+// custos realizados. `amount` Ã© derivado (quantity Ã— unitPrice) e gravado
+// para agregaÃ§Ã£o; o EVM (PV/EV/AC) Ã© calculado a partir destes dados +
+// progresso fÃ­sico das atividades vinculadas ao WBS.
 // ---------------------------------------------------------------------------
 
 enum CommitmentStatus {
@@ -994,6 +999,7 @@ model CostItem {
   organizationId String   @map("organization_id") @db.Uuid
   projectId      String   @map("project_id") @db.Uuid
   wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
+  activityId     String?  @map("activity_id") @db.Uuid
   code           String   @db.VarChar(32)
   description    String   @db.VarChar(300)
   category       String   @db.VarChar(64)
@@ -1014,8 +1020,9 @@ model CostItem {
 
   project    Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wbsNode    WBSNode?         @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
-  // Item de ajuste gerado pela implementação de uma mudança (E11 §31) —
-  // rastreia qual mudança aplicou este delta no orçamento vivo.
+  activity   ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  // Item de ajuste gerado pela implementaÃ§Ã£o de uma mudanÃ§a (E11 Â§31) â€”
+  // rastreia qual mudanÃ§a aplicou este delta no orÃ§amento vivo.
   changeRequest ChangeRequest? @relation(fields: [changeRequestId], references: [id], onDelete: SetNull)
   commitments CostCommitment[]
   actuals     CostActual[]
@@ -1033,11 +1040,14 @@ model CostItem {
 }
 
 model CostCommitment {
-  id           String           @id @default(uuid()) @db.Uuid
-  organizationId String         @map("organization_id") @db.Uuid
-  projectId    String           @map("project_id") @db.Uuid
-  costItemId   String?          @map("cost_item_id") @db.Uuid
-  code         String           @db.VarChar(32)
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  projectId      String           @map("project_id") @db.Uuid
+  costItemId     String?          @map("cost_item_id") @db.Uuid
+  wbsNodeId      String?          @map("wbs_node_id") @db.Uuid
+  activityId     String?          @map("activity_id") @db.Uuid
+  purchaseOrderId String?         @map("purchase_order_id") @db.Uuid
+  code           String           @db.VarChar(32)
   description  String           @db.VarChar(300)
   supplier     String?          @db.VarChar(200)
   amount       Decimal          @db.Decimal(18, 2)
@@ -1052,9 +1062,12 @@ model CostCommitment {
   deletedAt DateTime? @map("deleted_at")
   deletedBy String?   @map("deleted_by") @db.Uuid
 
-  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  costItem  CostItem?    @relation(fields: [costItemId], references: [id], onDelete: SetNull)
-  actuals   CostActual[]
+  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  costItem       CostItem?        @relation(fields: [costItemId], references: [id], onDelete: SetNull)
+  wbsNode        WBSNode?         @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity       ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  purchaseOrder  PurchaseOrder?   @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  actuals        CostActual[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -1068,6 +1081,9 @@ model CostActual {
   projectId      String  @map("project_id") @db.Uuid
   costItemId     String? @map("cost_item_id") @db.Uuid
   commitmentId   String? @map("commitment_id") @db.Uuid
+  wbsNodeId      String? @map("wbs_node_id") @db.Uuid
+  activityId     String? @map("activity_id") @db.Uuid
+  goodsReceiptId String? @map("goods_receipt_id") @db.Uuid
   code           String  @db.VarChar(32)
   description    String  @db.VarChar(300)
   amount         Decimal @db.Decimal(18, 2)
@@ -1081,9 +1097,12 @@ model CostActual {
   deletedAt DateTime? @map("deleted_at")
   deletedBy String?   @map("deleted_by") @db.Uuid
 
-  project    Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  costItem   CostItem?       @relation(fields: [costItemId], references: [id], onDelete: SetNull)
-  commitment CostCommitment? @relation(fields: [commitmentId], references: [id], onDelete: SetNull)
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  costItem     CostItem?        @relation(fields: [costItemId], references: [id], onDelete: SetNull)
+  commitment   CostCommitment?  @relation(fields: [commitmentId], references: [id], onDelete: SetNull)
+  wbsNode      WBSNode?         @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity     ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  goodsReceipt GoodsReceipt?    @relation(fields: [goodsReceiptId], references: [id], onDelete: SetNull)
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -1091,9 +1110,9 @@ model CostActual {
   @@map("cost_actuals")
 }
 
-// Cronogramas reutilizáveis (E07 import): arquivo MS Project (CSV/XML)
-// salvo como template. `snapshot` guarda o ParsedSchedule normalizado —
-// atividades + dependências prontas para aplicar em qualquer projeto.
+// Cronogramas reutilizÃ¡veis (E07 import): arquivo MS Project (CSV/XML)
+// salvo como template. `snapshot` guarda o ParsedSchedule normalizado â€”
+// atividades + dependÃªncias prontas para aplicar em qualquer projeto.
 model ScheduleTemplate {
   id             String   @id @default(uuid()) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
@@ -1122,18 +1141,18 @@ model ScheduleTemplate {
 }
 
 // ---------------------------------------------------------------------------
-// Documentos (E09, §36/§61, BR-009/BR-010/BR-011): documento com revisões
-// imutáveis (arquivo + hash SHA-256 + autor + data + motivo + status +
-// aprovação), máquina de estados WIP → FOR_REVIEW → APPROVED →
-// RELEASED_FOR_EXECUTION → OBSOLETE e links genéricos com outros objetos
-// (§92). Binário no Postgres (bytea) nesta fase — abstração de storage
-// permite migrar para S3/Blob sem mudar o módulo.
+// Documentos (E09, Â§36/Â§61, BR-009/BR-010/BR-011): documento com revisÃµes
+// imutÃ¡veis (arquivo + hash SHA-256 + autor + data + motivo + status +
+// aprovaÃ§Ã£o), mÃ¡quina de estados WIP â†’ FOR_REVIEW â†’ APPROVED â†’
+// RELEASED_FOR_EXECUTION â†’ OBSOLETE e links genÃ©ricos com outros objetos
+// (Â§92). BinÃ¡rio no Postgres (bytea) nesta fase â€” abstraÃ§Ã£o de storage
+// permite migrar para S3/Blob sem mudar o mÃ³dulo.
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Riscos (E10, §32): registro, matriz configurável (probabilidade × impacto),
-// resposta e risco residual. `exposure`/`residualExposure` são DERIVADOS:
-// sempre recalculados pelo motor (probabilidade × impacto) antes de persistir.
+// Riscos (E10, Â§32): registro, matriz configurÃ¡vel (probabilidade Ã— impacto),
+// resposta e risco residual. `exposure`/`residualExposure` sÃ£o DERIVADOS:
+// sempre recalculados pelo motor (probabilidade Ã— impacto) antes de persistir.
 // ---------------------------------------------------------------------------
 
 enum RiskCategory {
@@ -1149,8 +1168,8 @@ enum RiskCategory {
   SUSTAINABILITY
 }
 
-// Ciclo §32: Identify → Analyze → Prioritize → Response → Implement →
-// Monitor → Close. CANCELLED descarta o risco (falso positivo).
+// Ciclo Â§32: Identify â†’ Analyze â†’ Prioritize â†’ Response â†’ Implement â†’
+// Monitor â†’ Close. CANCELLED descarta o risco (falso positivo).
 enum RiskStatus {
   IDENTIFIED
   ANALYZED
@@ -1208,8 +1227,8 @@ model Document {
   @@map("documents")
 }
 
-// Revisão imutável (BR-009): o arquivo nunca é sobrescrito — cada revisão
-// preserva conteúdo, hash SHA-256, autor, data, motivo, status e aprovação.
+// RevisÃ£o imutÃ¡vel (BR-009): o arquivo nunca Ã© sobrescrito â€” cada revisÃ£o
+// preserva conteÃºdo, hash SHA-256, autor, data, motivo, status e aprovaÃ§Ã£o.
 // Append-only (sem updatedAt/soft-delete).
 model DocumentRevision {
   id              String         @id @default(uuid()) @db.Uuid
@@ -1238,7 +1257,7 @@ model DocumentRevision {
   @@map("document_revisions")
 }
 
-// Registro de aprovação/rejeição/liberação (BR-011 — sempre com AuditEvent).
+// Registro de aprovaÃ§Ã£o/rejeiÃ§Ã£o/liberaÃ§Ã£o (BR-011 â€” sempre com AuditEvent).
 // Append-only.
 model DocumentApproval {
   id             String           @id @default(uuid()) @db.Uuid
@@ -1258,8 +1277,8 @@ model DocumentApproval {
   @@map("document_approvals")
 }
 
-// Link genérico de objetos (E09-US05, §92): source/target polimórficos com
-// relationType. Entidades críticas preferem FK explícita — este model cobre
+// Link genÃ©rico de objetos (E09-US05, Â§92): source/target polimÃ³rficos com
+// relationType. Entidades crÃ­ticas preferem FK explÃ­cita â€” este model cobre
 // apenas os cruzamentos documentais (ex.: documento SATISFIES requisito).
 model DocumentLink {
   id             String   @id @default(uuid()) @db.Uuid
@@ -1280,14 +1299,14 @@ model DocumentLink {
   @@map("document_links")
 }
 
-// Matriz de risco configurável por organização (E10-US02, §32): rótulos de
-// probabilidade/impacto (1–5) e limites de nível sobre o exposure (1–25).
+// Matriz de risco configurÃ¡vel por organizaÃ§Ã£o (E10-US02, Â§32): rÃ³tulos de
+// probabilidade/impacto (1â€“5) e limites de nÃ­vel sobre o exposure (1â€“25).
 // Sem registro, vale a matriz default do motor.
 model RiskMatrixConfig {
   id                String   @id @default(uuid()) @db.Uuid
   organizationId    String   @unique @map("organization_id") @db.Uuid
-  probabilityLabels Json     @default("[\"Muito baixa\",\"Baixa\",\"Média\",\"Alta\",\"Muito alta\"]") @map("probability_labels")
-  impactLabels      Json     @default("[\"Irrelevante\",\"Menor\",\"Moderado\",\"Maior\",\"Crítico\"]") @map("impact_labels")
+  probabilityLabels Json     @default("[\"Muito baixa\",\"Baixa\",\"MÃ©dia\",\"Alta\",\"Muito alta\"]") @map("probability_labels")
+  impactLabels      Json     @default("[\"Irrelevante\",\"Menor\",\"Moderado\",\"Maior\",\"CrÃ­tico\"]") @map("impact_labels")
   lowMax            Int      @default(4) @map("low_max")
   mediumMax         Int      @default(9) @map("medium_max")
   highMax           Int      @default(16) @map("high_max")
@@ -1303,9 +1322,9 @@ model RiskMatrixConfig {
   @@map("risk_matrix_configs")
 }
 
-// Registro de riscos (E10-US01, §32): causa → evento → efeito, categoria,
-// probabilidade × impacto, proprietário, resposta, ação, prazo, status e
-// risco residual (E10-US04). Vínculos opcionais com WBS/atividade/custo.
+// Registro de riscos (E10-US01, Â§32): causa â†’ evento â†’ efeito, categoria,
+// probabilidade Ã— impacto, proprietÃ¡rio, resposta, aÃ§Ã£o, prazo, status e
+// risco residual (E10-US04). VÃ­nculos opcionais com WBS/atividade/custo.
 model Risk {
   id             String   @id @default(uuid()) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
@@ -1356,8 +1375,8 @@ model Risk {
   @@map("risks")
 }
 
-// Histórico imutável (append-only) das respostas planejadas/revistas
-// (E10-US03): cada plano/ajuste de resposta vira uma linha auditável.
+// HistÃ³rico imutÃ¡vel (append-only) das respostas planejadas/revistas
+// (E10-US03): cada plano/ajuste de resposta vira uma linha auditÃ¡vel.
 model RiskResponse {
   id             String   @id @default(uuid()) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
@@ -1381,11 +1400,11 @@ model RiskResponse {
 }
 
 // ---------------------------------------------------------------------------
-// Mudanças (E11, §31): ChangeRequest com workflow obrigatório
-// DRAFT → SUBMITTED → IMPACT_ANALYSIS → WAITING_APPROVAL → APPROVED/REJECTED
-// → IMPLEMENTED → VERIFIED → CLOSED (+ CANCELLED pré-aprovação), análise de
-// impacto por dimensão (ChangeImpact) e aprovações auditadas (ChangeApproval,
-// append-only). Mudança aprovada pode gerar baseline revision (BR-005).
+// MudanÃ§as (E11, Â§31): ChangeRequest com workflow obrigatÃ³rio
+// DRAFT â†’ SUBMITTED â†’ IMPACT_ANALYSIS â†’ WAITING_APPROVAL â†’ APPROVED/REJECTED
+// â†’ IMPLEMENTED â†’ VERIFIED â†’ CLOSED (+ CANCELLED prÃ©-aprovaÃ§Ã£o), anÃ¡lise de
+// impacto por dimensÃ£o (ChangeImpact) e aprovaÃ§Ãµes auditadas (ChangeApproval,
+// append-only). MudanÃ§a aprovada pode gerar baseline revision (BR-005).
 // ---------------------------------------------------------------------------
 
 enum ChangeStatus {
@@ -1456,8 +1475,8 @@ model ChangeRequest {
   requestedById  String       @map("requested_by_id") @db.Uuid
   dueDate        DateTime?    @map("due_date") @db.Date
 
-  // Impactos consolidados do change control (§31): delta de custo (BRL,
-  // positivo = acréscimo) e delta de prazo em dias (positivo = atraso).
+  // Impactos consolidados do change control (Â§31): delta de custo (BRL,
+  // positivo = acrÃ©scimo) e delta de prazo em dias (positivo = atraso).
   costDelta    Decimal? @map("cost_delta") @db.Decimal(18, 2)
   scheduleDays Int?     @map("schedule_days")
 
@@ -1496,8 +1515,8 @@ model ChangeRequest {
   @@map("change_requests")
 }
 
-// Avaliação de impacto por dimensão (§31 ChangeImpact): uma linha por
-// dimensão avaliada (upsert); severidade + notas + avaliador.
+// AvaliaÃ§Ã£o de impacto por dimensÃ£o (Â§31 ChangeImpact): uma linha por
+// dimensÃ£o avaliada (upsert); severidade + notas + avaliador.
 model ChangeImpact {
   id             String          @id @default(uuid()) @db.Uuid
   organizationId String          @map("organization_id") @db.Uuid
@@ -1521,7 +1540,7 @@ model ChangeImpact {
   @@map("change_impacts")
 }
 
-// Histórico imutável (append-only) das decisões de aprovação (BR-004/005).
+// HistÃ³rico imutÃ¡vel (append-only) das decisÃµes de aprovaÃ§Ã£o (BR-004/005).
 model ChangeApproval {
   id             String              @id @default(uuid()) @db.Uuid
   organizationId String              @map("organization_id") @db.Uuid
@@ -1543,14 +1562,14 @@ model ChangeApproval {
 
 
 // ---------------------------------------------------------------------------
-// Campo / mobile (E12, §38/§26): diário de obra, tarefas de campo, restrições
-// e fotos de evidência. Experiência mobile-first — poucos campos, upload
-// assíncrono, poucos estados por entidade.
+// Campo / mobile (E12, Â§38/Â§26): diÃ¡rio de obra, tarefas de campo, restriÃ§Ãµes
+// e fotos de evidÃªncia. ExperiÃªncia mobile-first â€” poucos campos, upload
+// assÃ­ncrono, poucos estados por entidade.
 // ---------------------------------------------------------------------------
 
-// Diário de obra (§26 — data, equipe, horas, atividades, avanço, equipamentos,
-// materiais, ocorrências, condições, segurança, visitantes, decisões, água,
-// energia, resíduos). Workflow: DRAFT → SUBMITTED → APPROVED / REJECTED.
+// DiÃ¡rio de obra (Â§26 â€” data, equipe, horas, atividades, avanÃ§o, equipamentos,
+// materiais, ocorrÃªncias, condiÃ§Ãµes, seguranÃ§a, visitantes, decisÃµes, Ã¡gua,
+// energia, resÃ­duos). Workflow: DRAFT â†’ SUBMITTED â†’ APPROVED / REJECTED.
 enum FieldDiaryStatus {
   DRAFT
   SUBMITTED
@@ -1586,7 +1605,7 @@ model FieldDiary {
   energy         Decimal? @db.Decimal(12, 3)
   wasteNotes     String?  @map("waste_notes") @db.Text
 
-  // Idempotência offline (§38): UUID gerado no cliente; reenvio do mesmo
+  // IdempotÃªncia offline (Â§38): UUID gerado no cliente; reenvio do mesmo
   // registro retorna o existente em vez de duplicar.
   clientUuid     String?  @map("client_uuid") @db.Uuid
 
@@ -1617,8 +1636,8 @@ model FieldDiary {
   @@map("field_diaries")
 }
 
-// Tarefa de campo (E12-US03): atribuída a um membro, com prazo e vínculo
-// opcional ao diário/atividade/WBS. mobile-first: poucos campos.
+// Tarefa de campo (E12-US03): atribuÃ­da a um membro, com prazo e vÃ­nculo
+// opcional ao diÃ¡rio/atividade/WBS. mobile-first: poucos campos.
 enum FieldTaskStatus {
   OPEN
   IN_PROGRESS
@@ -1679,8 +1698,8 @@ model FieldTask {
   @@map("field_tasks")
 }
 
-// Restrição (E12-US05, §39): Constraint Identification → Constraint Removal.
-// Bloqueio identificado em campo com responsável, prazo e vínculo ao que
+// RestriÃ§Ã£o (E12-US05, Â§39): Constraint Identification â†’ Constraint Removal.
+// Bloqueio identificado em campo com responsÃ¡vel, prazo e vÃ­nculo ao que
 // restringe (atividade/WBS).
 enum ConstraintStatus {
   OPEN
@@ -1744,9 +1763,9 @@ model Constraint {
   @@map("constraints")
 }
 
-// Foto de evidência (E12-US02, §33/§61): binário no Postgres (bytea), hash
-// SHA-256 e MIME validado — mesmo storage de documentos. Vinculada ao diário
-// e/ou a atividade/WBS/inspeção.
+// Foto de evidÃªncia (E12-US02, Â§33/Â§61): binÃ¡rio no Postgres (bytea), hash
+// SHA-256 e MIME validado â€” mesmo storage de documentos. Vinculada ao diÃ¡rio
+// e/ou a atividade/WBS/inspeÃ§Ã£o.
 model PhotoEvidence {
   id             String   @id @default(uuid()) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
@@ -1789,11 +1808,11 @@ model PhotoEvidence {
   @@map("photo_evidence")
 }
 
-// Controle físico (E12-US04, §12/§26): três níveis — Projeto, Marco/Pacote
-// (WBS) e Atividade. Toda medição declara MÉTODO + PERCENTUAL + CRITÉRIO
-// (critério de sucesso 6) e QUANTIDADE física real quando houver.
-// BR-006: o percentual financeiro nunca alimenta este registro — o avanço
-// físico só muda por medição explícita aqui.
+// Controle fÃ­sico (E12-US04, Â§12/Â§26): trÃªs nÃ­veis â€” Projeto, Marco/Pacote
+// (WBS) e Atividade. Toda mediÃ§Ã£o declara MÃ‰TODO + PERCENTUAL + CRITÃ‰RIO
+// (critÃ©rio de sucesso 6) e QUANTIDADE fÃ­sica real quando houver.
+// BR-006: o percentual financeiro nunca alimenta este registro â€” o avanÃ§o
+// fÃ­sico sÃ³ muda por mediÃ§Ã£o explÃ­cita aqui.
 enum ProgressLevel {
   PROJECT
   WBS
@@ -1843,11 +1862,11 @@ model ProgressMeasurement {
 }
 
 // ---------------------------------------------------------------------------
-// Qualidade (E13, §33): checklist (modelo + execução) e inspeção. Fluxo da
-// spec: Planned → Executed → Passed / Failed → Corrective Action →
-// Verification → Closed. Regra: item só conclui quando atinge o critério e
-// possui evidência adequada (foto e/ou execução de checklist concluída).
-// NCR e ação corretiva entram na Fatia 2; punch list em §34 (Fatia 2).
+// Qualidade (E13, Â§33): checklist (modelo + execuÃ§Ã£o) e inspeÃ§Ã£o. Fluxo da
+// spec: Planned â†’ Executed â†’ Passed / Failed â†’ Corrective Action â†’
+// Verification â†’ Closed. Regra: item sÃ³ conclui quando atinge o critÃ©rio e
+// possui evidÃªncia adequada (foto e/ou execuÃ§Ã£o de checklist concluÃ­da).
+// NCR e aÃ§Ã£o corretiva entram na Fatia 2; punch list em Â§34 (Fatia 2).
 // ---------------------------------------------------------------------------
 
 enum ChecklistExecutionStatus {
@@ -1866,7 +1885,7 @@ model ChecklistTemplate {
   name           String   @db.VarChar(200)
   description    String?  @db.Text
 
-  // Itens do modelo: [{ key, text, required }] — a execução copia o snapshot.
+  // Itens do modelo: [{ key, text, required }] â€” a execuÃ§Ã£o copia o snapshot.
   items          Json     @default("[]")
 
   createdAt DateTime  @default(now()) @map("created_at")
@@ -1896,7 +1915,7 @@ model ChecklistExecution {
   inspectionId   String?                 @map("inspection_id") @db.Uuid
   status         ChecklistExecutionStatus @default(DRAFT)
 
-  // Snapshot dos itens no momento da execução, já com o resultado:
+  // Snapshot dos itens no momento da execuÃ§Ã£o, jÃ¡ com o resultado:
   // [{ key, text, required, result: PASS|FAIL|NA|null, note }]
   items          Json                    @default("[]")
   inspectorId    String?                 @map("inspector_id") @db.Uuid
@@ -1950,8 +1969,8 @@ model Inspection {
   wbsNodeId      String?         @map("wbs_node_id") @db.Uuid
   activityId     String?         @map("activity_id") @db.Uuid
 
-  // Critério de aceite da inspeção — obrigatório (§33: "item somente
-  // concluído quando atingir o critério e possuir evidência adequada").
+  // CritÃ©rio de aceite da inspeÃ§Ã£o â€” obrigatÃ³rio (Â§33: "item somente
+  // concluÃ­do quando atingir o critÃ©rio e possuir evidÃªncia adequada").
   criterion      String          @db.Text
   resultNotes    String?         @map("result_notes") @db.Text
 
@@ -1984,10 +2003,10 @@ model Inspection {
 }
 
 // ---------------------------------------------------------------------------
-// E13 Fatia 2 (§33): Não conformidade (NCR) e ação corretiva. O NCR nasce
-// automaticamente quando a inspeção é REPROVADA (FAIL) e gateia o encerramento
-// da inspeção: em FAILED, o CLOSE exige o(s) NCR(s) encerrado(s). Fluxo da
-// spec: Failed → Corrective Action → Verification → Closed.
+// E13 Fatia 2 (Â§33): NÃ£o conformidade (NCR) e aÃ§Ã£o corretiva. O NCR nasce
+// automaticamente quando a inspeÃ§Ã£o Ã© REPROVADA (FAIL) e gateia o encerramento
+// da inspeÃ§Ã£o: em FAILED, o CLOSE exige o(s) NCR(s) encerrado(s). Fluxo da
+// spec: Failed â†’ Corrective Action â†’ Verification â†’ Closed.
 // ---------------------------------------------------------------------------
 
 enum NonConformityStatus {
@@ -2009,7 +2028,7 @@ model NonConformity {
   description    String              @db.Text
   status         NonConformityStatus @default(OPEN)
 
-  // Nascido de inspeção reprovada (auto) ou registrado manualmente.
+  // Nascido de inspeÃ§Ã£o reprovada (auto) ou registrado manualmente.
   inspectionId String? @map("inspection_id") @db.Uuid
 
   correctionNotes String? @map("correction_notes") @db.Text
@@ -2094,11 +2113,11 @@ model CorrectiveAction {
 }
 
 // ---------------------------------------------------------------------------
-// E13 Fatia 2b (§34): punch list — itens de correção menores apurados na
-// vistoria/entrega. Fluxo da spec: OPEN → ASSIGNED → IN_PROGRESS →
-// READY_FOR_VERIFICATION → VERIFIED → CLOSED; REJECTED volta a IN_PROGRESS.
+// E13 Fatia 2b (Â§34): punch list â€” itens de correÃ§Ã£o menores apurados na
+// vistoria/entrega. Fluxo da spec: OPEN â†’ ASSIGNED â†’ IN_PROGRESS â†’
+// READY_FOR_VERIFICATION â†’ VERIFIED â†’ CLOSED; REJECTED volta a IN_PROGRESS.
 // Campos da spec: location, description, priority, owner, due_date, status,
-// photo_evidence (o "como está"), correction_evidence (o "como ficou"),
+// photo_evidence (o "como estÃ¡"), correction_evidence (o "como ficou"),
 // verified_by e verified_at.
 // ---------------------------------------------------------------------------
 
@@ -2130,7 +2149,7 @@ model PunchItem {
   wbsNodeId  String? @map("wbs_node_id") @db.Uuid
   activityId String? @map("activity_id") @db.Uuid
 
-  // §34: foto do problema (photo_evidence) e da correção (correction_evidence).
+  // Â§34: foto do problema (photo_evidence) e da correÃ§Ã£o (correction_evidence).
   photoEvidenceId       String? @map("photo_evidence_id") @db.Uuid
   correctionEvidenceId  String? @map("correction_evidence_id") @db.Uuid
 
@@ -2164,8 +2183,8 @@ model PunchItem {
 }
 
 // ---------------------------------------------------------------------------
-// Procurement (E14, §49, E14-US01..US03): Fornecedores, Requisições de Compra,
-// Itens, Cotações e Mapa Comparativo.
+// Procurement (E14, Â§49, E14-US01..US03): Fornecedores, RequisiÃ§Ãµes de Compra,
+// Itens, CotaÃ§Ãµes e Mapa Comparativo.
 // ---------------------------------------------------------------------------
 
 enum SupplierStatus {
@@ -2447,6 +2466,7 @@ model PurchaseOrder {
   costItem       CostItem?           @relation(fields: [costItemId], references: [id], onDelete: SetNull)
   items          PurchaseOrderItem[]
   goodsReceipts  GoodsReceipt[]
+  costCommitments CostCommitment[]
 
   wbsNodeId      String?             @map("wbs_node_id") @db.Uuid
   activityId     String?             @map("activity_id") @db.Uuid
@@ -2508,6 +2528,7 @@ model GoodsReceipt {
   project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   purchaseOrder  PurchaseOrder     @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   items          GoodsReceiptItem[]
+  costActuals    CostActual[]
 
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])

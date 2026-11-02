@@ -10,6 +10,7 @@ import {
   nextProcurementCode,
   toDate,
 } from "@/modules/procurement/common";
+import { createActual } from "@/modules/cost/actuals";
 
 export async function createGoodsReceipt(
   projectId: string,
@@ -126,6 +127,34 @@ export async function confirmGoodsReceipt(
 
   // Atualiza status do pedido (PARTIALLY/FULLY_RECEIVED)
   await transitionPurchaseOrderStatusAfterReceipt(projectId, receipt.purchaseOrderId, actor);
+
+  // Integracao Procurement -> Cost: ao confirmar o recebimento, registra o
+  // realizado (idempotente por goodsReceiptId).
+  const existingActual = await prisma.costActual.findFirst({
+    where: { goodsReceiptId: receiptId, deletedAt: null },
+  });
+  if (!existingActual) {
+    const order = receipt.purchaseOrder;
+    const totalReceived = receipt.items.reduce(
+      (acc, gri) => acc + Number(gri.quantityReceived) * (Number(order.items.find((i) => i.id === gri.purchaseOrderItemId)?.unitPrice ?? 0)),
+      0
+    );
+    if (totalReceived > 0 || receipt.items.length > 0) {
+      await createActual({
+        organizationId: actor.organizationId,
+        actorId: actor.actorId,
+        actorLabel: actor.actorLabel,
+        projectId,
+        description: `Recebimento ${receipt.code} - ${order.code}`,
+        amount: Math.round(totalReceived * 100) / 100 || 0,
+        incurredAt: (receipt.receiptDate ?? new Date()).toISOString().slice(0, 10),
+        costItemId: order.costItemId ?? null,
+        wbsNodeId: order.wbsNodeId ?? null,
+        activityId: order.activityId ?? null,
+        goodsReceiptId: receiptId,
+      }).catch(() => null);
+    }
+  }
 
   await audit(actor, projectId, "GoodsReceipt", "CONFIRM", { objectId: receiptId, newValue: { status: "CONFIRMED" } });
   await emitDomainEvent(actor, projectId, "GoodsReceipt.Confirmed", "GoodsReceipt", receiptId, {});
