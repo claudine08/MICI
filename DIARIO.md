@@ -1544,3 +1544,14 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
 - Smoke autenticado: login 302 -> /api/v1/health 200 -> /api/v1/projects/[id]/dashboard 200
   (JSON com KPIs, curva S, Gantt, burndown, heat map, alertas); sem sessao -> 401.
 - Working tree limpa; main pushada.
+
+---
+
+## 02/11/2026 - Deploy em producao (links para drill-down no painel)
+
+- Deploy Vercel: mici-m83oy22mh-homeland1 (Production, Ready), alias
+  mici-theta.vercel.app. Sem migration nova.
+- Smoke autenticado: login 302 -> /api/v1/health 200 -> /painel 200 (contem link
+  para /projetos/[id]/dashboard) -> /api/v1/projects/[id]/dashboard 200; sem
+  sessao em /api/v1/projects -> 401.
+- Working tree limpa; main pushada.

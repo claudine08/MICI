@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 206.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 207.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -143,7 +143,8 @@
 | `diario-02-11-2026-e19-project-dashboard-fatia-2` | 02/11/2026 - E19 Project Dashboard, Fatia 2 | DIARIO.md:1506-1518 | - Drill-down por projeto em /projetos/[id]/dashboard: KPIs (BAC/PV/EV/AC/SPI/CPI/percentuais/datas plan-real), curva S (PV/EV/AC mensal), burndown de ativida... |
 | `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-2` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 2) | DIARIO.md:1519-1528 | - Deploy Vercel: mici-i4jpef7as-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
 | `diario-02-11-2026-e19-project-dashboard-fatia-3` | 02/11/2026 - E19 Project Dashboard, Fatia 3 | DIARIO.md:1529-1539 | - Graficos visuais com Recharts (v3.10.1): - CurveSChart (LineChart PV/EV/AC), BurndownChart (atividades restantes), RiskHeatmap (grid colorido). - Substitui... |
-| `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-3` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 3) | DIARIO.md:1540-1547 | - Deploy Vercel: mici-f2euprnxn-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
+| `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-3` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 3) | DIARIO.md:1540-1549 | - Deploy Vercel: mici-f2euprnxn-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
+| `diario-02-11-2026-deploy-em-producao-links-para-drill-d` | 02/11/2026 - Deploy em producao (links para drill-down no painel) | DIARIO.md:1550-1558 | - Deploy Vercel: mici-m83oy22mh-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
 | `roadmap-gate-de-verificacao-entre-fases` | Gate de verificação entre fases | ROADMAP.md:11-27 | Antes de iniciar uma fase, a fase anterior deve passar na suíte completa: `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `n... |
 | `roadmap-correcao-de-ambiente-e-sessao-07-10-2026` | Correção de ambiente e sessão (07/10/2026) | ROADMAP.md:28-60 | Bug reportado em `/selecionar-organizacao`: aviso **"Sessão expirada ou ausente."** junto de "Olá, Paulo" e "Você ainda não participa de nenhuma organização"... |
 | `roadmap-producao-sync-de-dados-auth-url-14-10-2026` | Produção: sync de dados + AUTH_URL (14/10/2026) | ROADMAP.md:61-89 | Login no Vercel falhava (`CredentialsSignin`) e os 302 do Auth.js apontavam para `http://localhost:3000`. Duas causas independentes: - [x] **Senhas dos perfi... |

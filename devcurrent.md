@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 02/11/2026 (E19 Dashboard Fatia 1+2+3 em producao: mici-f2euprnxn-homeland1, smoke verde - health/dashboard 200, sem sessao 401. Proxima frente: E15 Commissioning (a cargo do usuario).)
+**Ultima atualizacao:** 02/11/2026 (Links para drill-down no painel em producao: mici-m83oy22mh-homeland1, smoke verde. Proxima frente: E15 Commissioning (a cargo do usuario).)
 
 ---
 

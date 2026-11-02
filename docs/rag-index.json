@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T02:39:51.676Z",
+  "generatedAt": "2026-11-02T02:54:34.905Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 206,
+  "chunkCount": 207,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -1661,8 +1661,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1540,
-      "endLine": 1547,
+      "endLine": 1549,
       "summary": "- Deploy Vercel: mici-f2euprnxn-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-deploy-em-producao-links-para-drill-d",
+      "title": "02/11/2026 - Deploy em producao (links para drill-down no painel)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1550,
+      "endLine": 1558,
+      "summary": "- Deploy Vercel: mici-m83oy22mh-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea...",
       "tags": [
         "diario"
       ]
