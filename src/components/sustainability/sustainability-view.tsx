@@ -51,10 +51,16 @@ export function SustainabilityView(props: Props) {
 
   const [planOpen, setPlanOpen] = useState(false);
   const [metricOpen, setMetricOpen] = useState(false);
+  const [baselineOpen, setBaselineOpen] = useState(false);
+  const [targetOpen, setTargetOpen] = useState(false);
+  const [measurementOpen, setMeasurementOpen] = useState(false);
   const [wasteOpen, setWasteOpen] = useState(false);
   const [planForm, setPlanForm] = useState({ title: "", description: "", ownerId: "", startDate: "", plannedEndDate: "", wbsNodeId: "", activityId: "" });
   const [metricForm, setMetricForm] = useState({ planId: "", name: "", unit: "", category: "", description: "" });
   const [wasteForm, setWasteForm] = useState({ wasteType: "", quantity: "", unit: "", destination: "", recordedAt: "", wbsNodeId: "", activityId: "", notes: "" });
+  const [baselineForm, setBaselineForm] = useState({ metricId: "", value: "", recordedAt: "", source: "", notes: "" });
+  const [targetForm, setTargetForm] = useState({ metricId: "", targetValue: "", dueDate: "", notes: "" });
+  const [measurementForm, setMeasurementForm] = useState({ metricId: "", value: "", measuredAt: "", wbsNodeId: "", activityId: "", notes: "", evidenceNotes: "" });
 
   const refresh = () => startTransition(() => router.refresh());
 
@@ -69,6 +75,18 @@ export function SustainabilityView(props: Props) {
   const createWaste = async () => {
     await apiRequest(`/api/v1/projects/${projectId}/sustainability/wastes`, { method: "POST", body: JSON.stringify({ wasteType: wasteForm.wasteType, quantity: Number(wasteForm.quantity), unit: wasteForm.unit, destination: wasteForm.destination || undefined, recordedAt: wasteForm.recordedAt, wbsNodeId: wasteForm.wbsNodeId || null, activityId: wasteForm.activityId || null, notes: wasteForm.notes || undefined }) });
     setWasteOpen(false); setWasteForm({ wasteType: "", quantity: "", unit: "", destination: "", recordedAt: "", wbsNodeId: "", activityId: "", notes: "" }); refresh();
+  };
+  const createBaseline = async () => {
+    await apiRequest(`/api/v1/projects/${projectId}/sustainability/baselines`, { method: "POST", body: JSON.stringify({ metricId: baselineForm.metricId, value: Number(baselineForm.value), recordedAt: baselineForm.recordedAt, source: baselineForm.source || undefined, notes: baselineForm.notes || undefined }) });
+    setBaselineOpen(false); setBaselineForm({ metricId: "", value: "", recordedAt: "", source: "", notes: "" }); refresh();
+  };
+  const createTarget = async () => {
+    await apiRequest(`/api/v1/projects/${projectId}/sustainability/targets`, { method: "POST", body: JSON.stringify({ metricId: targetForm.metricId, targetValue: Number(targetForm.targetValue), dueDate: targetForm.dueDate || undefined, notes: targetForm.notes || undefined }) });
+    setTargetOpen(false); setTargetForm({ metricId: "", targetValue: "", dueDate: "", notes: "" }); refresh();
+  };
+  const createMeasurement = async () => {
+    await apiRequest(`/api/v1/projects/${projectId}/sustainability/measurements`, { method: "POST", body: JSON.stringify({ metricId: measurementForm.metricId, value: Number(measurementForm.value), measuredAt: measurementForm.measuredAt, wbsNodeId: measurementForm.wbsNodeId || null, activityId: measurementForm.activityId || null, notes: measurementForm.notes || undefined, evidenceNotes: measurementForm.evidenceNotes || undefined }) });
+    setMeasurementOpen(false); setMeasurementForm({ metricId: "", value: "", measuredAt: "", wbsNodeId: "", activityId: "", notes: "", evidenceNotes: "" }); refresh();
   };
 
   const transitionPlan = async (planId: string, action: string) => {
@@ -152,7 +170,10 @@ export function SustainabilityView(props: Props) {
 
       {tab === "baselines" && (
         <Card className="p-4">
-          <h2 className="mb-3 text-sm font-semibold">Baselines</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold">Baselines</h2>
+            {canCreate && <Button size="sm" onClick={() => setBaselineOpen(true)}><Plus className="mr-1 h-4 w-4" /> Novo baseline</Button>}
+          </div>
           <table className="w-full text-sm">
             <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2 pr-3">Código</th><th className="py-2 pr-3">Métrica</th><th className="py-2 pr-3">Valor</th><th className="py-2 pr-3">Data</th><th className="py-2 pr-3">Fonte</th><th className="py-2 pr-3">Ações</th></tr></thead>
             <tbody>
@@ -174,7 +195,10 @@ export function SustainabilityView(props: Props) {
 
       {tab === "targets" && (
         <Card className="p-4">
-          <h2 className="mb-3 text-sm font-semibold">Metas</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold">Metas</h2>
+            {canCreate && <Button size="sm" onClick={() => setTargetOpen(true)}><Plus className="mr-1 h-4 w-4" /> Nova meta</Button>}
+          </div>
           <table className="w-full text-sm">
             <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2 pr-3">Código</th><th className="py-2 pr-3">Métrica</th><th className="py-2 pr-3">Valor alvo</th><th className="py-2 pr-3">Prazo</th><th className="py-2 pr-3">Ações</th></tr></thead>
             <tbody>
@@ -195,7 +219,10 @@ export function SustainabilityView(props: Props) {
 
       {tab === "measurements" && (
         <Card className="p-4">
-          <h2 className="mb-3 text-sm font-semibold">Medições</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold">Medições</h2>
+            {canCreate && <Button size="sm" onClick={() => setMeasurementOpen(true)}><Plus className="mr-1 h-4 w-4" /> Nova medição</Button>}
+          </div>
           <table className="w-full text-sm">
             <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2 pr-3">Código</th><th className="py-2 pr-3">Métrica</th><th className="py-2 pr-3">Valor</th><th className="py-2 pr-3">Data</th><th className="py-2 pr-3">Ações</th></tr></thead>
             <tbody>
@@ -311,6 +338,69 @@ export function SustainabilityView(props: Props) {
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setWasteOpen(false)}>Cancelar</Button>
             <Button onClick={createWaste} disabled={isPending || !wasteForm.wasteType || !wasteForm.quantity || !wasteForm.unit || !wasteForm.recordedAt}>Criar</Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog open={baselineOpen} title="Novo baseline" onClose={() => setBaselineOpen(false)}>
+        <div className="space-y-3 p-4">
+          <div><Label>Métrica</Label>
+            <select className="w-full rounded border p-2" value={baselineForm.metricId} onChange={e => setBaselineForm({ ...baselineForm, metricId: e.target.value })}>
+              <option value="">—</option>{metrics.map(m => <option key={m.id} value={m.id}>{m.code} — {m.name}</option>)}
+            </select>
+          </div>
+          <div><Label>Valor</Label><Input type="number" value={baselineForm.value} onChange={e => setBaselineForm({ ...baselineForm, value: e.target.value })} /></div>
+          <div><Label>Data</Label><Input type="date" value={baselineForm.recordedAt} onChange={e => setBaselineForm({ ...baselineForm, recordedAt: e.target.value })} /></div>
+          <div><Label>Fonte</Label><Input value={baselineForm.source} onChange={e => setBaselineForm({ ...baselineForm, source: e.target.value })} /></div>
+          <div><Label>Notas</Label><Input value={baselineForm.notes} onChange={e => setBaselineForm({ ...baselineForm, notes: e.target.value })} /></div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setBaselineOpen(false)}>Cancelar</Button>
+            <Button onClick={createBaseline} disabled={isPending || !baselineForm.metricId || !baselineForm.value || !baselineForm.recordedAt}>Criar</Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog open={targetOpen} title="Nova meta" onClose={() => setTargetOpen(false)}>
+        <div className="space-y-3 p-4">
+          <div><Label>Métrica</Label>
+            <select className="w-full rounded border p-2" value={targetForm.metricId} onChange={e => setTargetForm({ ...targetForm, metricId: e.target.value })}>
+              <option value="">—</option>{metrics.map(m => <option key={m.id} value={m.id}>{m.code} — {m.name}</option>)}
+            </select>
+          </div>
+          <div><Label>Valor alvo</Label><Input type="number" value={targetForm.targetValue} onChange={e => setTargetForm({ ...targetForm, targetValue: e.target.value })} /></div>
+          <div><Label>Prazo</Label><Input type="date" value={targetForm.dueDate} onChange={e => setTargetForm({ ...targetForm, dueDate: e.target.value })} /></div>
+          <div><Label>Notas</Label><Input value={targetForm.notes} onChange={e => setTargetForm({ ...targetForm, notes: e.target.value })} /></div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setTargetOpen(false)}>Cancelar</Button>
+            <Button onClick={createTarget} disabled={isPending || !targetForm.metricId || !targetForm.targetValue}>Criar</Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog open={measurementOpen} title="Nova medição" onClose={() => setMeasurementOpen(false)}>
+        <div className="space-y-3 p-4">
+          <div><Label>Métrica</Label>
+            <select className="w-full rounded border p-2" value={measurementForm.metricId} onChange={e => setMeasurementForm({ ...measurementForm, metricId: e.target.value })}>
+              <option value="">—</option>{metrics.map(m => <option key={m.id} value={m.id}>{m.code} — {m.name}</option>)}
+            </select>
+          </div>
+          <div><Label>Valor</Label><Input type="number" value={measurementForm.value} onChange={e => setMeasurementForm({ ...measurementForm, value: e.target.value })} /></div>
+          <div><Label>Data</Label><Input type="date" value={measurementForm.measuredAt} onChange={e => setMeasurementForm({ ...measurementForm, measuredAt: e.target.value })} /></div>
+          <div><Label>WBS</Label>
+            <select className="w-full rounded border p-2" value={measurementForm.wbsNodeId} onChange={e => setMeasurementForm({ ...measurementForm, wbsNodeId: e.target.value })}>
+              <option value="">—</option>{wbsNodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+            </select>
+          </div>
+          <div><Label>Atividade</Label>
+            <select className="w-full rounded border p-2" value={measurementForm.activityId} onChange={e => setMeasurementForm({ ...measurementForm, activityId: e.target.value })}>
+              <option value="">—</option>{activities.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
+            </select>
+          </div>
+          <div><Label>Notas</Label><Input value={measurementForm.notes} onChange={e => setMeasurementForm({ ...measurementForm, notes: e.target.value })} /></div>
+          <div><Label>Evidência</Label><Input value={measurementForm.evidenceNotes} onChange={e => setMeasurementForm({ ...measurementForm, evidenceNotes: e.target.value })} /></div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setMeasurementOpen(false)}>Cancelar</Button>
+            <Button onClick={createMeasurement} disabled={isPending || !measurementForm.metricId || !measurementForm.value || !measurementForm.measuredAt}>Criar</Button>
           </div>
         </div>
       </Dialog>

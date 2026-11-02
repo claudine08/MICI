@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+
 import { apiHandler } from "@/core/api";
 import { AppError } from "@/core/errors";
 import { requireTenantContext, assertPermission } from "@/core/tenant";
