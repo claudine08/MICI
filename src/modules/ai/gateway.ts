@@ -144,9 +144,14 @@ export async function runAi(input: AiRunInput): Promise<AiRunResult> {
       requestId: updated.id,
     };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    // Fallback para mock quando a IA real estiver indisponível (sem créditos, quota, auth).
-    // Evita quebrar a UI e mantém a funcionalidade demonstrável.
+    const raw = err instanceof Error ? err.message : String(err);
+    // Mensagem amigável conforme o provider
+    let msg = raw;
+    if (raw.includes("FreeUsageLimitError")) {
+      msg = "Limite de uso gratuito do OpenCode atingido. Assine o OpenCode Go (https://opencode.ai/go) ou use uma chave OpenAI.";
+    } else if (raw.includes("insufficient_quota") || raw.includes("credit_balance_exhausted")) {
+      msg = "Sem créditos na conta OpenAI. Adicione créditos em platform.openai.com/settings/organization/billing.";
+    }
     const mock = mockResponse(model, input.input);
     const fallbackOutput = `${mock.output}\n\n[AVISO] IA real indisponível (${msg}). Resposta mock exibida.`;
     const updated = await prisma.aiRequest.update({
