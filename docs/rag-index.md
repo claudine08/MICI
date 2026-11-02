@@ -2,11 +2,11 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 204.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 205.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
-| `devcurrent-1-estado-atual-resumo-de-1-linha` | 1. Estado atual (resumo de 1 linha) | devcurrent.md:18-21 | \| E19 Project Dashboard \| Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2 im... |
+| `devcurrent-1-estado-atual-resumo-de-1-linha` | 1. Estado atual (resumo de 1 linha) | devcurrent.md:18-21 | \| E19 Project Dashboard \| Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2+3... |
 | `devcurrent-2-ambiente-e-comandos-na-o-precisa-rediscover` | 2. Ambiente e comandos (nÃ£o precisa rediscover) | devcurrent.md:22-40 | \| Item \| Valor \| \|---\|---\| \| Repo \| `https://github.com/claudine08/MICI.git`, branch `main` \| \| ProduÃ§Ã£o \| Vercel `mici-theta.vercel.app` (projeto `mici`,... |
 | `devcurrent-3-convena-a-es-do-repo-seguir-a-risca` | 3. ConvenÃ§Ãµes do repo (seguir Ã  risca) | devcurrent.md:41-50 | - **Commits**: sÃ³ quando o usuÃ¡rio pedir. PadrÃ£o: `feat: <Ã¡rea> - <resumo> - E<NN> US<NN>` (ASCII, sem acento) e depois `docs: registra â€¦`. `main` dire... |
 | `devcurrent-4-backlog-e12-pwa-fila-offline-completa-a-a-fech` | 4. Backlog E12: PWA/fila offline completa â€” âœ… FECHADO (29/10) | devcurrent.md:51-58 | Contexto e implementaÃ§Ã£o detalhada em `docs/rag-index.md` (chunks `diario-*` e `devcurrent-*`) e no DIARIO 29/10. Resumo: PWA (manifest + SW) + fila offlin... |
@@ -141,7 +141,8 @@
 | `diario-02-11-2026-deploy-em-producao-e08-cost-tracking-` | 02/11/2026 - Deploy em producao (E08+ cost tracking + cash flow) | DIARIO.md:1484-1495 | - Migration 20261101000000_phase17_cost_tracking aplicada no Neon (19 migrations no total). - Deploy Vercel: mici-c6kzjgsfv-homeland1 (Production, Ready), al... |
 | `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 1) | DIARIO.md:1496-1505 | - Deploy Vercel: mici-ddq4bapgz-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova (E19 fatia 1 nao altera schema). - Smoke auten... |
 | `diario-02-11-2026-e19-project-dashboard-fatia-2` | 02/11/2026 - E19 Project Dashboard, Fatia 2 | DIARIO.md:1506-1518 | - Drill-down por projeto em /projetos/[id]/dashboard: KPIs (BAC/PV/EV/AC/SPI/CPI/percentuais/datas plan-real), curva S (PV/EV/AC mensal), burndown de ativida... |
-| `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-2` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 2) | DIARIO.md:1519-1526 | - Deploy Vercel: mici-i4jpef7as-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
+| `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-2` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 2) | DIARIO.md:1519-1528 | - Deploy Vercel: mici-i4jpef7as-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
+| `diario-02-11-2026-e19-project-dashboard-fatia-3` | 02/11/2026 - E19 Project Dashboard, Fatia 3 | DIARIO.md:1529-1537 | - Graficos visuais com Recharts (v3.10.1): - CurveSChart (LineChart PV/EV/AC), BurndownChart (atividades restantes), RiskHeatmap (grid colorido). - Substitui... |
 | `roadmap-gate-de-verificacao-entre-fases` | Gate de verificação entre fases | ROADMAP.md:11-27 | Antes de iniciar uma fase, a fase anterior deve passar na suíte completa: `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `n... |
 | `roadmap-correcao-de-ambiente-e-sessao-07-10-2026` | Correção de ambiente e sessão (07/10/2026) | ROADMAP.md:28-60 | Bug reportado em `/selecionar-organizacao`: aviso **"Sessão expirada ou ausente."** junto de "Olá, Paulo" e "Você ainda não participa de nenhuma organização"... |
 | `roadmap-producao-sync-de-dados-auth-url-14-10-2026` | Produção: sync de dados + AUTH_URL (14/10/2026) | ROADMAP.md:61-89 | Login no Vercel falhava (`CredentialsSignin`) e os 302 do Auth.js apontavam para `http://localhost:3000`. Duas causas independentes: - [x] **Senhas dos perfi... |

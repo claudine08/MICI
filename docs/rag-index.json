@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T02:15:00.657Z",
+  "generatedAt": "2026-11-02T02:32:54.450Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 204,
+  "chunkCount": 205,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -18,7 +18,7 @@
       "file": "devcurrent.md",
       "startLine": 18,
       "endLine": 21,
-      "summary": "| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2 im...",
+      "summary": "| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2+3...",
       "tags": [
         "devcurrent"
       ]
@@ -1637,8 +1637,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1519,
-      "endLine": 1526,
+      "endLine": 1528,
       "summary": "- Deploy Vercel: mici-i4jpef7as-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-e19-project-dashboard-fatia-3",
+      "title": "02/11/2026 - E19 Project Dashboard, Fatia 3",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1529,
+      "endLine": 1537,
+      "summary": "- Graficos visuais com Recharts (v3.10.1): - CurveSChart (LineChart PV/EV/AC), BurndownChart (atividades restantes), RiskHeatmap (grid colorido). - Substitui...",
       "tags": [
         "diario"
       ]

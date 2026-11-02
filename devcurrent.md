@@ -11,13 +11,13 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 02/11/2026 (E19 Dashboard Fatia 1+2 em producao: mici-i4jpef7as-homeland1, smoke verde - health/dashboard 200, sem sessao 401. Proxima frente: E19 Fatia 3 (graficos visuais) ou E15 Commissioning (a cargo do usuario).)
+**Ultima atualizacao:** 02/11/2026 (E19 Dashboard Fatia 1+2+3 implementadas: portfólio + drill-down com gráficos visuais (Recharts: curva S, burndown, heat map). Build/lint verdes. Proxima frente: E15 Commissioning (a cargo do usuario).)
 
 ---
 
 ## 1. Estado atual (resumo de 1 linha)
 
-| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2 implementadas) |
+| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2+3 implementadas (graficos visuais com Recharts)) |
 
 ## 2. Ambiente e comandos (nÃ£o precisa rediscover)
 
@@ -89,7 +89,7 @@ Schedule (E07):
 
 | Ã‰pico | Escopo curto |
 |---|---|
-| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2 implementadas) |
+| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2+3 implementadas (graficos visuais com Recharts)) |
 | E15 Commissioning | Plano, teste, reteste, aceite |
 | E16 Sustainability | PSP, baseline, metas, mediÃ§Ãµes, resÃ­duo, relatÃ³rio |
 | E17 Dashboard | PortfÃ³lio, executivo, projeto, campo (genÃ©rico) |

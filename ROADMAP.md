@@ -145,7 +145,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E16 Sustainability** | PSP, baseline, metas, medições, resíduo, relatório ambiental | ⬜ |
 | **E17 Dashboard** | Portfólio, executivo, projeto, campo | ⬜ |
 | **E18 AI** | AI Gateway, prompts, extração, resumo diário, classificação, busca | ⬜ |
-| **E19 Project Dashboard** | Dashboard de projetos no painel (portfólio + drill-down): datas início/fim (planejado/real), custos (planejado/real), percentuais planejado/real por data de reporte (as-of), KPIs (PV/EV/AC/SPI/CPI), curva S, Gantt resumido, burndown, heat map de riscos, alertas. Inspirado em Power BI/Jira. | 🟦 Fatia 1+2 |
+| **E19 Project Dashboard** | Dashboard de projetos no painel (portfólio + drill-down): datas início/fim (planejado/real), custos (planejado/real), percentuais planejado/real por data de reporte (as-of), KPIs (PV/EV/AC/SPI/CPI), curva S, Gantt resumido, burndown, heat map de riscos, alertas. Visuais com Recharts (curva S, burndown, heat map). Inspirado em Power BI/Jira. | 🟦 Fatia 1+2+3 |
 
 > Desvio registrado (ADR-014): a spec original previa Django + React
 > (E01-US01/US02); a decisão aprovada de arquitetura é **Next.js full-stack**

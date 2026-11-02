@@ -1523,3 +1523,14 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
 - Smoke autenticado: login 302 -> /api/v1/health 200 -> /api/v1/projects/[id]/dashboard 200
   (JSON com KPIs, curva S, Gantt, burndown, heat map, alertas); sem sessao -> 401.
 - Working tree limpa; main pushada.
+
+---
+
+## 02/11/2026 - E19 Project Dashboard, Fatia 3
+
+- Graficos visuais com Recharts (v3.10.1):
+  - CurveSChart (LineChart PV/EV/AC), BurndownChart (atividades restantes),
+    RiskHeatmap (grid colorido).
+- Substitui as tabelas de curva S, burndown e heat map na pagina de
+  drill-down por graficos interativos.
+- Build e lint verdes.

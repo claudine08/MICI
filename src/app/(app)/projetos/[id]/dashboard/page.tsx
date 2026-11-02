@@ -3,6 +3,7 @@ import { getProjectDashboard } from "@/modules/dashboard/project";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { CurveSChart, BurndownChart, RiskHeatmap } from "@/components/dashboard/project-charts";
 
 function fmt(n: number): string {
   return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -38,7 +39,6 @@ export default async function ProjetoDashboardPage({
         </form>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">BAC</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(data.kpis.bac)}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">PV</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(data.kpis.pv)}</div></CardContent></Card>
@@ -55,66 +55,48 @@ export default async function ProjetoDashboardPage({
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Fim (plan.)</CardTitle></CardHeader><CardContent><div className="text-sm">{data.kpis.plannedEnd ?? "—"}</div><div className="text-xs text-muted-foreground">Real: {data.kpis.actualEnd ?? "—"}</div></CardContent></Card>
       </div>
 
-      {/* Alertas */}
       <Card>
         <CardHeader><CardTitle>Alertas</CardTitle></CardHeader>
         <CardContent>
           <ul className="list-disc pl-5 text-sm">
-            {data.alerts.map((a, i) => <li key={i}>{a}</li>)}
+            {data.alerts.map((a, i) => (
+              <li key={i}>{a}</li>
+            ))}
           </ul>
         </CardContent>
       </Card>
 
-      {/* Curva S */}
       <Card>
         <CardHeader><CardTitle>Curva S (PV / EV / AC)</CardTitle></CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b text-xs text-muted-foreground"><th className="py-2 pr-4">Mês</th><th className="py-2 pr-4 text-right">PV</th><th className="py-2 pr-4 text-right">EV</th><th className="py-2 pr-4 text-right">AC</th></tr></thead>
-              <tbody>
-                {data.curve.map((c) => (
-                  <tr key={c.month} className="border-b">
-                    <td className="py-1 pr-4">{c.month}</td>
-                    <td className="py-1 pr-4 text-right">{fmt(c.pv)}</td>
-                    <td className="py-1 pr-4 text-right">{fmt(c.ev)}</td>
-                    <td className="py-1 pr-4 text-right">{fmt(c.ac)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <CurveSChart data={data.curve} />
         </CardContent>
       </Card>
 
-      {/* Burndown */}
       <Card>
         <CardHeader><CardTitle>Burndown de atividades</CardTitle></CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b text-xs text-muted-foreground"><th className="py-2 pr-4">Mês</th><th className="py-2 pr-4 text-right">Restantes</th><th className="py-2 pr-4 text-right">Total</th></tr></thead>
-              <tbody>
-                {data.burndown.map((b) => (
-                  <tr key={b.month} className="border-b">
-                    <td className="py-1 pr-4">{b.month}</td>
-                    <td className="py-1 pr-4 text-right">{b.remaining}</td>
-                    <td className="py-1 pr-4 text-right">{b.total}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <BurndownChart data={data.burndown} />
         </CardContent>
       </Card>
 
-      {/* Gantt resumido */}
       <Card>
         <CardHeader><CardTitle>Gantt resumido (atividades)</CardTitle></CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b text-xs text-muted-foreground"><th className="py-2 pr-4">Código</th><th className="py-2 pr-4">Nome</th><th className="py-2 pr-4">Início</th><th className="py-2 pr-4">Fim</th><th className="py-2 pr-4 text-right">Dur.</th><th className="py-2 pr-4 text-right">Float</th><th className="py-2 pr-4 text-right">Avanço</th><th className="py-2 pr-4">Crítico</th></tr></thead>
+              <thead>
+                <tr className="border-b text-xs text-muted-foreground">
+                  <th className="py-2 pr-4">Código</th>
+                  <th className="py-2 pr-4">Nome</th>
+                  <th className="py-2 pr-4">Início</th>
+                  <th className="py-2 pr-4">Fim</th>
+                  <th className="py-2 pr-4 text-right">Dur.</th>
+                  <th className="py-2 pr-4 text-right">Float</th>
+                  <th className="py-2 pr-4 text-right">Avanço</th>
+                  <th className="py-2 pr-4">Crítico</th>
+                </tr>
+              </thead>
               <tbody>
                 {data.gantt.map((g) => (
                   <tr key={g.code} className="border-b">
@@ -137,37 +119,10 @@ export default async function ProjetoDashboardPage({
         </CardContent>
       </Card>
 
-      {/* Heat map de riscos */}
       <Card>
-        <CardHeader><CardTitle>Heat map de riscos (probabilidade × impacto)</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Heat map de riscos (probabilidade x impacto)</CardTitle></CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="text-xs">
-              <thead>
-                <tr>
-                  <th className="p-1">P\I</th>
-                  {[1,2,3,4,5].map((i) => <th key={i} className="p-1 text-center">{i}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {[5,4,3,2,1].map((p) => (
-                  <tr key={p}>
-                    <td className="p-1 font-medium">{p}</td>
-                    {[1,2,3,4,5].map((i) => {
-                      const cell = data.riskHeatmap.find((c) => c.probability === p && c.impact === i);
-                      const count = cell?.count ?? 0;
-                      const bg = count === 0 ? "bg-muted" : count < 2 ? "bg-amber-200" : "bg-red-300";
-                      return (
-                        <td key={i} className={`p-1 text-center ${bg} border`}>
-                          {count || ""}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <RiskHeatmap cells={data.riskHeatmap} />
         </CardContent>
       </Card>
 
