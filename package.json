@@ -18,6 +18,8 @@
     "db:studio": "dotenv -e .env -- prisma studio",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "rag:index": "node scripts/rag-index.mjs",
+    "rag:query": "node scripts/rag-query.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

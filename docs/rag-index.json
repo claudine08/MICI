@@ -1,0 +1,2138 @@
+{
+  "generatedAt": "2026-11-02T00:01:07.092Z",
+  "sources": [
+    "devcurrent.md",
+    "DIARIO.md",
+    "ROADMAP.md",
+    "suprimentos.md",
+    "qualidade.md",
+    "custos.md"
+  ],
+  "chunkCount": 177,
+  "chunks": [
+    {
+      "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
+      "title": "1. Estado atual (resumo de 1 linha)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 21,
+      "endLine": 26,
+      "summary": "E01–E14 completos e em produção (E14 agora com PO + recebimento). **Próxima frente: E15 Commissioning** (plano, teste, reteste, aceite). Working tree com `q....",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-2-ambiente-e-comandos-nao-precisa-rediscover",
+      "title": "2. Ambiente e comandos (não precisa rediscover)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 27,
+      "endLine": 45,
+      "summary": "| Item | Valor | |---|---| | Repo | `https://github.com/claudine08/MICI.git`, branch `main` | | Produção | Vercel `mici-theta.vercel.app` (projeto `mici`, te...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-3-convencoes-do-repo-seguir-a-risca",
+      "title": "3. Convenções do repo (seguir à risca)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 46,
+      "endLine": 55,
+      "summary": "- **Commits**: só quando o usuário pedir. Padrão: `feat: <área> - <resumo> - E<NN> US<NN>` (ASCII, sem acento) e depois `docs: registra …`. `main` direto, se...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-4-backlog-e12-pwa-fila-offline-completa-fechado-",
+      "title": "4. Backlog E12: PWA/fila offline completa — ✅ FECHADO (29/10)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 56,
+      "endLine": 63,
+      "summary": "Contexto e implementação detalhada em `docs/rag-index.md` (chunks `diario-*` e `devcurrent-*`) e no DIARIO 29/10. Resumo: PWA (manifest + SW) + fila offline...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-5-e14-procurement-completo-fatia-1-fatia-2",
+      "title": "5. E14 Procurement — ✅ COMPLETO (Fatia 1 + Fatia 2)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 64,
+      "endLine": 73,
+      "summary": "- **Fatia 1** (produção 30/10): fornecedores (SP), requisições (PR), cotações (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procurement`...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-6-restante-do-roadmap-apos-e14",
+      "title": "6. Restante do roadmap (após E14)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 74,
+      "endLine": 82,
+      "summary": "| Épico | Escopo curto | |---|---| | E15 Commissioning | Plano, teste, reteste, aceite | | E16 Sustainability | PSP, baseline, metas, medições, resíduo, rela...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-7-ponteiros-rapidos-de-codigo",
+      "title": "7. Ponteiros rápidos de código",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 83,
+      "endLine": 91,
+      "summary": "- Procurement (E14): `src/modules/procurement/*` · rotas `api/v1/projects/[id]/procurement/*` e `api/v1/suppliers/*` · UI `src/components/procurement/*` e `s...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-8-rag-indice-de-chunks-auto-gerado",
+      "title": "8. RAG — índice de chunks (auto-gerado)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 92,
+      "endLine": 101,
+      "summary": "- Índice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar após editar docs: `npm run rag:index...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-9-riscos-conhecidos",
+      "title": "9. Riscos conhecidos",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 102,
+      "endLine": 109,
+      "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI já orienta). - `vercel --prod` deploya o diretório local (não...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "diario-03-10-2026-fundacao-identidade-e-portfolio",
+      "title": "03/10/2026 — Fundação, Identidade e Portfólio",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 12,
+      "endLine": 13,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-fase-0-foundation-e01-base-de-e02",
+      "title": "Fase 0 — Foundation (E01 + base de E02)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 14,
+      "endLine": 35,
+      "summary": "- Scaffold **Next.js 16 + TypeScript + Tailwind 4** com configs de lint/typecheck/format e CI (GitHub Actions: lint → typecheck → test → build). - **Prisma 7...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-fase-1-identity-tenancy-e02",
+      "title": "Fase 1 — Identity/Tenancy (E02)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 36,
+      "endLine": 49,
+      "summary": "- UI de administração: `/administracao/usuarios` (usuários, convites, papéis), `/administracao/papeis` (matriz de permissões). - Troca de organização complet...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-fase-2-portfolio-e03-gates-e06",
+      "title": "Fase 2 — Portfólio (E03) + Gates (E06)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 50,
+      "endLine": 65,
+      "summary": "- CRUD Project/Client/ProjectTemplate com validação e escopo de tenant (`/projetos`, `/clientes`, `/templates` + 6 endpoints `/api/v1`). - Gates G0–G8 oficia...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-deploy-e-ferramentas",
+      "title": "Deploy e ferramentas",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 66,
+      "endLine": 73,
+      "summary": "- Runbook de deploy **Vercel + Neon** (produção) — commit docs. - Fix: timeout de transação de bootstrap para bancos remotos + utilitário de senha demo. ---",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-04-10-2026-fase-3-concluida-e-verificada",
+      "title": "04/10/2026 — Fase 3 concluída e verificada",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 74,
+      "endLine": 75,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-requisitos-drp-e04-wbs-e05",
+      "title": "Requisitos/DRP (E04) + WBS (E05)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 76,
+      "endLine": 100,
+      "summary": "- Migration `phase3_requirements_wbs`: `Requirement`, `RequirementRevision`, `RequirementEvidence`, `WBSNode`, `WBSVersion`. - Requisitos versionados (toda e...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-07-10-2026-correcoes-de-ambiente-e-sessao",
+      "title": "07/10/2026 — Correções de ambiente e sessão",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 101,
+      "endLine": 102,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-split-brain-de-banco-em-selecionar-organizacao",
+      "title": "Split-brain de banco em `/selecionar-organizacao`",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 103,
+      "endLine": 124,
+      "summary": "Sintoma: aviso \"Sessão expirada ou ausente.\" junto de \"Olá, Paulo\" e \"Você ainda não participa de nenhuma organização\". Causa raiz: o cookie JWT foi emitido...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-jwtsessionerror-em-entrar",
+      "title": "`JWTSessionError` em `/entrar`",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 125,
+      "endLine": 136,
+      "summary": "- O callback `session` ganhou try/catch (`src/lib/auth.ts`): qualquer falha de banco dentro do callback deixou de virar `JWTSessionError` opaca (o Auth.js em...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-08-10-2026-retomada-gate-da-fase-3-e07-fatia-1",
+      "title": "08/10/2026 — Retomada: gate da Fase 3 + E07 fatia 1",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 137,
+      "endLine": 138,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-manha-fechar-o-gate-da-fase-3",
+      "title": "Manhã — fechar o gate da Fase 3",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 139,
+      "endLine": 149,
+      "summary": "- Postgres local no ar (Docker healthy); `npm run dev` reiniciado de limpo (o processo antigo carregava o env antigo) — env listado: `.env.development.local`...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-tarde-fase-4-e07-fatia-atividades-dependencias-c",
+      "title": "Tarde — Fase 4 / E07, fatia \"atividades + dependências + CPM\"",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 150,
+      "endLine": 191,
+      "summary": "- **Migration `phase4_schedule`** — enums `ActivityType` (TASK/MILESTONE/ SUMMARY), `ActivityStatus`, `DependencyType` (FS/SS/FF/SF), `ProgressMethod`; model...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-tarde-continuacao-e07-fatia-2-baseline-schedule-",
+      "title": "Tarde (continuação) — E07 fatia 2: baseline SCHEDULE + forecast",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 192,
+      "endLine": 238,
+      "summary": "**Status salvo e diário criados** antes de entrar na fatia 2 (`ROADMAP.md` ganhou a seção \"Status do desenvolvimento (snapshot)\" e este `DIARIO.md` foi criad...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-fase-4-e07-fatia-3-calendarios-us03-epico-e07-fe",
+      "title": "Fase 4 / E07, fatia 3 — calendários (US03) — Épico E07 fechado",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 239,
+      "endLine": 275,
+      "summary": "- **`src/modules/schedule/calendars.ts`** — CRUD de `ProjectCalendar` com dois escopos (PROJECT e ORGANIZATION, `projectId` nulo): validação de semana útil (...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-item-cronograma-do-menu-global-habilitado",
+      "title": "Item \"Cronograma\" do menu global habilitado",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 276,
+      "endLine": 292,
+      "summary": "O item em `nav-items.ts` estava com `soon: true` porque a rota global não existia (o cronograma era só por projeto). Feito: - Nova página **`/cronograma`** (...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-e07-import-importacao-ms-project-csv-xml-templat",
+      "title": "E07 import — importação MS Project (CSV/XML) + templates de cronograma + aplicar calendário (08/10)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 293,
+      "endLine": 347,
+      "summary": "Feature pedida antes do E08: importar cronograma do MS Project pelo menu Cronograma, salvar templates reutilizáveis no menu Templates e, após o import, aplic...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-proximo-passo-definido-nesta-sessao",
+      "title": "Próximo passo (definido nesta sessão)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 348,
+      "endLine": 354,
+      "summary": "**E08 Cost/EVM** — orçamento, commitments, actuals (Fase 4; base do custo que o gate G4 exige). Depois: E09 Documents. ---",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-14-10-2026-calculadora-de-orcamento-de-cozinha-i",
+      "title": "14/10/2026 — Calculadora de orçamento de cozinha industrial (alimenta E08)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 355,
+      "endLine": 418,
+      "summary": "Feature pedida pelo usuário como aplicação dentro do MICI: calcula o orçamento de implantação de cozinha industrial a partir de `memoria_calculo.txt` (§1 pre...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-proximo-passo-definido-nesta-sessao-2",
+      "title": "Próximo passo (definido nesta sessão)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 419,
+      "endLine": 425,
+      "summary": "**E08 Cost/EVM** — o `estimate` deste módulo é a base de custo estimado; seguem commitments, actuals, EVM e o gate G4. Depois: E09 Documents. ---",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-14-10-2026-tarde-producao-login-sync-de-dados-e-",
+      "title": "14/10/2026 (tarde) — Produção: login, sync de dados e AUTH_URL",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 426,
+      "endLine": 431,
+      "summary": "Após o deploy da manhã (E07 + orçamento), o usuário reportou que **não conseguia logar no Vercel** e que **funcionalidades não apareciam em produção**. Diagn...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-login-falhava-credentialssignin",
+      "title": "Login falhava (`CredentialsSignin`)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 432,
+      "endLine": 445,
+      "summary": "- Logs do Vercel: `POST /api/auth/callback/credentials` → `CredentialsSignin` + **302 para `http://localhost:3000`**. - **Senhas**: `admin@mici.demo` tinha h...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-codigo-ok-dados-desalinhados",
+      "title": "Código ok, dados desalinhados",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 446,
+      "endLine": 464,
+      "summary": "- Análise de ambiente: deploy de 10:26 saía da mesma árvore (todas as páginas/APIs 200 em produção) — **código sincronizado**. Mas o Neon estava com 0 requis...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-correcoes-de-build-durante-o-deploy",
+      "title": "Correções de build durante o deploy",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 465,
+      "endLine": 470,
+      "summary": "- `scripts/check-users.ts` usava `prisma.membership` (inexistente; o model é `OrganizationMembership`) — o typecheck do `vercel deploy` falhou; corrigido e r...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-verificacao-final-producao",
+      "title": "Verificação final (produção)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 471,
+      "endLine": 480,
+      "summary": "- Login gerente → **302 `https://mici-theta.vercel.app/painel`** (sem mais localhost) → `/painel` 200, `/orcamento` 200. - `/projetos/[id]/{requisitos,wbs,cr...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-proximo-passo-definido-nesta-sessao-3",
+      "title": "Próximo passo (definido nesta sessão)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 481,
+      "endLine": 487,
+      "summary": "**E08 Cost/EVM** — commitments, actuals, EVM e gate G4 (o `estimate` de `/orcamento` é o custo estimado de entrada). Depois: E09 Documents. ---",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-14-10-2026-noite-e08-cost-evm-concluido",
+      "title": "14/10/2026 (noite) — E08 Cost/EVM concluído",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 488,
+      "endLine": 493,
+      "summary": "Fechado o épico de custos previsto desde a calculadora de orçamento: itens do orçamento, compromissos, realizados, EVM e o gate G4 que exige baseline de cust...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-persistencia",
+      "title": "Persistência",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 494,
+      "endLine": 503,
+      "summary": "- Migration `phase6_cost` (`prisma/migrations/20261014231808_phase6_cost/`) aplicada: `CostItem`, `CostCommitment`, `CostActual` e enum `CommitmentStatus`; r...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-modulo-src-modules-cost",
+      "title": "Módulo `src/modules/cost/`",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 504,
+      "endLine": 515,
+      "summary": "- `schemas.ts` (zod), `engine.ts` (EVM puro), `selectors.ts` (leituras escopadas por organização + `listCostSummaries`), `items.ts`, `commitments.ts`, `actua...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-api-src-app-api-v1-projects-id-cost",
+      "title": "API (`src/app/api/v1/projects/[id]/cost/`)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 516,
+      "endLine": 525,
+      "summary": "Itens (`route.ts` + `[itemId]`), compromissos (`commitments/` + `[commitmentId]`), realizados (`actuals/` + `[actualId]`), baselines (`baselines/` + `[baseli...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-gate-g4-e-baseline-de-custo",
+      "title": "Gate G4 e baseline de custo",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 526,
+      "endLine": 537,
+      "summary": "- `errors.ts`: novo código `COST_BASELINE_REQUIRED` (409). - `gates/instances.ts`: no `action === \"approve\"` do G4, checagem via `getG4CostApprovalBlocks` —...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-integracao-com-orcamento",
+      "title": "Integração com `/orcamento`",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 538,
+      "endLine": 543,
+      "summary": "- `POST /cost/import-estimate` recebe o JSON exportado por `/orcamento` (campo `quantitativos`) e faz replace-all dos itens vivos, códigos `ORC001…`.",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-ui",
+      "title": "UI",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 544,
+      "endLine": 552,
+      "summary": "- `/projetos/[id]/custos` — cards EVM, tabelas de itens/compromissos/ realizados/baselines, CRUD via dialogs, import de estimate, `load()` refetch `/summary`...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-testes-e-gate",
+      "title": "Testes e gate",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 553,
+      "endLine": 564,
+      "summary": "- +12 unit (`tests/unit/cost-engine.test.ts`) — BAC/PV/EV/AC, EAC/SPI/SV, progresso planejado, itens sem WBS, SPI nulo com PV = 0. - `tests/integration/cost....",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-proximo-passo-definido-nesta-sessao-4",
+      "title": "Próximo passo (definido nesta sessão)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 565,
+      "endLine": 572,
+      "summary": "**E09 Documents** — módulo de documentos do projeto. Antes, sob consentimento, rodar `npm run test:integration -- cost` para validar o teste de integração es...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-15-10-2026-e09-documents-concluido-fase-4-fechad",
+      "title": "15/10/2026 — E09 Documents concluído (Fase 4 fechada)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 573,
+      "endLine": 578,
+      "summary": "Upload com revisões imutáveis, máquina de estados com aprovação auditada e links genéricos para qualquer objeto do projeto. Gate completo verde e suíte de cu...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-ambiente-postgres-local-e-prisma-cli-dois-proble",
+      "title": "Ambiente: Postgres local e Prisma CLI (dois problemas resolvidos)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 579,
+      "endLine": 596,
+      "summary": "- **Backends morriam com `0xC0000142` (DLL_INIT_FAILED)** — exclusões do Windows Defender (paths `Programs\\PostgreSQL17`, `PostgreSQL17-data`, processos `pos...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-migration-e-schema",
+      "title": "Migration e schema",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 597,
+      "endLine": 606,
+      "summary": "- `phase7_documents` (`20261015225202`): enum `DocumentStatus` + `Document` (código `DOC001` por projeto, status, data de vigência) + `DocumentRevision` (app...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-modulo-src-modules-documents",
+      "title": "Módulo `src/modules/documents/`",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 607,
+      "endLine": 623,
+      "summary": "- `engine.ts` (puro): transições `SUBMIT` WIP→FOR_REVIEW · `APPROVE` FOR_REVIEW→APPROVED · `REJECT` FOR_REVIEW→WIP (motivo obrigatório, agora também validado...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-api-e-ui",
+      "title": "API e UI",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 624,
+      "endLine": 634,
+      "summary": "- `POST|GET /projects/[id]/documents` (upload multipart), `[docId]` (GET/PATCH/DELETE), `revisions` (POST nova revisão), `status` (transições com permissão p...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-testes-e-gate-15-10",
+      "title": "Testes e gate (15/10)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 635,
+      "endLine": 647,
+      "summary": "- `cost.test.ts` executado pela primeira vez (consentimento dado): 24 testes — **2 bugs reais achados e corrigidos**: (1) teste de código `CC001` conflitava...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-proximo-passo-definido-nesta-sessao-5",
+      "title": "Próximo passo (definido nesta sessão)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 648,
+      "endLine": 656,
+      "summary": "**E10 Risk** — risk register, matriz de probabilidade×impacto, respostas e risco residual. Antes: aplicar `phase7_documents` no Neon (`npx prisma migrate dep...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-20-10-2026-e10-risk-completo",
+      "title": "20/10/2026 — E10 Risk completo",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 657,
+      "endLine": 658,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-verificacao-de-producao-pendencia-do-15-10",
+      "title": "Verificação de produção (pendência do 15/10)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 659,
+      "endLine": 664,
+      "summary": "- Neon com as 8 migrations (`phase7_documents` incluída), git limpo e deploy do E09 já vivo (`/api/v1/projects/.../documents` → 401 sem sessão; health → 200)...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-banco-e-schema-migration-phase8-risk",
+      "title": "Banco e schema (migration `phase8_risk`)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 665,
+      "endLine": 676,
+      "summary": "- Enums `RiskCategory` (10 categorias da spec), `RiskStatus` (IDENTIFIED→ANALYZED→PLANNED→TREATING→MONITORING→CLOSED/CANCELLED) e `RiskResponseStrategy` (MIT...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-modulo-e-api",
+      "title": "Módulo e API",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 677,
+      "endLine": 696,
+      "summary": "- `src/modules/risk/`: motor puro (`engine.ts` — exposição, níveis, matriz default 4/9/16, máquina de estados com CANCEL/REOPEN/TREAT, `availableRiskActions`...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-ui-2",
+      "title": "UI",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 697,
+      "endLine": 707,
+      "summary": "- `/projetos/[id]/riscos` — registro com cards de resumo, tabela, CRUD, transições e histórico de respostas (`risk-view.tsx`). - `/riscos` — visão global por...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-testes-e-gate-20-10",
+      "title": "Testes e gate (20/10)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 708,
+      "endLine": 721,
+      "summary": "- `tests/unit/risk-engine.test.ts` (13 testes) e `tests/integration/risk.test.ts` (22 testes): CRUD, RI001, exposure derivado, ciclo completo + residuais, CA...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-deploy-20-10",
+      "title": "Deploy (20/10)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 722,
+      "endLine": 730,
+      "summary": "- Commit `a070e54` em `main` (25 arquivos, +4062 linhas) e push. - Migration `phase8_risk` aplicada no Neon; deploy `npx vercel --prod` concluído — `mici-the...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-proximo-passo",
+      "title": "Próximo passo",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 731,
+      "endLine": 735,
+      "summary": "- **E11 Change** — request, impacto, aprovação, baseline revision, implementation.",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-21-10-2026-incidente-upload-falhava-direto-do-on",
+      "title": "21/10/2026 — Incidente: upload falhava direto do OneDrive",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 736,
+      "endLine": 737,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-relato",
+      "title": "Relato",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 738,
+      "endLine": 742,
+      "summary": "- Usuário relatou \"Falha de conexão com o servidor\" ao enviar documento em produção (`mici-theta.vercel.app`), repetidamente.",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-diagnostico-evidencias",
+      "title": "Diagnóstico (evidências)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 743,
+      "endLine": 756,
+      "summary": "- API saudável em todas as variações testadas via CLI na mesma máquina: uploads de 0.1–4 MB, HTTP/1.1 e HTTP/2, upload lento (70 s a 60 KB/s) — todos 201; 4....",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-correcoes-aplicadas",
+      "title": "Correções aplicadas",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 757,
+      "endLine": 769,
+      "summary": "- `api-client.ts` (commit `6401472`): `Content-Type` não é mais forçado a JSON em `FormData`; erro de rede vira `ApiError` `NETWORK_ERROR`. - `api-client.ts`...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-encerramento-21-10",
+      "title": "Encerramento (21/10)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 770,
+      "endLine": 780,
+      "summary": "- Gate ✅ após correções: lint · typecheck · 154 unit · 184 integração (com `MICI_TEST_NO_RESET=1`) · build. - Commits em `main` e deploys Vercel: `66c628e` (...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-licao",
+      "title": "Lição",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 781,
+      "endLine": 789,
+      "summary": "- \"Falha de conexão\" no fetch não é sempre rede: 0 bytes enviados + servidor respondendo = o arquivo não pôde ser lido do disco (OneDrive online-only, arquiv...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-21-10-2026-fase-4-epico-e11-change-controle-de-m",
+      "title": "21/10/2026 — Fase 4: Épico E11 Change (controle de mudanças)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 790,
+      "endLine": 791,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-escopo-implementado-spec-31",
+      "title": "Escopo implementado (spec §31)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 792,
+      "endLine": 819,
+      "summary": "- **Modelo** (`prisma/schema.prisma`, migration `phase9_change`): `ChangeRequest` (código `CR001` automático por projeto, `costDelta` Decimal, `scheduleDays`...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-verificacao",
+      "title": "Verificação",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 820,
+      "endLine": 834,
+      "summary": "- Gate ✅: lint · typecheck · 169 unit (+15 em `tests/unit/ change-engine.test.ts`) · 200 integração (+16 em `tests/integration/change.test.ts`) · build (108...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-21-10-2026-noite-e12-field-fatia-1",
+      "title": "21/10/2026 (noite) — E12 Field, Fatia 1",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 835,
+      "endLine": 836,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-escopo-decidido",
+      "title": "Escopo decidido",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 837,
+      "endLine": 847,
+      "summary": "- E12 fatiado em 2 fatias (decisão do usuário): **Fatia 1** = `FieldDiary`, `FieldTask`, `Constraint` + `PhotoEvidence` (entidade própria com `diaryId` opcio...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-entrega",
+      "title": "Entrega",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 848,
+      "endLine": 874,
+      "summary": "- **Schema** (`phase10_field`, 12ª migration, aplicada localmente): enums `FieldDiaryStatus` (DRAFT/SUBMITTED/APPROVED/REJECTED/CANCELLED), `FieldTaskStatus`...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-verificacao-2",
+      "title": "Verificação",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 875,
+      "endLine": 892,
+      "summary": "- Gate ✅: lint · typecheck · **190 unit / 15 arquivos** (+21 em `tests/unit/field-engine.test.ts`) · **221 integração / 13 arquivos** (+17 em `tests/integrat...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-22-10-2026-e12-field-fatia-2",
+      "title": "22/10/2026 — E12 Field, Fatia 2",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 893,
+      "endLine": 894,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-escopo-decisao-acordada",
+      "title": "Escopo (decisão acordada)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 895,
+      "endLine": 906,
+      "summary": "- **Fatia 2 do E12**: `ProgressMeasurement` (BR-006 + critério de sucesso 6 \"avanço físico possuir critério\"), idempotência offline com UUID (`clientUuid`, §...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-entrega-2",
+      "title": "Entrega",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 907,
+      "endLine": 939,
+      "summary": "- **Schema** (`phase11_progress`, **13ª migration** — `prisma migrate dev` não roda não-interativo; gerada com `prisma migrate diff --from-migrations` usando...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-verificacao-gate",
+      "title": "Verificação (gate ✅)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 940,
+      "endLine": 976,
+      "summary": "- lint · typecheck · **193 unit / 15 arquivos** (+3 em `tests/unit/field-engine.test.ts`: derivação de nível, critério obrigatório, COMPLETED força 100) · **...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-24-10-2026-e13-quality-fatia-1-checklist-inspeca",
+      "title": "24/10/2026 — E13 Quality, Fatia 1 (checklist + inspeção)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 977,
+      "endLine": 984,
+      "summary": "**E13 fatiado em 2 fatias (decisão do usuário)**: **Fatia 1** = `ChecklistTemplate`/`ChecklistExecution` + `Inspection` (E13-US01/US02); **Fatia 2** = `NonCo...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-schema-e-migration",
+      "title": "Schema e migration",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 985,
+      "endLine": 1004,
+      "summary": "- `prisma/schema.prisma`: enums `checklist_execution_status` (DRAFT/COMPLETED/CANCELLED) e `inspection_status` (PLANNED/EXECUTED/PASSED/FAILED/CLOSED/CANCELL...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-dominio-src-modules-quality",
+      "title": "Domínio (`src/modules/quality/`)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1005,
+      "endLine": 1023,
+      "summary": "- `engine.ts` (puro): transições da inspeção e da execução, rótulos PT, `summarizeChecklistItems` (concluído = todo **obrigatório** respondido), `inspectionH...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-api-e-telas",
+      "title": "API e telas",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1024,
+      "endLine": 1041,
+      "summary": "- 8 rotas em `/api/v1/projects/[id]/quality/*`: `checklist-templates`, `checklist-executions`, `inspections` (GET/POST + `[id]` GET/PATCH/DELETE + `[id]/stat...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-gate-e-deploy",
+      "title": "Gate e deploy",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1042,
+      "endLine": 1065,
+      "summary": "- **Gate verde**: `eslint` 0 problemas · `tsc --noEmit` limpo · **208 unit (16 arquivos)** — 15 novos em `tests/unit/quality-engine.test.ts` · **249 integraç...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-27-10-2026-e13-evidencia-de-inspecao-na-ui-de-ca",
+      "title": "27/10/2026 — E13: evidência de inspeção na UI de campo",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1066,
+      "endLine": 1071,
+      "summary": "**Gap fechado**: a tela de campo não expunha `inspectionId` no upload/edição de foto — a evidência era vinculada só via API e o PASS/FAIL da inspeção falhava...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-mudancas",
+      "title": "Mudanças",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1072,
+      "endLine": 1087,
+      "summary": "- `field/schemas.ts`: `updatePhotoSchema` aceita `inspectionId` (uuid nullable). - `field/photos.ts`: `updatePhoto` valida e grava `inspectionId` (`assertIns...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-gate-e-deploy-2",
+      "title": "Gate e deploy",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1088,
+      "endLine": 1104,
+      "summary": "- Gate verde: `eslint` 0 · `tsc --noEmit` limpo · **208 unit** (16 arquivos). - Testes de integração não rodaram localmente (Postgres/Docker parados). - **De...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-27-10-2026-e13-quality-fatia-2a-ncr-acao-correti",
+      "title": "27/10/2026 — E13 Quality, Fatia 2a (NCR + ação corretiva)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1105,
+      "endLine": 1110,
+      "summary": "**Fatia 2 fatiada de novo (decisão do usuário)**: **2a** = `NonConformity` (NCR) + `CorrectiveAction` (E13-US03/US04, §33), com **NCR automático quando a ins...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-schema-e-migration-2",
+      "title": "Schema e migration",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1111,
+      "endLine": 1123,
+      "summary": "- `prisma/schema.prisma`: enums `non_conformity_status` (OPEN/CORRECTION/VERIFICATION/CLOSED/CANCELLED) e `corrective_action_status` (OPEN/IN_PROGRESS/DONE/V...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-dominio-src-modules-quality-2",
+      "title": "Domínio (`src/modules/quality/`)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1124,
+      "endLine": 1148,
+      "summary": "- `engine.ts`: máquinas NCR (`OPEN →(START) CORRECTION →(SUBMIT) VERIFICATION →(VERIFY) CLOSED`, `REJECT`/`CANCEL`/`REOPEN`) e ação corretiva (`OPEN →(START)...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-api-e-telas-2",
+      "title": "API e telas",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1149,
+      "endLine": 1161,
+      "summary": "- **10 rotas novas** em `/api/v1/projects/[id]/quality/*`: `non-conformities` e `corrective-actions` (GET/POST + `[id]` GET/PATCH/DELETE + `[id]/status` POST...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-verificacao-gate-2",
+      "title": "Verificação (gate ✅)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1162,
+      "endLine": 1175,
+      "summary": "- `eslint` 0 · `tsc --noEmit` limpo · **220 unit / 16 arquivos** (+12 em `tests/unit/quality-engine.test.ts`: máquinas NCR/CA, tabela completa, resolvido/abe...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-deploy",
+      "title": "Deploy",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1176,
+      "endLine": 1194,
+      "summary": "- **Deploy (27/10)**: commit `762b55c` (19 arquivos, +2757) em `main` + push; `prisma migrate deploy` aplicou `phase13_ncr_corrective` no Neon (15ª de 15); `...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-29-10-2026-e13-quality-fatia-2b-punch-list",
+      "title": "29/10/2026 — E13 Quality, Fatia 2b (punch list)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1195,
+      "endLine": 1200,
+      "summary": "**E13 completo no código**: punch list (E13-US05, §34) implementada de ponta a ponta — `PunchItem` com os 7 estados da spec, verificação com evidência de cor...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-schema-e-migration-3",
+      "title": "Schema e migration",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1201,
+      "endLine": 1223,
+      "summary": "- `prisma/schema.prisma`: enum `punch_item_status` (OPEN/ASSIGNED/IN_PROGRESS/READY_FOR_VERIFICATION/VERIFIED/REJECTED/CLOSED — **sem CANCELLED**, fiel à §34...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-dominio-src-modules-quality-3",
+      "title": "Domínio (`src/modules/quality/`)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1224,
+      "endLine": 1246,
+      "summary": "- `engine.ts`: máquina punch (`OPEN →(ASSIGN) ASSIGNED →(START) IN_PROGRESS →(SUBMIT) READY_FOR_VERIFICATION →(VERIFY) VERIFIED →(CLOSE) CLOSED`, `REJECT` de...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-api-e-telas-3",
+      "title": "API e telas",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1247,
+      "endLine": 1261,
+      "summary": "- **3 rotas novas** em `/api/v1/projects/[id]/quality/punch-items` (GET/POST + `[punchItemId]` GET/PATCH/DELETE + `[punchItemId]/status` POST), permissões `Q...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-verificacao-gate-3",
+      "title": "Verificação (gate ✅)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1262,
+      "endLine": 1274,
+      "summary": "- `eslint` 0 · `tsc --noEmit` limpo · **226 unit / 16 arquivos** (+6 em `tests/unit/quality-engine.test.ts`: máquina punch completa, ausência de CANCELLED, e...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-deploy-e-smoke-29-10-21h",
+      "title": "Deploy e smoke (29/10, 21h)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1275,
+      "endLine": 1287,
+      "summary": "- `vercel --prod` a partir de `main` (`01a0966`): deployment **`mici-nb8dr9z1l-homeland1`** (alias `mici-theta.vercel.app`), pronto em ~1m — a Fatia 2b está...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-estado",
+      "title": "Estado",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1288,
+      "endLine": 1296,
+      "summary": "- Deploy completo: commit **`01a0966`** (feat) + **`52dc736`** (docs desta entrada) em `main` + push; `20261029120000_phase14_punch` aplicada no Neon; produç...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-29-10-2026-noite-e12-backlog-fatia-1-pwa-fila-of",
+      "title": "29/10/2026 (noite) — E12-backlog, Fatia 1 (PWA + fila offline)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1297,
+      "endLine": 1302,
+      "summary": "**Decisão do usuário na mesma sessão**: criar o `devcurrent.md` como fonte oficial de retomada (DIARIO/ROADMAP viram só histórico) e atacar o **backlog do E1...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-o-que-entrou-codigo-local-ainda-nao-commitado",
+      "title": "O que entrou (código local — ainda não commitado)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1303,
+      "endLine": 1333,
+      "summary": "- **`src/lib/offline-queue.ts`** (novo): fila de criações de campo com store `IndexedDbQueueStore` (DB `mici-offline`/`field-queue`, fallback em memória); `e...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-gate-29-10-23h-tudo-verde",
+      "title": "Gate (29/10, 23h) — tudo verde",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1334,
+      "endLine": 1341,
+      "summary": "- `npm run lint` ✅ (corrigidos: `set-state-in-effect`, `useSyncExternalStore` para conectividade, ordem de declarações) · `npm run typecheck` ✅ - `npm test`...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-estado-2",
+      "title": "Estado",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1342,
+      "endLine": 1346,
+      "summary": "- **Código pronto + gate verde** ao fim do desenvolvimento; na sequência, sob pedido do usuário: **commit + push + deploy + smoke** (abaixo).",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-commit-e-deploy-29-10-23h",
+      "title": "Commit e deploy (29/10, 23h)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1347,
+      "endLine": 1359,
+      "summary": "- Commits: **`116bd7a`** `feat: campo - pwa e fila offline de criacoes - E12 US06` (9 arquivos) + **`0f13e2d`** `docs: registra fatia 1 do backlog E12 (pwa e...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-estado-3",
+      "title": "Estado",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1360,
+      "endLine": 1365,
+      "summary": "- **Fatia 1 do backlog E12 em produção**; working tree limpa, `main` pushada (`0f13e2d`). Próximo passo decidido com o usuário: **Fatia 2** (fotos offline +...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-29-10-2026-noite-parte-2-e12-backlog-fatia-2-fot",
+      "title": "29/10/2026 (noite, parte 2) — E12-backlog, Fatia 2 (fotos offline + conflito)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1366,
+      "endLine": 1369,
+      "summary": "Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-bug-fix-encontrado-no-caminho",
+      "title": "Bug fix encontrado no caminho",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1370,
+      "endLine": 1378,
+      "summary": "- A rota **`POST /field/photos` ignorava o `clientUuid` do multipart** (não estava no `rawFields`), embora o schema aceitasse e `createPhoto` fizesse replay:...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-o-que-entrou",
+      "title": "O que entrou",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1379,
+      "endLine": 1406,
+      "summary": "- **`src/lib/offline-queue.ts`** (estendido, compatível com itens da Fatia 1 gravados no IndexedDB): - entity `\"photo\"` com **`file: Blob` persistido** + `fi...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-gate-29-10-23h30-tudo-verde",
+      "title": "Gate (29/10, 23h30) — tudo verde",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1407,
+      "endLine": 1416,
+      "summary": "- `npm run lint` ✅ · `npm run typecheck` ✅ - `npm test` ✅ **251 unit / 17 arquivos** (+13) · `MICI_TEST_NO_RESET=1 npm run test:integration` ✅ **267 / 14** (...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-estado-4",
+      "title": "Estado",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1417,
+      "endLine": 1422,
+      "summary": "- **Fatia 2 pronta, gate verde, não commitada** ao fim do desenvolvimento; na sequência, sob pedido do usuário: **commit + push + deploy + smoke** (abaixo).",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-commit-e-deploy-29-10-23h40",
+      "title": "Commit e deploy (29/10, 23h40)",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1423,
+      "endLine": 1434,
+      "summary": "- Commits: **`dec1951`** `feat: campo - fotos offline e regra de conflito de edicao - E12 US02` (6 arquivos) + **`583496c`** `docs: registra fatia 2 do backl...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-estado-5",
+      "title": "Estado",
+      "level": 3,
+      "file": "DIARIO.md",
+      "startLine": 1435,
+      "endLine": 1440,
+      "summary": "- **Backlog E12 (PWA/fila offline) fechado de ponta a ponta** — Fatia 1 + Fatia 2 em produção; working tree limpa, `main` pushada. **Próximo épico: E14 Procu...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-30-10-2026-e14-procurement-fatia-1",
+      "title": "30/10/2026 � E14 Procurement, Fatia 1",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1441,
+      "endLine": 1448,
+      "summary": "- Fornecedores (SP), Requisi��es de Compra (PR), Cota��es (QT) e Mapa Comparativo (BC) em produ��o. - Commit feat 2ea90bb, migration phase15_procurement no N...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-31-10-2026-atualizacao-do-devcurrent-rag-leve-pa",
+      "title": "31/10/2026 — Atualizacao do devcurrent + RAG leve para docs",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1449,
+      "endLine": 1461,
+      "summary": "- devcurrent.md reescrito: E14 marcado completo (Fatia 1+2), proxima frente E15 Commissioning, contagem de migrations 17, ponteiros de procurement. - ROADMAP...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "roadmap-gate-de-verificacao-entre-fases",
+      "title": "Gate de verificação entre fases",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 11,
+      "endLine": 27,
+      "summary": "Antes de iniciar uma fase, a fase anterior deve passar na suíte completa: `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `n...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-correcao-de-ambiente-e-sessao-07-10-2026",
+      "title": "Correção de ambiente e sessão (07/10/2026)",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 28,
+      "endLine": 60,
+      "summary": "Bug reportado em `/selecionar-organizacao`: aviso **\"Sessão expirada ou ausente.\"** junto de \"Olá, Paulo\" e \"Você ainda não participa de nenhuma organização\"...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-producao-sync-de-dados-auth-url-14-10-2026",
+      "title": "Produção: sync de dados + AUTH_URL (14/10/2026)",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 61,
+      "endLine": 89,
+      "summary": "Login no Vercel falhava (`CredentialsSignin`) e os 302 do Auth.js apontavam para `http://localhost:3000`. Duas causas independentes: - [x] **Senhas dos perfi...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-status-do-sistema-29-10-2026",
+      "title": "Status do sistema (29/10/2026)",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 90,
+      "endLine": 104,
+      "summary": "| Área | Situação | |---|---| | Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) · E11 ✅ · E12 **Fatia 1** ✅ / **Fatia 2** ✅ / **backlog Fatia 1...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-incidente-de-upload-21-10-2026-resolvido",
+      "title": "Incidente de upload (21/10/2026) — resolvido",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 105,
+      "endLine": 116,
+      "summary": "- Relato: \"Falha de conexão\" ao enviar documentos em produção. Diagnóstico via XHR com progresso: arquivo de 15 KB com **0 bytes enviados** e servidor OK — o...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-releases-produto",
+      "title": "Releases (produto)",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 117,
+      "endLine": 125,
+      "summary": "| Release | Escopo | |---|---| | **Release 1** | Projetos, templates, requisitos, WBS, gates, cronograma básico, orçamento, físico, documentos, riscos, mudan...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-epicos-e01-e18-e-status",
+      "title": "Épicos (E01–E18) e status",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 126,
+      "endLine": 152,
+      "summary": "| Épico | Escopo resumido | Status | |---|---|---| | **E01 Platform Foundation** | Base do sistema, CI, observabilidade | ✅ Fase 0 | | **E02 Identity** | Usu...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-plano-de-execucao-por-fases",
+      "title": "Plano de execução por fases",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 153,
+      "endLine": 154,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-fase-0-foundation",
+      "title": "Fase 0 — Foundation ✅",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 155,
+      "endLine": 171,
+      "summary": "- [x] Scaffold Next 16 + TypeScript + Tailwind 4 + configs (lint/typecheck/format/CI) - [x] Prisma 7 + schema base: tenancy, usuários, memberships, papéis, p...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-fase-1-identity-tenancy-e02",
+      "title": "Fase 1 — Identity/Tenancy (E02) ✅",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 172,
+      "endLine": 184,
+      "summary": "- [x] UI de administração: usuários, convites, papéis e permissões (`/administracao/usuarios`, `/administracao/papeis`) - [x] Troca de organização completa +...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-fase-2-portfolio-e-projetos-e03-gates-e06",
+      "title": "Fase 2 — Portfólio e Projetos (E03) + Gates (E06) ✅",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 185,
+      "endLine": 202,
+      "summary": "- [x] CRUD Project/Client/ProjectTemplate com validação e escopo de tenant (`/projetos`, `/clientes`, `/templates` + 6 endpoints `/api/v1`) - [x] Gates G0–G8...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-fase-3-requirements-drp-e04-wbs-e05",
+      "title": "Fase 3 — Requirements/DRP (E04) + WBS (E05) ✅",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 203,
+      "endLine": 224,
+      "summary": "- [x] Modelos Prisma + migration `phase3_requirements_wbs` (`Requirement`, `RequirementRevision`, `RequirementEvidence`, `WBSNode`, `WBSVersion`) - [x] Requi...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-fase-4-planejamento-e-custos-e07-e08-documentos-",
+      "title": "Fase 4 — Planejamento e Custos (E07, E08), Documentos (E09) ✅",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 225,
+      "endLine": 288,
+      "summary": "**E07 Schedule ✅** (ver DIARIO 08/10 — commits locais `phase4_schedule*`): - [x] Modelos + migrations `phase4_schedule`, `phase4_schedule_baseline`, `phase5_...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-fase-5-releases-1-4",
+      "title": "Fase 5+ — Releases 1→4 ⬜",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 289,
+      "endLine": 292,
+      "summary": "Executar épicos E10–E18 conforme prioridade de Release 1, depois Releases 2–4.",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-criterios-de-aceite-do-mvp-101",
+      "title": "Critérios de aceite do MVP (§101)",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 293,
+      "endLine": 307,
+      "summary": "O MVP é aceito quando um projeto real executar o ciclo completo: ```text Oportunidade → Requisitos → Orçamento → Projeto → Baseline → Execução → Avanço → Cus...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-gates-do-projeto-de-implantacao-referencia",
+      "title": "Gates do projeto de implantação (referência)",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 308,
+      "endLine": 313,
+      "summary": "G0 Oportunidade qualificada · G1 Requisitos suficientes · G2 Viabilidade · G3 Proposta/orçamento · G4 Contrato e plano · G5 Projeto liberado · G6 Pronto para...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "suprimentos-1-visao-geral-do-processo-end-to-end",
+      "title": "1. Visão geral do processo (end-to-end)",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 15,
+      "endLine": 74,
+      "summary": "O módulo de Suprimentos (E14, RF-019) cobre todo o ciclo de aquisição de um projeto, da identificação da necessidade até o fechamento financeiro. A Fatia 1 e...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-2-os-conceitos-entidades",
+      "title": "2. Os conceitos (entidades)",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 75,
+      "endLine": 76,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-fatia-1-implementada",
+      "title": "Fatia 1 (implementada)",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 77,
+      "endLine": 87,
+      "summary": "| Conceito | Entidade | O que é | Código | |---|---|---|---| | **Fornecedor** | `Supplier` | Cadastro central (escopo da **organização**) de fornecedores hom...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-fatia-2-planejada",
+      "title": "Fatia 2 (planejada)",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 88,
+      "endLine": 115,
+      "summary": "| Conceito | Entidade (prevista) | O que é | Código (previsto) | |---|---|---|---| | **Pedido de Compra** | `PurchaseOrder` | Documento formal emitido ao for...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-3-fluxo-detalhado-passo-a-passo",
+      "title": "3. Fluxo detalhado passo a passo",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 116,
+      "endLine": 117,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-etapa-0-fornecedores-cadastro-central",
+      "title": "Etapa 0 — Fornecedores (cadastro central)",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 118,
+      "endLine": 136,
+      "summary": "**Quem:** Comprador / equipe de suprimentos (papel `PROCUREMENT` ou superior). **O que acontece:** 1. Acessa a aba **Fornecedores** na tela de Suprimentos do...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-etapa-1-necessidade-requisicao-de-compra-pr",
+      "title": "Etapa 1 — Necessidade → Requisição de Compra (PR)",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 137,
+      "endLine": 168,
+      "summary": "**Quem:** Engenheiro, coordenador de obra ou gestor de projeto. **O que acontece:** 1. Identifica a necessidade de compra (material, serviço, equipamento) e...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-etapa-2-cotacao-qt",
+      "title": "Etapa 2 — Cotação (QT)",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 169,
+      "endLine": 201,
+      "summary": "**Quem:** Comprador (contata fornecedores e registra as propostas). **O que acontece:** 1. Para cada fornecedor interessado, cria uma **cotação** vinculada à...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-etapa-3-mapa-comparativo-bc",
+      "title": "Etapa 3 — Mapa Comparativo (BC)",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 202,
+      "endLine": 231,
+      "summary": "**Quem:** Comprador / gestor de suprimentos. **O que acontece:** 1. Com as cotações submetidas, gera o **mapa comparativo** a partir da requisição: - O siste...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-etapa-4-aprovacao-da-requisicao",
+      "title": "Etapa 4 — Aprovação da Requisição",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 232,
+      "endLine": 249,
+      "summary": "**Quem:** Gestor de projeto ou PMO (permissão `PROCUREMENT:APPROVE`). **O que acontece:** 1. Com a requisição em `COMPARED`, o gestor revisa o mapa comparati...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-etapa-5-pedido-de-compra-po-fatia-2-implementada",
+      "title": "Etapa 5 — Pedido de Compra (PO) *(Fatia 2 — implementada)*",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 250,
+      "endLine": 282,
+      "summary": "**Status:** implementado. Descrição do escopo entregue (PO001, rotas `procurement/orders`). **Quem:** Comprador / equipe de suprimentos. **O que acontece (pr...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-etapa-6-recebimento-e-inspecao-fatia-2-implement",
+      "title": "Etapa 6 — Recebimento e Inspeção *(Fatia 2 — implementada)*",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 283,
+      "endLine": 311,
+      "summary": "**Quem:** Almoxarife / equipe de campo + inspetor de qualidade. **O que acontece (previsto):** 1. Ao chegar o material/serviço, registra o **Recebimento** (`...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-etapa-7-fechamento-financeiro-fatia-2-planejada",
+      "title": "Etapa 7 — Fechamento Financeiro *(Fatia 2 — planejada)*",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 312,
+      "endLine": 327,
+      "summary": "**Quem:** Financeiro / controladoria. **O que acontece (previsto):** 1. Com o pedido totalmente recebido e inspecionado, o financeiro: - Registra o **commitm...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-4-regras-transversais-fatia-1-implementadas",
+      "title": "4. Regras transversais (Fatia 1, implementadas)",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 328,
+      "endLine": 341,
+      "summary": "- **Escopo de tenant** sempre validado (`assertProcurementProject`): projeto deve existir e pertencer à organização. - **Códigos automáticos** por escopo: `S...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-5-maquinas-de-estados-resumo",
+      "title": "5. Máquinas de estados (resumo)",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 342,
+      "endLine": 343,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-5-1-fornecedor",
+      "title": "5.1 Fornecedor",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 344,
+      "endLine": 347,
+      "summary": "`ACTIVE` (pode receber cotações) · `BLOCKED` · `INACTIVE` (desativado; usado em vez de exclusão quando há cotações vinculadas). Status alterado via `updateSu...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-5-2-requisicao-de-compra",
+      "title": "5.2 Requisição de Compra",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 348,
+      "endLine": 361,
+      "summary": "``` DRAFT ──SUBMIT──► SUBMITTED ──START_QUOTING──► QUOTING ──FINISH_QUOTING──► COMPARED ──APPROVE──► APPROVED │ │ │ │ │ ├──APPROVE──► APPROVED │ ├──REJECT──►...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-5-3-cotacao",
+      "title": "5.3 Cotação",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 362,
+      "endLine": 375,
+      "summary": "``` DRAFT ──SUBMIT──► SUBMITTED ──SELECT──► SELECTED │ │ │ ├──REJECT──► REJECTED │ ├──CANCEL──► CANCELLED │ └──REOPEN──► DRAFT └──CANCEL──► CANCELLED CANCELL...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-5-4-mapa-comparativo",
+      "title": "5.4 Mapa Comparativo",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 376,
+      "endLine": 379,
+      "summary": "`DRAFT → COMPLETED` (via `completeBidComparison`, que seleciona a vencedora e avança a requisição para `COMPARED`) · `CANCELLED`.",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-5-5-pedido-de-compra-previsto-fatia-2",
+      "title": "5.5 Pedido de Compra (previsto — Fatia 2)",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 380,
+      "endLine": 383,
+      "summary": "`DRAFT → ISSUED → PARTIALLY_RECEIVED → FULLY_RECEIVED → CLOSED` · `ISSUED → CANCELLED`.",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-5-6-recebimento-implementado-fatia-2",
+      "title": "5.6 Recebimento (implementado — Fatia 2)",
+      "level": 3,
+      "file": "suprimentos.md",
+      "startLine": 384,
+      "endLine": 389,
+      "summary": "`DRAFT → CONFIRMED` (parcial ou total), com inspeção de recebimento opcional via E13. ---",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-6-api-fatia-1-14-rotas-implementadas",
+      "title": "6. API (Fatia 1 — 14 rotas implementadas)",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 390,
+      "endLine": 421,
+      "summary": "Base: `/api/v1/projects/[id]/procurement/…` (exceto fornecedores em `/api/v1/suppliers/…`). Padrão `apiHandler` + `actorOf` + `idsFrom`/`projectIdFrom`. Perm...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-7-telas-fatia-1",
+      "title": "7. Telas (Fatia 1)",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 422,
+      "endLine": 435,
+      "summary": "- **`/suprimentos`** — visão geral por projeto: contagem de requisições, em cotação, cotadas, aprovadas e fornecedores homologados; link para a tela do proje...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-8-limitacoes-conhecidas-hoje",
+      "title": "8. Limitações conhecidas (hoje)",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 436,
+      "endLine": 448,
+      "summary": "1. **PO/recebimento implementados na Fatia 2** (rotas `procurement/orders`, `procurement/receipts`); inspeção de recebimento via E13 segue pendente de integr...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-9-proximo-passo",
+      "title": "9. Próximo passo",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 449,
+      "endLine": 454,
+      "summary": "**E14 completo.** Próxima frente: **E15 Commissioning** (plano, teste, reteste, aceite). Pendências de procurement: inspeção de recebimento integrada ao E13,...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "suprimentos-10-verificacao-gate-da-fatia-1",
+      "title": "10. Verificação (gate da Fatia 1)",
+      "level": 2,
+      "file": "suprimentos.md",
+      "startLine": 455,
+      "endLine": 465,
+      "summary": "- `eslint` 0 problemas · `tsc --noEmit` limpo. - **263 testes unitários** (`tests/unit/procurement-engine.test.ts` — máquina de estados de requisição e cotaç...",
+      "tags": [
+        "suprimentos"
+      ]
+    },
+    {
+      "id": "qualidade-1-os-sete-conceitos",
+      "title": "1. Os sete conceitos",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 12,
+      "endLine": 35,
+      "summary": "| Conceito | Entidade | O que é | Código | |---|---|---|---| | **Modelo de checklist** | `ChecklistTemplate` | Biblioteca de itens por projeto. Guarda **apen...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-2-fluxo-completo-visao-geral",
+      "title": "2. Fluxo completo (visão geral)",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 36,
+      "endLine": 153,
+      "summary": "``` ┌──────────────────────────────────────────────────────────────────────────┐ │ 1. MODELO (ChecklistTemplate) │ │ criar itens [{key, text, required}] → có...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-3-maquinas-de-estados",
+      "title": "3. Máquinas de estados",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 154,
+      "endLine": 155,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-3-1-execucao-de-checklist-engine-ts",
+      "title": "3.1 Execução de checklist (`engine.ts`)",
+      "level": 3,
+      "file": "qualidade.md",
+      "startLine": 156,
+      "endLine": 167,
+      "summary": "| Status | Rótulo PT | Ações disponíveis | Observação | |---|---|---|---| | `DRAFT` | Em preenchimento | `COMPLETE`, `CANCEL` | único status **editável** | |...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-3-2-inspecao-engine-ts",
+      "title": "3.2 Inspeção (`engine.ts`)",
+      "level": 3,
+      "file": "qualidade.md",
+      "startLine": 168,
+      "endLine": 191,
+      "summary": "| Status | Rótulo PT | Ações disponíveis | Editável? | |---|---|---|---| | `PLANNED` | Planejada | `EXECUTE`, `CANCEL` | sim | | `EXECUTED` | Executada | `PA...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-3-3-nao-conformidade-ncr-engine-ts-nonconformiti",
+      "title": "3.3 Não conformidade — NCR (`engine.ts` + `nonconformities.ts`)",
+      "level": 3,
+      "file": "qualidade.md",
+      "startLine": 192,
+      "endLine": 211,
+      "summary": "| Status | Rótulo PT | Ações disponíveis | Editável? | |---|---|---|---| | `OPEN` | Aberta | `START`, `CANCEL` | sim | | `CORRECTION` | Em correção | `SUBMIT...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-3-4-acao-corretiva-engine-ts-corrective-actions-",
+      "title": "3.4 Ação corretiva (`engine.ts` + `corrective-actions.ts`)",
+      "level": 3,
+      "file": "qualidade.md",
+      "startLine": 212,
+      "endLine": 230,
+      "summary": "| Status | Rótulo PT | Ações disponíveis | Editável? | |---|---|---|---| | `OPEN` | Aberta | `START`, `CANCEL` | sim | | `IN_PROGRESS` | Em andamento | `COMP...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-3-5-punch-list-engine-ts-punch-items-ts",
+      "title": "3.5 Punch list (`engine.ts` + `punch-items.ts`)",
+      "level": 3,
+      "file": "qualidade.md",
+      "startLine": 231,
+      "endLine": 262,
+      "summary": "| Status | Rótulo PT | Ações disponíveis | Editável? | |---|---|---|---| | `OPEN` | Aberto | `ASSIGN` (→ ASSIGNED) | sim | | `ASSIGNED` | Atribuído | `START`...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-4-regras-de-negocio-gravadas-nos-writers",
+      "title": "4. Regras de negócio (gravadas nos writers)",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 263,
+      "endLine": 324,
+      "summary": "**Modelo (`templates.ts`)** - Mínimo de 1 item, com texto não vazio (`isValidTemplateItems`). - Itens do modelo nunca têm `result` — o resultado nasce na exe...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-5-evidencia-a-regra-do-33-na-pratica",
+      "title": "5. Evidência (a regra do §33 na prática)",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 325,
+      "endLine": 337,
+      "summary": "A inspeção só pode sair de `EXECUTED` para `PASSED`/`FAILED` com prova material: | Tipo | Como vincular hoje | Onde contar | |---|---|---| | **Foto de evidên...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-6-api-30-rotas",
+      "title": "6. API (30 rotas)",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 338,
+      "endLine": 384,
+      "summary": "Base: `/api/v1/projects/[id]/quality/…` — padrão `apiHandler` + `actorOf` + `idsFrom`, mesmo padrão do módulo de campo. | Método | Rota | Permissão | Função...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-7-telas",
+      "title": "7. Telas",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 385,
+      "endLine": 420,
+      "summary": "- **`/projetos/[id]/qualidade`** — página principal (`quality-view.tsx`), server-side com os selectors. Espelho da tela de `/campo`. - **`/qualidade`** — res...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-8-limitacoes-conhecidas-hoje",
+      "title": "8. Limitações conhecidas (hoje)",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 421,
+      "endLine": 438,
+      "summary": "1. **Execução não pode ser editada após concluir** sem reabrir — por design (rastro de conformidade), mas exige o passo extra de `REOPEN`. 2. **Foto e checkl...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-9-proximo-passo",
+      "title": "9. Próximo passo",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 439,
+      "endLine": 453,
+      "summary": "**E13 fechado no código** (Fatia 1 + 2a + 2b). O fluxo §33 completo está de pé: ``` Planned → Executed → Passed / Failed → Corrective Action → Verification →...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "qualidade-10-verificacao-gate-da-fatia-2b",
+      "title": "10. Verificação (gate da Fatia 2b)",
+      "level": 2,
+      "file": "qualidade.md",
+      "startLine": 454,
+      "endLine": 475,
+      "summary": "- `eslint` 0 problemas · `tsc --noEmit` limpo. - **226 testes unitários** (incluindo máquina punch, `isPunchItemOverdue` e board com punch list em `tests/uni...",
+      "tags": [
+        "qualidade"
+      ]
+    },
+    {
+      "id": "custos-1-tres-entidades",
+      "title": "1. Três entidades",
+      "level": 2,
+      "file": "custos.md",
+      "startLine": 8,
+      "endLine": 20,
+      "summary": "O custo de um projeto vive em três tabelas, todas escopadas por `organizationId` (isolamento de tenant) e auditáveis: | Entidade | O que é | Código | |---|--...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-2-extracao-do-json-orcamento-custos",
+      "title": "2. Extração do JSON (`/orcamento` → custos)",
+      "level": 2,
+      "file": "custos.md",
+      "startLine": 21,
+      "endLine": 34,
+      "summary": "O JSON vem do export da calculadora. O caminho é: ``` /orcamento (calculadora stateless) │ exporta BudgetEstimate (JSON) ▼ POST /api/v1/projects/[id]/cost/im...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-2-1-formato-aceito",
+      "title": "2.1 Formato aceito",
+      "level": 3,
+      "file": "custos.md",
+      "startLine": 35,
+      "endLine": 54,
+      "summary": "A API aceita um objeto com o array `quantitativos` (mín. 1, máx. 2000). Cada linha tem os campos abaixo, que são mapeados direto para o `CostItem`: | Campo d...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-2-3-custo-direto-custo-total-do-projeto",
+      "title": "2.3 Custo direto ≠ custo total do projeto",
+      "level": 3,
+      "file": "custos.md",
+      "startLine": 55,
+      "endLine": 77,
+      "summary": "Os itens importados são **custos diretos** — a obra em si, linha a linha: ``` custoTotal da linha = pu × quantidade × fator de custo local ``` O que entra no...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-2-2-replace-all",
+      "title": "2.2 Replace-all",
+      "level": 3,
+      "file": "custos.md",
+      "startLine": 78,
+      "endLine": 91,
+      "summary": "A importação substitui todos os itens vivos do projeto (mesmo princípio do import de cronograma), dentro de uma única transação: 1. Soft-delete dos itens viv...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-3-evm-desempenho-de-custo",
+      "title": "3. EVM — desempenho de custo",
+      "level": 2,
+      "file": "custos.md",
+      "startLine": 92,
+      "endLine": 114,
+      "summary": "O motor (`engine.ts`, puro, sem I/O) combina o custo com o progresso do cronograma: | Indicador | Fórmula | |---|---| | **BAC** | Σ `amount` dos itens (= cus...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-4-baseline-e-gate-g4",
+      "title": "4. Baseline e gate G4",
+      "level": 2,
+      "file": "custos.md",
+      "startLine": 115,
+      "endLine": 124,
+      "summary": "- **Baseline de custo** congela o orçamento (snapshot com `totalBudget`, `itemCount` e os itens). Aprovada é imutável (`BASELINE_IMMUTABLE`). - **Gate G4** (...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-5-ui",
+      "title": "5. UI",
+      "level": 2,
+      "file": "custos.md",
+      "startLine": 125,
+      "endLine": 135,
+      "summary": "- `/projetos/[id]/custos` — detalhe do projeto: cards de EVM, tabelas de itens / compromissos / realizados / baselines, CRUD e importação. - `/custos` — visã...",
+      "tags": [
+        "custos"
+      ]
+    }
+  ]
+}
