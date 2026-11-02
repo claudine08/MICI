@@ -1513,3 +1513,13 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
 - API: GET /api/v1/projects/[id]/dashboard?asOf=...
 - Modulo src/modules/dashboard/project.ts.
 - Build e lint verdes.
+
+---
+
+## 02/11/2026 - Deploy em producao (E19 dashboard fatia 2)
+
+- Deploy Vercel: mici-i4jpef7as-homeland1 (Production, Ready), alias
+  mici-theta.vercel.app. Sem migration nova.
+- Smoke autenticado: login 302 -> /api/v1/health 200 -> /api/v1/projects/[id]/dashboard 200
+  (JSON com KPIs, curva S, Gantt, burndown, heat map, alertas); sem sessao -> 401.
+- Working tree limpa; main pushada.

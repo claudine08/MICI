@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 203.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 204.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -140,7 +140,8 @@
 | `diario-01-11-2026-e08-cost-tracking-cash-flow` | 01/11/2026 - E08+ Cost Tracking & Cash Flow | DIARIO.md:1464-1483 | - Estendido o modulo de Custos (E08) com rastreio por WBS/atividade: - CostItem, CostCommitment, CostActual passam a carregar wbsNodeId e ctivityId (FKs par... |
 | `diario-02-11-2026-deploy-em-producao-e08-cost-tracking-` | 02/11/2026 - Deploy em producao (E08+ cost tracking + cash flow) | DIARIO.md:1484-1495 | - Migration 20261101000000_phase17_cost_tracking aplicada no Neon (19 migrations no total). - Deploy Vercel: mici-c6kzjgsfv-homeland1 (Production, Ready), al... |
 | `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 1) | DIARIO.md:1496-1505 | - Deploy Vercel: mici-ddq4bapgz-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova (E19 fatia 1 nao altera schema). - Smoke auten... |
-| `diario-02-11-2026-e19-project-dashboard-fatia-2` | 02/11/2026 - E19 Project Dashboard, Fatia 2 | DIARIO.md:1506-1516 | - Drill-down por projeto em /projetos/[id]/dashboard: KPIs (BAC/PV/EV/AC/SPI/CPI/percentuais/datas plan-real), curva S (PV/EV/AC mensal), burndown de ativida... |
+| `diario-02-11-2026-e19-project-dashboard-fatia-2` | 02/11/2026 - E19 Project Dashboard, Fatia 2 | DIARIO.md:1506-1518 | - Drill-down por projeto em /projetos/[id]/dashboard: KPIs (BAC/PV/EV/AC/SPI/CPI/percentuais/datas plan-real), curva S (PV/EV/AC mensal), burndown de ativida... |
+| `diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-2` | 02/11/2026 - Deploy em producao (E19 dashboard fatia 2) | DIARIO.md:1519-1526 | - Deploy Vercel: mici-i4jpef7as-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea... |
 | `roadmap-gate-de-verificacao-entre-fases` | Gate de verificação entre fases | ROADMAP.md:11-27 | Antes de iniciar uma fase, a fase anterior deve passar na suíte completa: `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `n... |
 | `roadmap-correcao-de-ambiente-e-sessao-07-10-2026` | Correção de ambiente e sessão (07/10/2026) | ROADMAP.md:28-60 | Bug reportado em `/selecionar-organizacao`: aviso **"Sessão expirada ou ausente."** junto de "Olá, Paulo" e "Você ainda não participa de nenhuma organização"... |
 | `roadmap-producao-sync-de-dados-auth-url-14-10-2026` | Produção: sync de dados + AUTH_URL (14/10/2026) | ROADMAP.md:61-89 | Login no Vercel falhava (`CredentialsSignin`) e os 302 do Auth.js apontavam para `http://localhost:3000`. Duas causas independentes: - [x] **Senhas dos perfi... |

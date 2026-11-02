@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T02:10:43.839Z",
+  "generatedAt": "2026-11-02T02:15:00.657Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 203,
+  "chunkCount": 204,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -1625,8 +1625,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1506,
-      "endLine": 1516,
+      "endLine": 1518,
       "summary": "- Drill-down por projeto em /projetos/[id]/dashboard: KPIs (BAC/PV/EV/AC/SPI/CPI/percentuais/datas plan-real), curva S (PV/EV/AC mensal), burndown de ativida...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-2",
+      "title": "02/11/2026 - Deploy em producao (E19 dashboard fatia 2)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1519,
+      "endLine": 1526,
+      "summary": "- Deploy Vercel: mici-i4jpef7as-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea...",
       "tags": [
         "diario"
       ]
