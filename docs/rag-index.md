@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 210.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 211.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -13,9 +13,9 @@
 | `devcurrent-5-e08-cost-tracking-cash-flow-a-a-implementado-0` | 5. E08+ Cost Tracking & Cash Flow â€” âœ… IMPLEMENTADO (01/11) | devcurrent.md:59-77 | ExtensÃ£o do mÃ³dulo de Custos (E08) + integraÃ§Ã£o com Procurement (E14) + Schedule (E07): - **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e... |
 | `devcurrent-6-e14-procurement-a-a-completo-fatia-1-fatia-2` | 6. E14 Procurement â€” âœ… COMPLETO (Fatia 1 + Fatia 2) | devcurrent.md:78-87 | - **Fatia 1** (produÃ§Ã£o 30/10): fornecedores (SP), requisiÃ§Ãµes (PR), cotaÃ§Ãµes (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procur... |
 | `devcurrent-6-restante-do-roadmap-apa-s-e14` | 6. Restante do roadmap (apÃ³s E14) | devcurrent.md:88-103 | \| Ã‰pico \| Escopo curto \| \|---\|---\| \| E19 Project Dashboard \| Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat... |
-| `devcurrent-7-ponteiros-ra-pidos-de-ca-digo` | 7. Ponteiros rÃ¡pidos de cÃ³digo | devcurrent.md:104-115 | - Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf... |
-| `devcurrent-8-rag-a-a-ndice-de-chunks-auto-gerado` | 8. RAG â€” Ã­ndice de chunks (auto-gerado) | devcurrent.md:116-125 | - Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind... |
-| `devcurrent-9-riscos-conhecidos` | 9. Riscos conhecidos | devcurrent.md:126-134 | - Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n... |
+| `devcurrent-7-ponteiros-ra-pidos-de-ca-digo` | 7. Ponteiros rÃ¡pidos de cÃ³digo | devcurrent.md:104-116 | - Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf... |
+| `devcurrent-8-rag-a-a-ndice-de-chunks-auto-gerado` | 8. RAG â€” Ã­ndice de chunks (auto-gerado) | devcurrent.md:117-126 | - Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind... |
+| `devcurrent-9-riscos-conhecidos` | 9. Riscos conhecidos | devcurrent.md:127-135 | - Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n... |
 | `fluxo-1-visao-geral-do-ciclo-mvp` | 1. Visão geral do ciclo (MVP) | docs/fluxo-e01-e14.md:3-12 | ``` Oportunidade → Requisitos → Orçamento → Projeto → Baseline → Execução → Avanço → Custo → Risco → Mudança → Qualidade → Comissionamento → Aceite → Encerra... |
 | `fluxo-2-epicos-e-o-que-cada-um-entrega` | 2. Épicos e o que cada um entrega | docs/fluxo-e01-e14.md:13-31 | \| Épico \| Módulo \| Entrega-chave \| \|---\|---\|---\| \| E01 Foundation \| `src/lib`, `prisma` \| Next 16 + TS + Tailwind 4, Prisma 7, Auth.js v5, RBAC 18×25×8, outb... |
 | `fluxo-3-fluxo-end-to-end-com-modulos` | 3. Fluxo end-to-end (com módulos) | docs/fluxo-e01-e14.md:32-33 | (secao sem corpo) |
@@ -148,6 +148,7 @@
 | `diario-02-11-2026-encerramento-do-dia` | 02/11/2026 - Encerramento do dia | DIARIO.md:1561-1572 | Estado final da sessão: - E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em produção. - Links de drill-down par... |
 | `diario-02-11-2026-e15-commissioning-implementado-e-depl` | 02/11/2026 — E15 Commissioning implementado e deployado | DIARIO.md:1573-1581 | - Módulo `src/modules/commissioning/` (plano, item de teste/reteste, aceite formal) + migration `phase18_commissioning` + RBAC `COMMISSIONING`. - API em `/ap... |
 | `diario-02-11-2026-e16-sustainability-implementado-e-dep` | 02/11/2026 - E16 Sustainability implementado e deployado | DIARIO.md:1582-1589 | - Modulo src/modules/sustainability/ (PSP, metricas, baseline, metas, medicoes, residuos) + migration phase19_sustainability. - API /api/v1/projects/[id]/sus... |
+| `diario-02-11-2026-e18-ai-implementado-e-deployado` | 02/11/2026 - E18 AI implementado e deployado | DIARIO.md:1590-1597 | - Modulo src/modules/ai/ (gateway, prompts, logs) + migration phase20_ai + RBAC AI. - API /api/v1/ai/run e /api/v1/ai/requests; UI /ai. - Deploy Vercel produ... |
 | `roadmap-gate-de-verificaa-a-o-entre-fases` | Gate de verificaÃ§Ã£o entre fases | ROADMAP.md:11-27 | Antes de iniciar uma fase, a fase anterior deve passar na suÃ­te completa: `npm run lint` Â· `npm run typecheck` Â· `npm test` Â· `npm run test:integration`... |
 | `roadmap-correa-a-o-de-ambiente-e-sessa-o-07-10-2026` | CorreÃ§Ã£o de ambiente e sessÃ£o (07/10/2026) | ROADMAP.md:28-60 | Bug reportado em `/selecionar-organizacao`: aviso **"SessÃ£o expirada ou ausente."** junto de "OlÃ¡, Paulo" e "VocÃª ainda nÃ£o participa de nenhuma organiza... |
 | `roadmap-produa-a-o-sync-de-dados-auth-url-14-10-2026` | ProduÃ§Ã£o: sync de dados + AUTH_URL (14/10/2026) | ROADMAP.md:61-89 | Login no Vercel falhava (`CredentialsSignin`) e os 302 do Auth.js apontavam para `http://localhost:3000`. Duas causas independentes: - [x] **Senhas dos perfi... |

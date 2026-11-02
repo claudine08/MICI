@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T21:12:42.592Z",
+  "generatedAt": "2026-11-02T22:32:29.248Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 210,
+  "chunkCount": 211,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -101,7 +101,7 @@
       "level": 2,
       "file": "devcurrent.md",
       "startLine": 104,
-      "endLine": 115,
+      "endLine": 116,
       "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf...",
       "tags": [
         "devcurrent"
@@ -112,8 +112,8 @@
       "title": "8. RAG â€” Ã­ndice de chunks (auto-gerado)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 116,
-      "endLine": 125,
+      "startLine": 117,
+      "endLine": 126,
       "summary": "- Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind...",
       "tags": [
         "devcurrent"
@@ -124,8 +124,8 @@
       "title": "9. Riscos conhecidos",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 126,
-      "endLine": 134,
+      "startLine": 127,
+      "endLine": 135,
       "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n...",
       "tags": [
         "devcurrent"
@@ -1711,6 +1711,18 @@
       "startLine": 1582,
       "endLine": 1589,
       "summary": "- Modulo src/modules/sustainability/ (PSP, metricas, baseline, metas, medicoes, residuos) + migration phase19_sustainability. - API /api/v1/projects/[id]/sus...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-e18-ai-implementado-e-deployado",
+      "title": "02/11/2026 - E18 AI implementado e deployado",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1590,
+      "endLine": 1597,
+      "summary": "- Modulo src/modules/ai/ (gateway, prompts, logs) + migration phase20_ai + RBAC AI. - API /api/v1/ai/run e /api/v1/ai/requests; UI /ai. - Deploy Vercel produ...",
       "tags": [
         "diario"
       ]

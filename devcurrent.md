@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 02/11/2026 (encerramento). E01-E16 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em producao. E16 Sustainability deployado: PSP, metricas, baseline, metas, medicoes, residuos; migration `phase19_sustainability` aplicada no Neon (21 migrations). Smoke autenticado OK. Working tree limpa. Proxima frente: E17 Dashboard (ou E18 AI).
+**Ultima atualizacao:** 02/11/2026 (encerramento). E01-E18 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em producao. E18 AI deployado: gateway, prompts, resumo diario, classificacao, busca (mock sem OPENAI_API_KEY); migration `phase20_ai` aplicada no Neon (22 migrations). Smoke autenticado OK. Working tree limpa. Proxima frente: nenhuma (roadmap E01-E18 completo).
 
 ---
 
@@ -108,7 +108,8 @@ Schedule (E07):
 - Campo (E12/backlog): `src/modules/field/*` Â· rotas `api/v1/projects/[id]/field/*` Â· UI `src/components/field/field-view.tsx` Â· fila offline `src/lib/offline-queue.ts` + `public/sw.js` + `src/app/manifest.ts` Â· testes `tests/{unit/offline-queue,unit/field-engine,integration/field}.test.ts`.
 - Qualidade (E13): `src/modules/quality/*` (inclui `punch-items.ts`)
 - Comissionamento (E15): `src/modules/commissioning/*` · `comissionamento.md` · rotas `api/v1/projects/[id]/commissioning/*` · UI `src/components/commissioning/commissioning-view.tsx` e `src/app/(app)/projetos/[id]/commissioning`.
-- Sustentabilidade (E16): `src/modules/sustainability/*` · `sustentabilidade.md` · rotas `api/v1/projects/[id]/sustainability/*` · UI `src/components/sustainability/sustainability-view.tsx` e `src/app/(app)/projetos/[id]/sustentabilidade` Â· `qualidade.md` Â· testes `tests/{unit/quality-engine,integration/quality}.test.ts`.
+- Sustentabilidade (E16): `src/modules/sustainability/*` · `sustentabilidade.md` · rotas `api/v1/projects/[id]/sustainability/*` · UI `src/components/sustainability/sustainability-view.tsx` e `src/app/(app)/projetos/[id]/sustentabilidade`.
+- IA (E18): `src/modules/ai/*` · rotas `api/v1/ai/run`, `api/v1/ai/requests` · UI `/ai`. Requer `OPENAI_API_KEY` para respostas reais (mock sem chave). Â· `qualidade.md` Â· testes `tests/{unit/quality-engine,integration/quality}.test.ts`.
 - Auth/permissÃµes: `src/lib/auth.ts` Â· guards nas rotas Â· seed em `prisma/seed.ts`.
 - Schema completo: `prisma/schema.prisma` (~2500 linhas).
 - RAG de docs: `scripts/rag-index.mjs`, `scripts/rag-query.mjs`, `docs/rag-index.{json,md}`.

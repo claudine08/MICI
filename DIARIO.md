@@ -1586,3 +1586,11 @@ Estado final da sessão:
 - Deploy Vercel producao mici-theta.vercel.app; migration aplicada no Neon.
 - Smoke autenticado: GET plans -> 200; sem sessao -> 401.
 - Testes: 268 unit + 302 integracao verdes.
+
+## 02/11/2026 - E18 AI implementado e deployado
+
+- Modulo src/modules/ai/ (gateway, prompts, logs) + migration phase20_ai + RBAC AI.
+- API /api/v1/ai/run e /api/v1/ai/requests; UI /ai.
+- Deploy Vercel producao; migration aplicada no Neon (22 migrations); permissoes sincronizadas.
+- Smoke: /ai -> 200; run -> SUCCESS (mock sem OPENAI_API_KEY).
+- Testes: 268 unit + 302 integracao verdes.
