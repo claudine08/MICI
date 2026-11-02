@@ -39,7 +39,10 @@ export interface NavGroup {
 export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Geral",
-    items: [{ label: "Painel", href: "/painel", icon: LayoutDashboard }],
+    items: [
+      { label: "Painel", href: "/painel", icon: LayoutDashboard },
+      { label: "Executivo", href: "/executivo", icon: LayoutDashboard },
+    ],
   },
   {
     title: "Portfólio",
