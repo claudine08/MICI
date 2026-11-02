@@ -17,11 +17,7 @@
 
 ## 1. Estado atual (resumo de 1 linha)
 
-E01â€“E14 completos e em produÃ§Ã£o (E14 com PO + recebimento). **E19 Project
-Dashboard Fatia 1 implementada** (portfÃ³lio + KPIs + as-of date + tabela de
-projetos) no menu Painel. PrÃ³xima frente: E19 Fatia 2 (drill-down, curva S,
-Gantt, burndown, heat map de riscos, alertas) ou E15 Commissioning (a cargo
-do usuÃ¡rio).
+| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2 implementadas) |
 
 ## 2. Ambiente e comandos (nÃ£o precisa rediscover)
 
@@ -93,7 +89,7 @@ Schedule (E07):
 
 | Ã‰pico | Escopo curto |
 |---|---|
-| E19 Project Dashboard | PortfÃ³lio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1 âœ…) |
+| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2 implementadas) |
 | E15 Commissioning | Plano, teste, reteste, aceite |
 | E16 Sustainability | PSP, baseline, metas, mediÃ§Ãµes, resÃ­duo, relatÃ³rio |
 | E17 Dashboard | PortfÃ³lio, executivo, projeto, campo (genÃ©rico) |

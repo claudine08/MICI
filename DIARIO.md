@@ -1500,3 +1500,16 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
 - Smoke autenticado: login 302 -> /api/v1/health 200 -> /api/v1/dashboard/portfolio 200
   (JSON com KPIs e projetos); sem sessao -> 401.
 - Working tree limpa; main pushada.
+
+---
+
+## 02/11/2026 - E19 Project Dashboard, Fatia 2
+
+- Drill-down por projeto em /projetos/[id]/dashboard:
+  KPIs (BAC/PV/EV/AC/SPI/CPI/percentuais/datas plan-real),
+  curva S (PV/EV/AC mensal), burndown de atividades, Gantt resumido
+  (atividades com float/critico/avanço), heat map de riscos
+  (probabilidade x impacto), alertas (atraso, sobrecusto, termino, riscos criticos).
+- API: GET /api/v1/projects/[id]/dashboard?asOf=...
+- Modulo src/modules/dashboard/project.ts.
+- Build e lint verdes.

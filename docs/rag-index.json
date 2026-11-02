@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T01:56:01.623Z",
+  "generatedAt": "2026-11-02T02:10:43.839Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 202,
+  "chunkCount": 203,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -17,8 +17,8 @@
       "level": 2,
       "file": "devcurrent.md",
       "startLine": 18,
-      "endLine": 25,
-      "summary": "E01â€“E14 completos e em produÃ§Ã£o (E14 com PO + recebimento). **E19 Project Dashboard Fatia 1 implementada** (portfÃ³lio + KPIs + as-of date + tabela de pr...",
+      "endLine": 21,
+      "summary": "| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2 im...",
       "tags": [
         "devcurrent"
       ]
@@ -28,8 +28,8 @@
       "title": "2. Ambiente e comandos (nÃ£o precisa rediscover)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 26,
-      "endLine": 44,
+      "startLine": 22,
+      "endLine": 40,
       "summary": "| Item | Valor | |---|---| | Repo | `https://github.com/claudine08/MICI.git`, branch `main` | | ProduÃ§Ã£o | Vercel `mici-theta.vercel.app` (projeto `mici`,...",
       "tags": [
         "devcurrent"
@@ -40,8 +40,8 @@
       "title": "3. ConvenÃ§Ãµes do repo (seguir Ã  risca)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 45,
-      "endLine": 54,
+      "startLine": 41,
+      "endLine": 50,
       "summary": "- **Commits**: sÃ³ quando o usuÃ¡rio pedir. PadrÃ£o: `feat: <Ã¡rea> - <resumo> - E<NN> US<NN>` (ASCII, sem acento) e depois `docs: registra â€¦`. `main` dire...",
       "tags": [
         "devcurrent"
@@ -52,8 +52,8 @@
       "title": "4. Backlog E12: PWA/fila offline completa â€” âœ… FECHADO (29/10)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 55,
-      "endLine": 62,
+      "startLine": 51,
+      "endLine": 58,
       "summary": "Contexto e implementaÃ§Ã£o detalhada em `docs/rag-index.md` (chunks `diario-*` e `devcurrent-*`) e no DIARIO 29/10. Resumo: PWA (manifest + SW) + fila offlin...",
       "tags": [
         "devcurrent"
@@ -64,8 +64,8 @@
       "title": "5. E08+ Cost Tracking & Cash Flow â€” âœ… IMPLEMENTADO (01/11)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 63,
-      "endLine": 81,
+      "startLine": 59,
+      "endLine": 77,
       "summary": "ExtensÃ£o do mÃ³dulo de Custos (E08) + integraÃ§Ã£o com Procurement (E14) + Schedule (E07): - **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e...",
       "tags": [
         "devcurrent"
@@ -76,8 +76,8 @@
       "title": "6. E14 Procurement â€” âœ… COMPLETO (Fatia 1 + Fatia 2)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 82,
-      "endLine": 91,
+      "startLine": 78,
+      "endLine": 87,
       "summary": "- **Fatia 1** (produÃ§Ã£o 30/10): fornecedores (SP), requisiÃ§Ãµes (PR), cotaÃ§Ãµes (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procur...",
       "tags": [
         "devcurrent"
@@ -88,9 +88,9 @@
       "title": "6. Restante do roadmap (apÃ³s E14)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 92,
-      "endLine": 107,
-      "summary": "| Ã‰pico | Escopo curto | |---|---| | E19 Project Dashboard | PortfÃ³lio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat...",
+      "startLine": 88,
+      "endLine": 103,
+      "summary": "| Ã‰pico | Escopo curto | |---|---| | E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat...",
       "tags": [
         "devcurrent"
       ]
@@ -100,8 +100,8 @@
       "title": "7. Ponteiros rÃ¡pidos de cÃ³digo",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 108,
-      "endLine": 117,
+      "startLine": 104,
+      "endLine": 113,
       "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf...",
       "tags": [
         "devcurrent"
@@ -112,8 +112,8 @@
       "title": "8. RAG â€” Ã­ndice de chunks (auto-gerado)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 118,
-      "endLine": 127,
+      "startLine": 114,
+      "endLine": 123,
       "summary": "- Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind...",
       "tags": [
         "devcurrent"
@@ -124,8 +124,8 @@
       "title": "9. Riscos conhecidos",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 128,
-      "endLine": 136,
+      "startLine": 124,
+      "endLine": 132,
       "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n...",
       "tags": [
         "devcurrent"
@@ -1613,8 +1613,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1496,
-      "endLine": 1503,
+      "endLine": 1505,
       "summary": "- Deploy Vercel: mici-ddq4bapgz-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova (E19 fatia 1 nao altera schema). - Smoke auten...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-e19-project-dashboard-fatia-2",
+      "title": "02/11/2026 - E19 Project Dashboard, Fatia 2",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1506,
+      "endLine": 1516,
+      "summary": "- Drill-down por projeto em /projetos/[id]/dashboard: KPIs (BAC/PV/EV/AC/SPI/CPI/percentuais/datas plan-real), curva S (PV/EV/AC mensal), burndown de ativida...",
       "tags": [
         "diario"
       ]
