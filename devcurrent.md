@@ -11,10 +11,10 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar só o chunk relevante e reduzir tokens.
 
-**Última atualização:** 31/10/2026 (E14 Procurement completo — Fatia 1+2 em
-produção: fornecedores, PR, QT, BC, PO e recebimento; migration
-`phase16_procurement` com conteúdo; working tree com q.sql untracked.
-Próxima frente: **E15 Commissioning**.)
+**Última atualização:** 02/11/2026 (E08+ Cost Tracking & Cash Flow em
+produção: migration `phase17_cost_tracking` aplicada no Neon (19 migrations),
+deploy `mici-c6kzjgsfv-homeland1`, smoke verde — health/projects/cashflow
+export 200, sem sessão 401. Próxima frente: **E15 Commissioning**.)
 
 ---
 
@@ -31,7 +31,7 @@ com `q.sql` untracked; `main` pushada até `9e5c259`.
 | Repo | `https://github.com/claudine08/MICI.git`, branch `main` |
 | Produção | Vercel `mici-theta.vercel.app` (projeto `mici`, team `team_wbWA52Y5iAGD3NRZNIrNEMAe`, CLI logada como `ccpjr8-1922`) |
 | Banco prod | Neon `ep-lively-firefly-b7d3dgk3-pooler…/neondb` — URL em `.env.local` (puxada do Vercel; **nunca commitar**) |
-| Migrations | 17 aplicadas no Neon (`init_foundation_identity` → `phase16_procurement`) |
+| Migrations | 19 aplicadas no Neon (`init_foundation_identity` → `phase17_cost_tracking`) |
 | Banco local | PostgreSQL 17 portátil em `%LOCALAPPDATA%\PostgreSQL17-data`; **sobe via tarefa agendada `mici-postgres`** (settings corrigidas 29/10: `AllowStartIfOnBatteries=True`; start via shell direto morre com `0xC0000142`) |
 | Dev local | `npm run dev` → `http://localhost:3000`; seed demo: 5 usuários, login `admin@mici.demo` / `Demo@1234` |
 | `.env*` | `DATABASE_URL` local usa `127.0.0.1` (Prisma não conecta em `localhost`/IPv6 nesta máquina). `prisma7.config.ts` carrega `.env` via dotenv (não `.env.local`) |

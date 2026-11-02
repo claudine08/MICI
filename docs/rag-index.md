@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 182.
+> Fontes: devcurrent.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 183.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -119,7 +119,8 @@
 | `diario-estado-5` | Estado | DIARIO.md:1435-1440 | - **Backlog E12 (PWA/fila offline) fechado de ponta a ponta** — Fatia 1 + Fatia 2 em produção; working tree limpa, `main` pushada. **Próximo épico: E14 Procu... |
 | `diario-30-10-2026-e14-procurement-fatia-1` | 30/10/2026 � E14 Procurement, Fatia 1 | DIARIO.md:1441-1448 | - Fornecedores (SP), Requisi��es de Compra (PR), Cota��es (QT) e Mapa Comparativo (BC) em produ��o. - Commit feat 2ea90bb, migration phase15_procurement no N... |
 | `diario-31-10-2026-atualizacao-do-devcurrent-rag-leve-pa` | 31/10/2026 — Atualizacao do devcurrent + RAG leve para docs | DIARIO.md:1449-1463 | - devcurrent.md reescrito: E14 marcado completo (Fatia 1+2), proxima frente E15 Commissioning, contagem de migrations 17, ponteiros de procurement. - ROADMAP... |
-| `diario-01-11-2026-e08-cost-tracking-cash-flow` | 01/11/2026 - E08+ Cost Tracking & Cash Flow | DIARIO.md:1464-1481 | - Estendido o modulo de Custos (E08) com rastreio por WBS/atividade: - CostItem, CostCommitment, CostActual passam a carregar wbsNodeId e ctivityId (FKs par... |
+| `diario-01-11-2026-e08-cost-tracking-cash-flow` | 01/11/2026 - E08+ Cost Tracking & Cash Flow | DIARIO.md:1464-1483 | - Estendido o modulo de Custos (E08) com rastreio por WBS/atividade: - CostItem, CostCommitment, CostActual passam a carregar wbsNodeId e ctivityId (FKs par... |
+| `diario-02-11-2026-deploy-em-producao-e08-cost-tracking-` | 02/11/2026 - Deploy em producao (E08+ cost tracking + cash flow) | DIARIO.md:1484-1493 | - Migration 20261101000000_phase17_cost_tracking aplicada no Neon (19 migrations no total). - Deploy Vercel: mici-c6kzjgsfv-homeland1 (Production, Ready), al... |
 | `roadmap-gate-de-verificacao-entre-fases` | Gate de verificação entre fases | ROADMAP.md:11-27 | Antes de iniciar uma fase, a fase anterior deve passar na suíte completa: `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `n... |
 | `roadmap-correcao-de-ambiente-e-sessao-07-10-2026` | Correção de ambiente e sessão (07/10/2026) | ROADMAP.md:28-60 | Bug reportado em `/selecionar-organizacao`: aviso **"Sessão expirada ou ausente."** junto de "Olá, Paulo" e "Você ainda não participa de nenhuma organização"... |
 | `roadmap-producao-sync-de-dados-auth-url-14-10-2026` | Produção: sync de dados + AUTH_URL (14/10/2026) | ROADMAP.md:61-89 | Login no Vercel falhava (`CredentialsSignin`) e os 302 do Auth.js apontavam para `http://localhost:3000`. Duas causas independentes: - [x] **Senhas dos perfi... |

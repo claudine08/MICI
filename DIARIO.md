@@ -1478,3 +1478,15 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
 - Migration phase17_cost_tracking (local; producao via migrate deploy).
 - Novos campos nos schemas zod de cost (items/commitments/actuals).
 - Docs: devcurrent.md, ROADMAP.md (E08 ampliado), custos.md atualizado.
+
+---
+
+## 02/11/2026 - Deploy em producao (E08+ cost tracking + cash flow)
+
+- Migration 20261101000000_phase17_cost_tracking aplicada no Neon
+  (19 migrations no total).
+- Deploy Vercel: mici-c6kzjgsfv-homeland1 (Production, Ready), alias
+  mici-theta.vercel.app.
+- Smoke autenticado: login 302 -> /api/v1/health 200 -> /api/v1/projects 200 ->
+  /api/v1/projects/[id]/cost/cashflow/export 200 (CSV); sem sessao -> 401.
+- Working tree limpa; main pushada.

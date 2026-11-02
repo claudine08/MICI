@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T00:36:19.662Z",
+  "generatedAt": "2026-11-02T01:06:14.510Z",
   "sources": [
     "devcurrent.md",
     "DIARIO.md",
@@ -8,7 +8,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 182,
+  "chunkCount": 183,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -1372,8 +1372,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1464,
-      "endLine": 1481,
+      "endLine": 1483,
       "summary": "- Estendido o modulo de Custos (E08) com rastreio por WBS/atividade: - CostItem, CostCommitment, CostActual passam a carregar wbsNodeId e \u0007ctivityId (FKs par...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-deploy-em-producao-e08-cost-tracking-",
+      "title": "02/11/2026 - Deploy em producao (E08+ cost tracking + cash flow)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1484,
+      "endLine": 1493,
+      "summary": "- Migration 20261101000000_phase17_cost_tracking aplicada no Neon (19 migrations no total). - Deploy Vercel: mici-c6kzjgsfv-homeland1 (Production, Ready), al...",
       "tags": [
         "diario"
       ]
