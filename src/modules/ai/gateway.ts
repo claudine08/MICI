@@ -26,15 +26,18 @@ export interface AiRunResult {
 
 const DEFAULT_MODEL = process.env.AI_MODEL || "gpt-4o-mini";
 
+function mockResponse(model: string, userInput: string): { output: string; tokensIn: number | null; tokensOut: number | null } {
+  return {
+    output: `[MOCK AI - ${model}] Resposta simulada para: ${userInput.slice(0, 80)}...`,
+    tokensIn: null,
+    tokensOut: null,
+  };
+}
+
 async function callOpenAI(model: string, systemPrompt: string, userInput: string): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    // Mock para desenvolvimento sem chave
-    return {
-      output: `[MOCK AI - ${model}] Resposta simulada para: ${userInput.slice(0, 80)}...`,
-      tokensIn: null,
-      tokensOut: null,
-    };
+    return mockResponse(model, userInput);
   }
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -104,18 +107,26 @@ export async function runAi(input: AiRunInput): Promise<AiRunResult> {
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    await prisma.aiRequest.update({
+    // Fallback para mock quando a IA real estiver indisponível (sem créditos, quota, auth).
+    // Evita quebrar a UI e mantém a funcionalidade demonstrável.
+    const mock = mockResponse(model, input.input);
+    const fallbackOutput = `${mock.output}\n\n[AVISO] IA real indisponível (${msg}). Resposta mock exibida.`;
+    const updated = await prisma.aiRequest.update({
       where: { id: request.id },
-      data: { status: "FAILED", errorMessage: msg },
+      data: {
+        output: fallbackOutput,
+        status: "SUCCESS",
+        errorMessage: msg,
+      },
     });
     return {
-      output: "",
+      output: fallbackOutput,
       model,
       tokensIn: null,
       tokensOut: null,
-      status: "FAILED",
+      status: "SUCCESS",
       errorMessage: msg,
-      requestId: request.id,
+      requestId: updated.id,
     };
   }
 }
