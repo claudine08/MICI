@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 236.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 238.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -232,13 +232,15 @@
 | `sustentabilidade-integridade` | Integridade | sustentabilidade.md:43-46 | - Códigos automáticos por projeto: SP001, SM001, SB001, ST001, MS001, WR001. - Soft delete (deletedAt); idempotência por clientUuid. |
 | `sustentabilidade-limitacoes-ui` | Limitações UI | sustentabilidade.md:47-48 | - Baselines, metas e medições: apenas listagem + exclusão na UI; criação via API. |
 | `ai-visao-geral` | Visão geral | AI.md:3-5 | Módulo de inteligência artificial do MICI: gateway unificado para LLMs, registro de prompts e histórico de requisições. Permite resumo diário de obra, classi... |
-| `ai-configuracao` | Configuração | AI.md:6-10 | Variáveis de ambiente (Vercel / `.env.local`): - `OPENAI_API_KEY` — chave da OpenAI. Se ausente, o gateway retorna respostas **mock** (desenvolvimento). - `A... |
-| `ai-entidades-schema` | Entidades (schema) | AI.md:11-14 | - **AiPrompt** (`ai_prompts`): registro de prompts (código, nome, descrição, template, modelo, isSystem). Escopo por organização (organizationId nullable par... |
-| `ai-modulo-src-modules-ai` | Módulo (`src/modules/ai/`) | AI.md:15-21 | - `common.ts` — helpers (assertAiProject). - `gateway.ts` — `runAi(input)` executa a chamada ao LLM (OpenAI ou mock) e persiste o log. - `prompts.ts` — `AI_P... |
-| `ai-prompts-padrao` | Prompts padrão | AI.md:22-29 | \| Código \| Nome \| Uso \| \|---\|---\|---\| \| `DAILY_SUMMARY` \| Resumo diário de obra \| Resume diário em 5 bullet points \| \| `RISK_CLASSIFY` \| Classificação de ris... |
-| `ai-api` | API | AI.md:30-37 | Base: `/api/v1/ai` - `POST /ai/run` — body: `{ "promptCode": "DAILY_SUMMARY", "input": "...", "projectId": "uuid (opcional)" }`. Retorna `{ output, model, to... |
-| `ai-ui` | UI | AI.md:38-41 | - Rota: `/ai` (menu lateral → Geral → IA). - Tela com seletor de prompt, campo de input, projectId opcional, botão Executar e histórico de requisições (statu... |
-| `ai-gateway-detalhes` | Gateway (detalhes) | AI.md:42-46 | - Se `OPENAI_API_KEY` estiver definida: chama `https://api.openai.com/v1/chat/completions` com o modelo configurado. - Caso contrário: retorna `[MOCK AI - {m... |
-| `ai-testes` | Testes | AI.md:47-50 | - Smoke autenticado: `GET /ai` → 200; `POST /ai/run` → 200 com `status: "SUCCESS"`. - Sem sessão → 401. |
-| `ai-como-habilitar-ia-real` | Como habilitar IA real | AI.md:51-57 | 1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. Garanta créditos na conta (billing) — sem créditos, a API retorna 429. 3. No Vercel: Setting... |
-| `ai-tratamento-de-falhas` | Tratamento de falhas | AI.md:58-59 | Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: "SUCCESS"` com um aviso no o... |
+| `ai-configuracao` | Configuração | AI.md:6-12 | Variáveis de ambiente (Vercel / `.env.local`): - `OPENCODE_API_KEY` — chave do OpenCode Zen (modelos free). **Preferencial**; usa endpoint `https://opencode.... |
+| `ai-entidades-schema` | Entidades (schema) | AI.md:13-16 | - **AiPrompt** (`ai_prompts`): registro de prompts (código, nome, descrição, template, modelo, isSystem). Escopo por organização (organizationId nullable par... |
+| `ai-modulo-src-modules-ai` | Módulo (`src/modules/ai/`) | AI.md:17-23 | - `common.ts` — helpers (assertAiProject). - `gateway.ts` — `runAi(input)` executa a chamada ao LLM (OpenAI ou mock) e persiste o log. - `prompts.ts` — `AI_P... |
+| `ai-prompts-padrao` | Prompts padrão | AI.md:24-31 | \| Código \| Nome \| Uso \| \|---\|---\|---\| \| `DAILY_SUMMARY` \| Resumo diário de obra \| Resume diário em 5 bullet points \| \| `RISK_CLASSIFY` \| Classificação de ris... |
+| `ai-api` | API | AI.md:32-39 | Base: `/api/v1/ai` - `POST /ai/run` — body: `{ "promptCode": "DAILY_SUMMARY", "input": "...", "projectId": "uuid (opcional)" }`. Retorna `{ output, model, to... |
+| `ai-ui` | UI | AI.md:40-43 | - Rota: `/ai` (menu lateral → Geral → IA). - Tela com seletor de prompt, campo de input, projectId opcional, botão Executar e histórico de requisições (statu... |
+| `ai-gateway-detalhes` | Gateway (detalhes) | AI.md:44-48 | - Se `OPENAI_API_KEY` estiver definida: chama `https://api.openai.com/v1/chat/completions` com o modelo configurado. - Caso contrário: retorna `[MOCK AI - {m... |
+| `ai-testes` | Testes | AI.md:49-52 | - Smoke autenticado: `GET /ai` → 200; `POST /ai/run` → 200 com `status: "SUCCESS"`. - Sem sessão → 401. |
+| `ai-provedor-padrao-opencode-zen-modelo-free` | Provedor padrão: OpenCode Zen (modelo free) | AI.md:53-55 | O MICI usa por padrão o **OpenCode Zen** com o modelo free **`glm-5.3-flash-free`** (zero retention, sem uso para treino), adequado para resumo, classificaçã... |
+| `ai-como-habilitar-ia-real-opencode-zen` | Como habilitar IA real (OpenCode Zen) | AI.md:56-61 | 1. Crie uma conta em https://opencode.ai e gere uma API key (Console → API keys). 2. No Vercel: Settings → Environment Variables → adicione `OPENCODE_API_KEY... |
+| `ai-alternativa-openai` | Alternativa: OpenAI | AI.md:62-67 | 1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. Garanta créditos na conta (billing). 3. No Vercel: adicione `OPENAI_API_KEY` (e opcionalment... |
+| `ai-tratamento-de-falhas` | Tratamento de falhas | AI.md:68-69 | Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: "SUCCESS"` com um aviso no o... |

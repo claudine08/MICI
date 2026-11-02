@@ -5,8 +5,10 @@ Módulo de inteligência artificial do MICI: gateway unificado para LLMs, regist
 
 ## Configuração
 Variáveis de ambiente (Vercel / `.env.local`):
-- `OPENAI_API_KEY` — chave da OpenAI. Se ausente, o gateway retorna respostas **mock** (desenvolvimento).
-- `AI_MODEL` — modelo padrão (default: `gpt-4o-mini`).
+- `OPENCODE_API_KEY` — chave do OpenCode Zen (modelos free). **Preferencial**; usa endpoint `https://opencode.ai/zen/v1`.
+- `OPENCODE_BASE_URL` — (opcional) base URL do OpenCode Zen (default `https://opencode.ai/zen/v1`).
+- `OPENAI_API_KEY` — (fallback) chave da OpenAI, usada se `OPENCODE_API_KEY` não estiver definida.
+- `AI_MODEL` — modelo padrão (default: `glm-5.3-flash-free`).
 
 ## Entidades (schema)
 - **AiPrompt** (`ai_prompts`): registro de prompts (código, nome, descrição, template, modelo, isSystem). Escopo por organização (organizationId nullable para prompts globais).
@@ -48,12 +50,20 @@ Permissão: `AI:VIEW` (leitura) / `AI:CREATE` (execução).
 - Smoke autenticado: `GET /ai` → 200; `POST /ai/run` → 200 com `status: "SUCCESS"`.
 - Sem sessão → 401.
 
-## Como habilitar IA real
+## Provedor padrão: OpenCode Zen (modelo free)
+O MICI usa por padrão o **OpenCode Zen** com o modelo free **`glm-5.3-flash-free`** (zero retention, sem uso para treino), adequado para resumo, classificação e extração de textos de projeto. O gateway prioriza `OPENCODE_API_KEY`; se ausente, tenta `OPENAI_API_KEY`; se nenhuma, usa mock.
+
+### Como habilitar IA real (OpenCode Zen)
+1. Crie uma conta em https://opencode.ai e gere uma API key (Console → API keys).
+2. No Vercel: Settings → Environment Variables → adicione `OPENCODE_API_KEY`.
+3. (Opcional) `OPENCODE_BASE_URL` (default `https://opencode.ai/zen/v1`) e `AI_MODEL` (ex.: `deepseek-v4.1-flash-free`, `glm-5.3-flash-free`).
+4. Redeploy. As requisições passarão a usar o modelo real e retornar tokens.
+
+### Alternativa: OpenAI
 1. Obtenha uma chave em https://platform.openai.com/api-keys.
-2. Garanta créditos na conta (billing) — sem créditos, a API retorna 429.
-3. No Vercel: Settings → Environment Variables → adicione `OPENAI_API_KEY`.
-4. (Opcional) `AI_MODEL` (ex.: `gpt-4o`).
-5. Redeploy. As requisições passarão a usar o modelo real e retornar tokens.
+2. Garanta créditos na conta (billing).
+3. No Vercel: adicione `OPENAI_API_KEY` (e opcionalmente `AI_MODEL`, ex.: `gpt-4o-mini`).
+4. Redeploy.
 
 ## Tratamento de falhas
 Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: "SUCCESS"` com um aviso no output e `errorMessage` preenchido. A UI continua funcionando. O histórico registra a falha.
