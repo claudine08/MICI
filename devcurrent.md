@@ -61,7 +61,26 @@ IndexedDB (creates, fotos com Blob, PATCH editáveis) + sync FIFO + banner de
 status + regra de conflito. Sem migration. Em produção: commits `116bd7a`,
 `dec1951`. Playwright fora (sem infra e2e).
 
-## 5. E14 Procurement — ✅ COMPLETO (Fatia 1 + Fatia 2)
+## 5. E08+ Cost Tracking & Cash Flow — ✅ IMPLEMENTADO (01/11)
+
+Extensão do módulo de Custos (E08) + integração com Procurement (E14) +
+Schedule (E07):
+
+- **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e `CostActual`
+  agora carregam `wbsNodeId` e `activityId` (FKs). CostCommitment referencia
+  `purchaseOrderId`; CostActual referencia `goodsReceiptId`.
+- **Integração automática Procurement → Cost**:
+  - PO emitido (ISSUED) → cria `CostCommitment` vinculado (idempotente por PO).
+  - Recebimento confirmado → cria `CostActual` vinculado (idempotente por GR).
+- **Fluxo de caixa CSV**: rotas
+  `GET/POST /api/v1/projects/[id]/cost/cashflow/{export,import}` — exporta
+  planejado/comprometido/realizado; importa custos indiretos (categoria
+  INDIRETO/OUTROS) como CostItem com WBS/atividade nulos.
+- Migration: `phase17_cost_tracking` (aplicada local; produção via
+  `prisma migrate deploy`).
+- Migration pendente em produção: aplicar `phase17_cost_tracking` no Neon.
+
+## 6. E14 Procurement — ✅ COMPLETO (Fatia 1 + Fatia 2)
 
 - **Fatia 1** (produção 30/10): fornecedores (SP), requisições (PR), cotações
   (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procurement`,
@@ -82,7 +101,8 @@ status + regra de conflito. Sem migration. Em produção: commits `116bd7a`,
 
 ## 7. Ponteiros rápidos de código
 
-- Procurement (E14): `src/modules/procurement/*` · rotas `api/v1/projects/[id]/procurement/*` e `api/v1/suppliers/*` · UI `src/components/procurement/*` e `src/app/(app)/suprimentos` e `src/app/(app)/projetos/[id]/suprimentos` · doc `suprimentos.md` · testes `tests/{unit/procurement-engine,integration/procurement}.test.ts`.
+- Procurement (E14): `src/modules/procurement/*`
+- Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` · rotas `api/v1/projects/[id]/cost/cashflow/{export,import}` · módulos `cost/{items,commitments,actuals}.ts` (WBS/atividade/PO/GR) · doc `custos.md`. · rotas `api/v1/projects/[id]/procurement/*` e `api/v1/suppliers/*` · UI `src/components/procurement/*` e `src/app/(app)/suprimentos` e `src/app/(app)/projetos/[id]/suprimentos` · doc `suprimentos.md` · testes `tests/{unit/procurement-engine,integration/procurement}.test.ts`.
 - Campo (E12/backlog): `src/modules/field/*` · rotas `api/v1/projects/[id]/field/*` · UI `src/components/field/field-view.tsx` · fila offline `src/lib/offline-queue.ts` + `public/sw.js` + `src/app/manifest.ts` · testes `tests/{unit/offline-queue,unit/field-engine,integration/field}.test.ts`.
 - Qualidade (E13): `src/modules/quality/*` (inclui `punch-items.ts`) · `qualidade.md` · testes `tests/{unit/quality-engine,integration/quality}.test.ts`.
 - Auth/permissões: `src/lib/auth.ts` · guards nas rotas · seed em `prisma/seed.ts`.

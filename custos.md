@@ -132,3 +132,27 @@ Dois comportamentos que evitam números falsos:
 A importação na UI aceita **arquivo `.json`** (extração automática) ou
 colagem direta, com preview do total e do número de linhas antes de
 confirmar.
+
+---
+
+## 6. Rastreio por WBS/atividade e fluxo de caixa (E08+)
+
+### 6.1 Rastreio
+
+- CostItem, CostCommitment e CostActual carregam wbsNodeId e
+  ctivityId (opcionais, FKs para WBS e ScheduleActivity).
+- CostCommitment.purchaseOrderId vincula o compromisso ao PO de origem.
+- CostActual.goodsReceiptId vincula o realizado ao recebimento de origem.
+- Integracao automatica:
+  - PO emitido (ISSUED) -> cria CostCommitment (idempotente por PO).
+  - Recebimento confirmado -> cria CostActual (idempotente por GR).
+
+### 6.2 Fluxo de caixa CSV
+
+- Export: GET /api/v1/projects/[id]/cost/cashflow/export retorna CSV com
+  colunas date,type,code,description,category,wbs,activity,amount,source
+  (planejado/comprometido/realizado).
+- Import: POST /api/v1/projects/[id]/cost/cashflow/import aceita CSV
+  (multipart ile ou campo csv) e cria CostItems (PLANNED), CostCommitments
+  (COMMITTED) e CostActuals (ACTUAL). Custos indiretos sem WBS/atividade
+  sao lancados com categoria INDIRETO/OUTROS.

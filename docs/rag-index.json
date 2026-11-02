@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T00:01:07.092Z",
+  "generatedAt": "2026-11-02T00:36:19.662Z",
   "sources": [
     "devcurrent.md",
     "DIARIO.md",
@@ -8,7 +8,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 177,
+  "chunkCount": 182,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -59,12 +59,24 @@
       ]
     },
     {
-      "id": "devcurrent-5-e14-procurement-completo-fatia-1-fatia-2",
-      "title": "5. E14 Procurement — ✅ COMPLETO (Fatia 1 + Fatia 2)",
+      "id": "devcurrent-5-e08-cost-tracking-cash-flow-implementado-01-11",
+      "title": "5. E08+ Cost Tracking & Cash Flow — ✅ IMPLEMENTADO (01/11)",
       "level": 2,
       "file": "devcurrent.md",
       "startLine": 64,
-      "endLine": 73,
+      "endLine": 82,
+      "summary": "Extensão do módulo de Custos (E08) + integração com Procurement (E14) + Schedule (E07): - **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e `Cos...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-6-e14-procurement-completo-fatia-1-fatia-2",
+      "title": "6. E14 Procurement — ✅ COMPLETO (Fatia 1 + Fatia 2)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 83,
+      "endLine": 92,
       "summary": "- **Fatia 1** (produção 30/10): fornecedores (SP), requisições (PR), cotações (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procurement`...",
       "tags": [
         "devcurrent"
@@ -75,8 +87,8 @@
       "title": "6. Restante do roadmap (após E14)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 74,
-      "endLine": 82,
+      "startLine": 93,
+      "endLine": 101,
       "summary": "| Épico | Escopo curto | |---|---| | E15 Commissioning | Plano, teste, reteste, aceite | | E16 Sustainability | PSP, baseline, metas, medições, resíduo, rela...",
       "tags": [
         "devcurrent"
@@ -87,9 +99,9 @@
       "title": "7. Ponteiros rápidos de código",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 83,
-      "endLine": 91,
-      "summary": "- Procurement (E14): `src/modules/procurement/*` · rotas `api/v1/projects/[id]/procurement/*` e `api/v1/suppliers/*` · UI `src/components/procurement/*` e `s...",
+      "startLine": 102,
+      "endLine": 111,
+      "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` · rotas `api/v1/projects/[id]/cost/cashfl...",
       "tags": [
         "devcurrent"
       ]
@@ -99,8 +111,8 @@
       "title": "8. RAG — índice de chunks (auto-gerado)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 92,
-      "endLine": 101,
+      "startLine": 112,
+      "endLine": 121,
       "summary": "- Índice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar após editar docs: `npm run rag:index...",
       "tags": [
         "devcurrent"
@@ -111,8 +123,8 @@
       "title": "9. Riscos conhecidos",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 102,
-      "endLine": 109,
+      "startLine": 122,
+      "endLine": 129,
       "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI já orienta). - `vercel --prod` deploya o diretório local (não...",
       "tags": [
         "devcurrent"
@@ -1348,8 +1360,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1449,
-      "endLine": 1461,
+      "endLine": 1463,
       "summary": "- devcurrent.md reescrito: E14 marcado completo (Fatia 1+2), proxima frente E15 Commissioning, contagem de migrations 17, ponteiros de procurement. - ROADMAP...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-01-11-2026-e08-cost-tracking-cash-flow",
+      "title": "01/11/2026 - E08+ Cost Tracking & Cash Flow",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1464,
+      "endLine": 1481,
+      "summary": "- Estendido o modulo de Custos (E08) com rastreio por WBS/atividade: - CostItem, CostCommitment, CostActual passam a carregar wbsNodeId e \u0007ctivityId (FKs par...",
       "tags": [
         "diario"
       ]
@@ -2128,8 +2152,44 @@
       "level": 2,
       "file": "custos.md",
       "startLine": 125,
-      "endLine": 135,
+      "endLine": 137,
       "summary": "- `/projetos/[id]/custos` — detalhe do projeto: cards de EVM, tabelas de itens / compromissos / realizados / baselines, CRUD e importação. - `/custos` — visã...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-6-rastreio-por-wbs-atividade-e-fluxo-de-caixa-e0",
+      "title": "6. Rastreio por WBS/atividade e fluxo de caixa (E08+)",
+      "level": 2,
+      "file": "custos.md",
+      "startLine": 138,
+      "endLine": 139,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-6-1-rastreio",
+      "title": "6.1 Rastreio",
+      "level": 3,
+      "file": "custos.md",
+      "startLine": 140,
+      "endLine": 149,
+      "summary": "- CostItem, CostCommitment e CostActual carregam wbsNodeId e \u0007ctivityId (opcionais, FKs para WBS e ScheduleActivity). - CostCommitment.purchaseOrderId vincul...",
+      "tags": [
+        "custos"
+      ]
+    },
+    {
+      "id": "custos-6-2-fluxo-de-caixa-csv",
+      "title": "6.2 Fluxo de caixa CSV",
+      "level": 3,
+      "file": "custos.md",
+      "startLine": 150,
+      "endLine": 159,
+      "summary": "- Export: GET /api/v1/projects/[id]/cost/cashflow/export retorna CSV com colunas date,type,code,description,category,wbs,activity,amount,source (planejado/co...",
       "tags": [
         "custos"
       ]

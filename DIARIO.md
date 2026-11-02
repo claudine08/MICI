@@ -1458,3 +1458,23 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
   - scripts/rag-query.mjs recupera apenas chunks relevantes por termo/id/arquivo.
   - npm scripts ag:index e ag:query adicionados.
   - Objetivo: reduzir consumo de tokens ao retomar desenvolvimento.
+
+---
+
+## 01/11/2026 - E08+ Cost Tracking & Cash Flow
+
+- Estendido o modulo de Custos (E08) com rastreio por WBS/atividade:
+  - CostItem, CostCommitment, CostActual passam a carregar wbsNodeId
+    e ctivityId (FKs para WBS e ScheduleActivity).
+  - CostCommitment referencia purchaseOrderId; CostActual referencia
+    goodsReceiptId.
+- Integracao automatica Procurement -> Cost:
+  - PO emitido (ISSUED) cria CostCommitment vinculado (idempotente por PO).
+  - Recebimento confirmado cria CostActual vinculado (idempotente por GR).
+- Fluxo de caixa CSV: rotas
+  GET/POST /api/v1/projects/[id]/cost/cashflow/{export,import} (exporta
+  planejado/comprometido/realizado; importa custos indiretos como CostItem
+  com categoria INDIRETO/OUTROS e WBS/atividade nulos).
+- Migration phase17_cost_tracking (local; producao via migrate deploy).
+- Novos campos nos schemas zod de cost (items/commitments/actuals).
+- Docs: devcurrent.md, ROADMAP.md (E08 ampliado), custos.md atualizado.
