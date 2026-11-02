@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 183.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 201.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -16,6 +16,24 @@
 | `devcurrent-7-ponteiros-rapidos-de-codigo` | 7. Ponteiros rápidos de código | devcurrent.md:102-111 | - Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` · rotas `api/v1/projects/[id]/cost/cashfl... |
 | `devcurrent-8-rag-indice-de-chunks-auto-gerado` | 8. RAG — índice de chunks (auto-gerado) | devcurrent.md:112-121 | - Índice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar após editar docs: `npm run rag:index... |
 | `devcurrent-9-riscos-conhecidos` | 9. Riscos conhecidos | devcurrent.md:122-129 | - Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI já orienta). - `vercel --prod` deploya o diretório local (não... |
+| `fluxo-1-visao-geral-do-ciclo-mvp` | 1. Visão geral do ciclo (MVP) | docs/fluxo-e01-e14.md:3-12 | ``` Oportunidade → Requisitos → Orçamento → Projeto → Baseline → Execução → Avanço → Custo → Risco → Mudança → Qualidade → Comissionamento → Aceite → Encerra... |
+| `fluxo-2-epicos-e-o-que-cada-um-entrega` | 2. Épicos e o que cada um entrega | docs/fluxo-e01-e14.md:13-31 | \| Épico \| Módulo \| Entrega-chave \| \|---\|---\|---\| \| E01 Foundation \| `src/lib`, `prisma` \| Next 16 + TS + Tailwind 4, Prisma 7, Auth.js v5, RBAC 18×25×8, outb... |
+| `fluxo-3-fluxo-end-to-end-com-modulos` | 3. Fluxo end-to-end (com módulos) | docs/fluxo-e01-e14.md:32-33 | (secao sem corpo) |
+| `fluxo-etapa-a-oportunidade-e-portfolio-e01-e02-e03-e06` | Etapa A — Oportunidade e portfólio (E01/E02/E03/E06) | docs/fluxo-e01-e14.md:34-38 | 1. Criar organização, usuários, papéis (E02). 2. Criar projeto a partir de template; gates G0–G8 instanciados com snapshot (E03/E06). 3. G0 qualifica a oport... |
+| `fluxo-etapa-b-requisitos-e-wbs-e04-e05` | Etapa B — Requisitos e WBS (E04/E05) | docs/fluxo-e01-e14.md:39-43 | 4. Cadastrar requisitos versionados, vincular a WBS, evidências (BR-008/BR-015). 5. Gerar DRP; G1 exige DRP completo. 6. Montar árvore WBS (importação MS Pro... |
+| `fluxo-etapa-c-orcamento-e08-budget-e08` | Etapa C — Orçamento (E08/budget + E08) | docs/fluxo-e01-e14.md:44-50 | 7. Calculadora de cozinha (`/orcamento`) → JSON → `import-estimate` → `CostItem` (ORC001…). 8. Itens manuais (CI001…) com categoria, WBS, atividade. 9. Compr... |
+| `fluxo-etapa-d-cronograma-e07` | Etapa D — Cronograma (E07) | docs/fluxo-e01-e14.md:51-54 | 12. Atividades com dependências, CPM, calendário, baseline SCHEDULE. 13. Forecast e caminho crítico. |
+| `fluxo-etapa-e-riscos-e-mudancas-e10-e11` | Etapa E — Riscos e mudanças (E10/E11) | docs/fluxo-e01-e14.md:55-58 | 14. Risk register com matriz configurável, respostas, residual, escalada. 15. ChangeRequest com impacto 11 dimensões; aprovação; implementação vincula baseli... |
+| `fluxo-etapa-f-suprimentos-e14-e08` | Etapa F — Suprimentos (E14 + E08+) | docs/fluxo-e01-e14.md:59-66 | 16. Cadastrar fornecedores (SP, escopo da org). 17. Criar requisição (PR) com itens, vínculos WBS/atividade/custo. 18. Cotações (QT) dos fornecedores; mapa c... |
+| `fluxo-etapa-g-campo-e-qualidade-e12-e13` | Etapa G — Campo e qualidade (E12/E13) | docs/fluxo-e01-e14.md:67-71 | 22. Diário de obra, tarefas, restrições, fotos, medição (BR-006) com idempotência offline. 23. PWA + fila offline (IndexedDB) com sync FIFO. 24. Checklist mo... |
+| `fluxo-etapa-h-documentos-e09` | Etapa H — Documentos (E09) | docs/fluxo-e01-e14.md:72-74 | 25. Upload, revisão, aprovação, release, links a objetos (WBS, schedule, cost, document). |
+| `fluxo-etapa-i-comissionamento-e15-a-iniciar` | Etapa I — Comissionamento (E15 — a iniciar) | docs/fluxo-e01-e14.md:75-77 | 26. Plano, teste, reteste, aceite. |
+| `fluxo-etapa-j-aceite-e-encerramento-g7-g8` | Etapa J — Aceite e encerramento (G7/G8) | docs/fluxo-e01-e14.md:78-80 | 27. Aprovação final, encerramento do projeto. |
+| `fluxo-4-rastreio-bidirecional-e08-e14` | 4. Rastreio bidirecional (E08+ / E14) | docs/fluxo-e01-e14.md:81-96 | ``` GoodsReceipt (GR001) └─ CostActual (CAxxx) ← goodsReceiptId, wbsNodeId, activityId, costItemId └─ CostCommitment (CCxxx) ← purchaseOrderId, wbsNodeId, ac... |
+| `fluxo-5-fluxo-de-caixa-planejado-comprometido-realizad` | 5. Fluxo de caixa (planejado / comprometido / realizado / acumulado) | docs/fluxo-e01-e14.md:97-108 | \| Tipo \| Fonte \| Entidade \| Campo de data \| \|---\|---\|---\|---\| \| PLANEJADO \| Orçamento (import-estimate ou manual) \| `CostItem.amount` \| — (sem data; BAC) \| \|... |
+| `fluxo-6-rastreio-no-menu-custos` | 6. Rastreio no menu Custos | docs/fluxo-e01-e14.md:109-114 | - `/projetos/[id]/custos` — EVM + CRUD de itens/compromissos/realizados/baselines + import-estimate + botões export/import de cash flow. - `/custos` — visão... |
+| `fluxo-7-integracoes-com-schedule-e-wbs` | 7. Integrações com Schedule e WBS | docs/fluxo-e01-e14.md:115-120 | - `CostItem.wbsNodeId` / `activityId` vinculam custo a um nó de WBS e/ou atividade do cronograma. - `CostCommitment` e `CostActual` herdam `wbsNodeId`/`activ... |
+| `fluxo-8-documentacao-de-referencia-rag` | 8. Documentação de referência (RAG) | docs/fluxo-e01-e14.md:121-126 | - Detalhes de cada módulo: `npm run rag:query <termo>` (ex.: `npm run rag:query procurement cost cashflow`). - Índice completo: `docs/rag-index.md`. - Docs p... |
 | `diario-03-10-2026-fundacao-identidade-e-portfolio` | 03/10/2026 — Fundação, Identidade e Portfólio | DIARIO.md:12-13 | (secao sem corpo) |
 | `diario-fase-0-foundation-e01-base-de-e02` | Fase 0 — Foundation (E01 + base de E02) | DIARIO.md:14-35 | - Scaffold **Next.js 16 + TypeScript + Tailwind 4** com configs de lint/typecheck/format e CI (GitHub Actions: lint → typecheck → test → build). - **Prisma 7... |
 | `diario-fase-1-identity-tenancy-e02` | Fase 1 — Identity/Tenancy (E02) | DIARIO.md:36-49 | - UI de administração: `/administracao/usuarios` (usuários, convites, papéis), `/administracao/papeis` (matriz de permissões). - Troca de organização complet... |

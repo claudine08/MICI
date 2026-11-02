@@ -19,6 +19,7 @@ const INDEX_MD = path.join(OUT_DIR, "rag-index.md");
 // Arquivos fonte (relativos a ROOT). Apenas os que existirem sao indexados.
 const SOURCES = [
   { file: "devcurrent.md", label: "devcurrent" },
+  { file: "docs/fluxo-e01-e14.md", label: "fluxo" },
   { file: "DIARIO.md", label: "diario" },
   { file: "ROADMAP.md", label: "roadmap" },
   { file: "suprimentos.md", label: "suprimentos" },

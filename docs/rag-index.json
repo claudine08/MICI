@@ -1,14 +1,15 @@
 {
-  "generatedAt": "2026-11-02T01:06:14.510Z",
+  "generatedAt": "2026-11-02T01:25:51.973Z",
   "sources": [
     "devcurrent.md",
+    "docs/fluxo-e01-e14.md",
     "DIARIO.md",
     "ROADMAP.md",
     "suprimentos.md",
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 183,
+  "chunkCount": 201,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -128,6 +129,222 @@
       "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI já orienta). - `vercel --prod` deploya o diretório local (não...",
       "tags": [
         "devcurrent"
+      ]
+    },
+    {
+      "id": "fluxo-1-visao-geral-do-ciclo-mvp",
+      "title": "1. Visão geral do ciclo (MVP)",
+      "level": 2,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 3,
+      "endLine": 12,
+      "summary": "``` Oportunidade → Requisitos → Orçamento → Projeto → Baseline → Execução → Avanço → Custo → Risco → Mudança → Qualidade → Comissionamento → Aceite → Encerra...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-2-epicos-e-o-que-cada-um-entrega",
+      "title": "2. Épicos e o que cada um entrega",
+      "level": 2,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 13,
+      "endLine": 31,
+      "summary": "| Épico | Módulo | Entrega-chave | |---|---|---| | E01 Foundation | `src/lib`, `prisma` | Next 16 + TS + Tailwind 4, Prisma 7, Auth.js v5, RBAC 18×25×8, outb...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-3-fluxo-end-to-end-com-modulos",
+      "title": "3. Fluxo end-to-end (com módulos)",
+      "level": 2,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 32,
+      "endLine": 33,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-a-oportunidade-e-portfolio-e01-e02-e03-e06",
+      "title": "Etapa A — Oportunidade e portfólio (E01/E02/E03/E06)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 34,
+      "endLine": 38,
+      "summary": "1. Criar organização, usuários, papéis (E02). 2. Criar projeto a partir de template; gates G0–G8 instanciados com snapshot (E03/E06). 3. G0 qualifica a oport...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-b-requisitos-e-wbs-e04-e05",
+      "title": "Etapa B — Requisitos e WBS (E04/E05)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 39,
+      "endLine": 43,
+      "summary": "4. Cadastrar requisitos versionados, vincular a WBS, evidências (BR-008/BR-015). 5. Gerar DRP; G1 exige DRP completo. 6. Montar árvore WBS (importação MS Pro...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-c-orcamento-e08-budget-e08",
+      "title": "Etapa C — Orçamento (E08/budget + E08)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 44,
+      "endLine": 50,
+      "summary": "7. Calculadora de cozinha (`/orcamento`) → JSON → `import-estimate` → `CostItem` (ORC001…). 8. Itens manuais (CI001…) com categoria, WBS, atividade. 9. Compr...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-d-cronograma-e07",
+      "title": "Etapa D — Cronograma (E07)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 51,
+      "endLine": 54,
+      "summary": "12. Atividades com dependências, CPM, calendário, baseline SCHEDULE. 13. Forecast e caminho crítico.",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-e-riscos-e-mudancas-e10-e11",
+      "title": "Etapa E — Riscos e mudanças (E10/E11)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 55,
+      "endLine": 58,
+      "summary": "14. Risk register com matriz configurável, respostas, residual, escalada. 15. ChangeRequest com impacto 11 dimensões; aprovação; implementação vincula baseli...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-f-suprimentos-e14-e08",
+      "title": "Etapa F — Suprimentos (E14 + E08+)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 59,
+      "endLine": 66,
+      "summary": "16. Cadastrar fornecedores (SP, escopo da org). 17. Criar requisição (PR) com itens, vínculos WBS/atividade/custo. 18. Cotações (QT) dos fornecedores; mapa c...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-g-campo-e-qualidade-e12-e13",
+      "title": "Etapa G — Campo e qualidade (E12/E13)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 67,
+      "endLine": 71,
+      "summary": "22. Diário de obra, tarefas, restrições, fotos, medição (BR-006) com idempotência offline. 23. PWA + fila offline (IndexedDB) com sync FIFO. 24. Checklist mo...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-h-documentos-e09",
+      "title": "Etapa H — Documentos (E09)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 72,
+      "endLine": 74,
+      "summary": "25. Upload, revisão, aprovação, release, links a objetos (WBS, schedule, cost, document).",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-i-comissionamento-e15-a-iniciar",
+      "title": "Etapa I — Comissionamento (E15 — a iniciar)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 75,
+      "endLine": 77,
+      "summary": "26. Plano, teste, reteste, aceite.",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-etapa-j-aceite-e-encerramento-g7-g8",
+      "title": "Etapa J — Aceite e encerramento (G7/G8)",
+      "level": 3,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 78,
+      "endLine": 80,
+      "summary": "27. Aprovação final, encerramento do projeto.",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-4-rastreio-bidirecional-e08-e14",
+      "title": "4. Rastreio bidirecional (E08+ / E14)",
+      "level": 2,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 81,
+      "endLine": 96,
+      "summary": "``` GoodsReceipt (GR001) └─ CostActual (CAxxx) ← goodsReceiptId, wbsNodeId, activityId, costItemId └─ CostCommitment (CCxxx) ← purchaseOrderId, wbsNodeId, ac...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-5-fluxo-de-caixa-planejado-comprometido-realizad",
+      "title": "5. Fluxo de caixa (planejado / comprometido / realizado / acumulado)",
+      "level": 2,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 97,
+      "endLine": 108,
+      "summary": "| Tipo | Fonte | Entidade | Campo de data | |---|---|---|---| | PLANEJADO | Orçamento (import-estimate ou manual) | `CostItem.amount` | — (sem data; BAC) | |...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-6-rastreio-no-menu-custos",
+      "title": "6. Rastreio no menu Custos",
+      "level": 2,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 109,
+      "endLine": 114,
+      "summary": "- `/projetos/[id]/custos` — EVM + CRUD de itens/compromissos/realizados/baselines + import-estimate + botões export/import de cash flow. - `/custos` — visão...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-7-integracoes-com-schedule-e-wbs",
+      "title": "7. Integrações com Schedule e WBS",
+      "level": 2,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 115,
+      "endLine": 120,
+      "summary": "- `CostItem.wbsNodeId` / `activityId` vinculam custo a um nó de WBS e/ou atividade do cronograma. - `CostCommitment` e `CostActual` herdam `wbsNodeId`/`activ...",
+      "tags": [
+        "fluxo"
+      ]
+    },
+    {
+      "id": "fluxo-8-documentacao-de-referencia-rag",
+      "title": "8. Documentação de referência (RAG)",
+      "level": 2,
+      "file": "docs/fluxo-e01-e14.md",
+      "startLine": 121,
+      "endLine": 126,
+      "summary": "- Detalhes de cada módulo: `npm run rag:query <termo>` (ex.: `npm run rag:query procurement cost cashflow`). - Índice completo: `docs/rag-index.md`. - Docs p...",
+      "tags": [
+        "fluxo"
       ]
     },
     {
