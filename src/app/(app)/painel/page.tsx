@@ -128,6 +128,9 @@ export default async function PainelPage({
                       <Link href={`/projetos/${p.id}`} className="hover:underline">
                         {p.code}
                       </Link>
+                      <Link href={`/projetos/${p.id}/dashboard`} className="ml-2 text-xs text-primary hover:underline">
+                        📊
+                      </Link>
                     </td>
                     <td className="py-2 pr-4">{p.name}</td>
                     <td className="py-2 pr-4">
