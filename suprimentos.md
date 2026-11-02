@@ -3,11 +3,12 @@
 > Fonte: código em `src/modules/procurement/`, `prisma/schema.prisma` (bloco
 > Procurement), rotas `src/app/api/v1/.../procurement/*` e `src/app/api/v1/suppliers/*`,
 > telas `src/app/(app)/suprimentos/page.tsx` e `src/app/(app)/projetos/[id]/suprimentos/page.tsx`.
-> **Status: E14 Fatia 1 completo e em produção** (commit `2ea90bb`,
-> deploy `mici-5w7tzxsmi-homeland1`, smoke verde, migration `phase15_procurement`
-> no Neon). A **Fatia 2** (Pedido de Compra / PO e recebimento) ainda não foi
-> iniciada — o fluxo end-to-end completo está descrito abaixo, com a Fatia 2
-> marcada como planejada.
+> **Status: E14 completo — Fatia 1 + Fatia 2 em produção.** Fatia 1 (commit
+> `2ea90bb`, deploy `mici-5w7tzxsmi-homeland1`, migration `phase15_procurement`).
+> Fatia 2 (PO + recebimento): commits `e4555bb` … `9e5c259`, migration
+> `phase16_procurement`, rotas `procurement/orders` e `procurement/receipts`.
+> O fluxo end-to-end abaixo está totalmente implementado (Fatia 2 não é mais
+> "planejada").
 
 ---
 
@@ -49,7 +50,7 @@ fornecedor vencedor). A Fatia 2 cobrirá do **pedido de compra** ao
 │       • gestor aprova a requisição com a cotação vencedora                          │
 │       • status COMPARED → APPROVED                                                  │
 │                                                                                      │
-│  FATIA 2 (planejada — PO e recebimento)                                             │
+│  FATIA 2 (implementada — PO e recebimento)                                          │
 │  ──────────────────────────────────────                                             │
 │                                                                                      │
 │  [5] PEDIDO DE COMPRA (PO) — emitido a partir da requisição aprovada                │
@@ -246,9 +247,9 @@ Relações da Fatia 2 (previstas):
 
 ---
 
-### Etapa 5 — Pedido de Compra (PO) *(Fatia 2 — planejada)*
+### Etapa 5 — Pedido de Compra (PO) *(Fatia 2 — implementada)*
 
-**Status:** não implementado. Descrição do escopo previsto.
+**Status:** implementado. Descrição do escopo entregue (PO001, rotas `procurement/orders`).
 
 **Quem:** Comprador / equipe de suprimentos.
 
@@ -279,7 +280,7 @@ Relações da Fatia 2 (previstas):
 
 ---
 
-### Etapa 6 — Recebimento e Inspeção *(Fatia 2 — planejada)*
+### Etapa 6 — Recebimento e Inspeção *(Fatia 2 — implementada)*
 
 **Quem:** Almoxarife / equipe de campo + inspetor de qualidade.
 
@@ -380,7 +381,7 @@ Editável apenas em `DRAFT`. Excluível apenas em `DRAFT`/`CANCELLED`.
 
 `DRAFT → ISSUED → PARTIALLY_RECEIVED → FULLY_RECEIVED → CLOSED` · `ISSUED → CANCELLED`.
 
-### 5.6 Recebimento (previsto — Fatia 2)
+### 5.6 Recebimento (implementado — Fatia 2)
 
 `DRAFT → CONFIRMED` (parcial ou total), com inspeção de recebimento opcional via E13.
 
@@ -434,7 +435,7 @@ Componentes da tela:
 
 ## 8. Limitações conhecidas (hoje)
 
-1. **Sem pedido de compra (PO) e recebimento** — a Fatia 1 fecha em `APPROVED` na requisição; PO/recebimento/inspeção de recebimento ficam para a Fatia 2.
+1. **PO/recebimento implementados na Fatia 2** (rotas `procurement/orders`, `procurement/receipts`); inspeção de recebimento via E13 segue pendente de integração.
 2. **Edição de requisição bloqueada após SUBMITTED avançado** — requisição só é editável em `DRAFT`/`SUBMITTED`; itens não podem ser alterados em cotação.
 3. **Cotação bloqueada após submissão** — edição só em `DRAFT`.
 4. **Um mapa comparativo por requisição** — `getBidComparisonByRequestId` retorna o primeiro; `completeBidComparison` reutiliza o existente.
@@ -447,7 +448,7 @@ Componentes da tela:
 
 ## 9. Próximo passo
 
-**E14 Fatia 2**: Pedido de Compra (PO) e recebimento — vincular a requisição aprovada a um PO, controle de entrega/recebimento, inspeção de recebimento e integração com estoque/custos. Ainda não iniciado.
+**E14 completo.** Próxima frente: **E15 Commissioning** (plano, teste, reteste, aceite). Pendências de procurement: inspeção de recebimento integrada ao E13, testes de integração de PO/recebimento, deploy/smoke/docs da Fatia 2 (se ainda não feitos).
 
 ---
 
@@ -461,3 +462,4 @@ Componentes da tela:
 - Documentação: `suprimentos.md` (este arquivo), entrada em `DIARIO.md`, status em `ROADMAP.md`, estado em `devcurrent.md`.
 
 > Detalhamento diário em [`DIARIO.md`](DIARIO.md) (seção "30/10/2026 — E14 Procurement, Fatia 1").
+> Testes da Fatia 2: `tests/integration/procurement-orders.test.ts` (17 casos — PO: criação, idempotência, validação de estado, edição, transições, exclusão; recebimento: criação, saldo, idempotência, confirmação parcial/total, isolamento).

@@ -1443,3 +1443,18 @@ UsuÃ¡rio pediu para seguir direto para a **Fatia 2** do backlog E12.
 - Fornecedores (SP), Requisições de Compra (PR), Cotações (QT) e Mapa Comparativo (BC) em produção.
 - Commit feat 2ea90bb, migration phase15_procurement no Neon, deploy mici-5w7tzxsmi-homeland1, smoke verde.
 - Gate: lint, typecheck, 263 unit, 285 integração, build OK.
+
+---
+
+## 31/10/2026 â€” Atualizacao do devcurrent + RAG leve para docs
+
+- devcurrent.md reescrito: E14 marcado completo (Fatia 1+2), proxima frente
+  E15 Commissioning, contagem de migrations 17, ponteiros de procurement.
+- ROADMAP.md: E14 status atualizado para completo.
+- suprimentos.md: Fatia 2 marcada como implementada (nao mais planejada).
+- Implementada tecnica de RAG leve para documentacao:
+  - scripts/rag-index.mjs gera docs/rag-index.json + docs/rag-index.md
+    (178 chunks por secao de markdown, com line ranges e resumo).
+  - scripts/rag-query.mjs recupera apenas chunks relevantes por termo/id/arquivo.
+  - npm scripts ag:index e ag:query adicionados.
+  - Objetivo: reduzir consumo de tokens ao retomar desenvolvimento.
