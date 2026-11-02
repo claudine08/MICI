@@ -12,6 +12,7 @@ export interface AiRunInput {
   input: string;
   systemPrompt?: string;
   model?: string;
+  mode?: "mock" | "opencode" | "openai";
 }
 
 export interface AiRunResult {
@@ -34,18 +35,36 @@ function mockResponse(model: string, userInput: string): { output: string; token
   };
 }
 
-async function callLlm(model: string, systemPrompt: string, userInput: string): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
-  const openCodeKey = process.env.OPENCODE_API_KEY;
-  const openAiKey = process.env.OPENAI_API_KEY;
-
-  if (!openCodeKey && !openAiKey) {
+async function callLlm(model: string, systemPrompt: string, userInput: string, mode: "mock" | "opencode" | "openai" = "opencode"): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
+  if (mode === "mock") {
     return mockResponse(model, userInput);
   }
 
-  const baseUrl = openCodeKey
+  const openCodeKey = process.env.OPENCODE_API_KEY;
+  const openAiKey = process.env.OPENAI_API_KEY;
+
+  let useOpenCode = mode === "opencode";
+  let useOpenAi = mode === "openai";
+
+  if (mode === "opencode" && !openCodeKey) {
+    // Sem chave OpenCode: fallback para mock
+    return mockResponse(model, userInput);
+  }
+  if (mode === "openai" && !openAiKey) {
+    return mockResponse(model, userInput);
+  }
+
+  // Auto: preferir OpenCode se disponível
+  if (mode !== "opencode" && mode !== "openai") {
+    if (openCodeKey) useOpenCode = true;
+    else if (openAiKey) useOpenAi = true;
+    else return mockResponse(model, userInput);
+  }
+
+  const baseUrl = useOpenCode
     ? (process.env.OPENCODE_BASE_URL || "https://opencode.ai/zen/v1")
     : "https://api.openai.com/v1";
-  const apiKey = openCodeKey || openAiKey!;
+  const apiKey = useOpenCode ? openCodeKey! : openAiKey!;
 
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
@@ -95,7 +114,7 @@ export async function runAi(input: AiRunInput): Promise<AiRunResult> {
   });
 
   try {
-    const result = await callLlm(model, systemPrompt, input.input);
+    const result = await callLlm(model, systemPrompt, input.input, input.mode ?? "opencode");
     const updated = await prisma.aiRequest.update({
       where: { id: request.id },
       data: {

@@ -15,6 +15,7 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
   const [selected, setSelected] = useState(prompts[0]?.code ?? "");
   const [input, setInput] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [mode, setMode] = useState<"mock" | "opencode" | "openai">("mock");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -26,7 +27,7 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
     try {
       const res = await apiRequest<{ output: string; status: string; errorMessage?: string }>("/api/v1/ai/run", {
         method: "POST",
-        body: JSON.stringify({ promptCode: selected, input, projectId: projectId || undefined }),
+        body: JSON.stringify({ promptCode: selected, input, projectId: projectId || undefined, mode }),
       });
       setOutput(res.output);
       if (res.status === "FAILED") setError(res.errorMessage ?? "Falha");
@@ -47,6 +48,15 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
               {prompts.map((p) => <option key={p.code} value={p.code}>{p.name} ({p.code})</option>)}
             </select>
             <p className="mt-1 text-xs text-muted-foreground">{prompts.find((p) => p.code === selected)?.description}</p>
+          </div>
+          <div>
+            <Label>Modo</Label>
+            <select className="w-full rounded border p-2" value={mode} onChange={(e) => setMode(e.target.value as "mock" | "opencode" | "openai")}>
+              <option value="mock">Mock (sem custo)</option>
+              <option value="opencode">OpenCode AI (modelo free)</option>
+              <option value="openai">OpenAI</option>
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">Mock não consome créditos. OpenCode requer OPENCODE_API_KEY no servidor.</p>
           </div>
           <div>
             <Label>Project ID (opcional)</Label>
