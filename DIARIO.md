@@ -1555,3 +1555,18 @@ Usuário pediu para seguir direto para a **Fatia 2** do backlog E12.
   para /projetos/[id]/dashboard) -> /api/v1/projects/[id]/dashboard 200; sem
   sessao em /api/v1/projects -> 401.
 - Working tree limpa; main pushada.
+
+---
+
+## 02/11/2026 - Encerramento do dia
+
+Estado final da sessão:
+- E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3)
+  completos e em produção.
+- Links de drill-down para o dashboard adicionados no painel e no detalhe do projeto.
+- Deploys em produção: mici-m83oy22mh-homeland1 (links), mici-f2euprnxn (fatia 3),
+  mici-ddq4bapgz (fatia 2), mici-c6kzjgsfv (cost tracking), mici-5w7tzxsmi (E14 fatia 1).
+- Migrations no Neon: 19 (até phase17_cost_tracking).
+- Working tree limpa; main sincronizado com origin/main.
+- RAG leve atualizado (192 chunks em 7 arquivos).
+- Próxima frente (amanhã): E15 Commissioning (a cargo do usuário) ou ajustes no dashboard.

@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 02/11/2026 (Links para drill-down no painel em producao: mici-m83oy22mh-homeland1, smoke verde. Proxima frente: E15 Commissioning (a cargo do usuario).)
+**Ultima atualizacao:** 02/11/2026 (encerramento do dia). E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em producao. Links de drill-down no painel. Migrations no Neon: 19. Working tree limpa. Proxima frente: E15 Commissioning (a cargo do usuario).
 
 ---
 

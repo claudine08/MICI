@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T02:54:34.905Z",
+  "generatedAt": "2026-11-02T02:58:14.321Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 207,
+  "chunkCount": 208,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -1673,8 +1673,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1550,
-      "endLine": 1558,
+      "endLine": 1560,
       "summary": "- Deploy Vercel: mici-m83oy22mh-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-encerramento-do-dia",
+      "title": "02/11/2026 - Encerramento do dia",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1561,
+      "endLine": 1573,
+      "summary": "Estado final da sessão: - E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em produção. - Links de drill-down par...",
       "tags": [
         "diario"
       ]
