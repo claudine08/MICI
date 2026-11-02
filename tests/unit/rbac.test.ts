@@ -53,8 +53,8 @@ describe("rbac", () => {
     }
   });
 
-  it("catálogo completo tem 26 módulos × 8 ações", () => {
-    expect(allPermissionCodes()).toHaveLength(26 * 8);
+  it("catálogo completo tem 27 módulos × 8 ações", () => {
+    expect(allPermissionCodes()).toHaveLength(27 * 8);
     expect(permissionCode("PROJECT", "VIEW")).toBe("PROJECT:VIEW");
   });
 });

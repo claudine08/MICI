@@ -216,7 +216,8 @@ model Organization {
   scheduleTemplates ScheduleTemplate[]
   riskMatrixConfig RiskMatrixConfig?
   suppliers   Supplier[]
-
+  aiPrompts   AiPrompt[]
+  aiRequests  AiRequest[]
   @@index([status])
   @@map("organizations")
 }
@@ -543,12 +544,12 @@ model Project {
   sustainabilityTargets SustainabilityTarget[]
   sustainabilityMeasurements SustainabilityMeasurement[]
   wasteRecords    WasteRecord[]
+  aiRequests      AiRequest[]
   purchaseRequests PurchaseRequest[]
   quotations      Quotation[]
   bidComparisons  BidComparison[]
   purchaseOrders  PurchaseOrder[]
   goodsReceipts   GoodsReceipt[]
-
   @@unique([organizationId, code])
   @@index([organizationId, status])
   @@index([organizationId, clientId])
@@ -2949,4 +2950,59 @@ model WasteRecord {
   @@unique([projectId, clientUuid])
   @@index([organizationId, projectId])
   @@map("waste_records")
+}
+
+// ---------------------------------------------------------------------------
+// AI (E18): gateway, prompt registry, logs de requisição.
+// ---------------------------------------------------------------------------
+
+model AiPrompt {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  code           String   @db.VarChar(64)
+  name           String   @db.VarChar(200)
+  description    String?  @db.Text
+  template       String   @db.Text
+  model          String   @db.VarChar(120)
+  isSystem       Boolean  @default(false) @map("is_system")
+  clientUuid     String?  @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("ai_prompts")
+}
+
+model AiRequest {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String?  @map("project_id") @db.Uuid
+  promptCode     String   @map("prompt_code") @db.VarChar(64)
+  input          String   @db.Text
+  output         String?  @db.Text
+  model          String   @db.VarChar(120)
+  status         String   @db.VarChar(32)
+  errorMessage   String?  @map("error_message") @db.Text
+  tokensIn       Int?     @map("tokens_in")
+  tokensOut      Int?     @map("tokens_out")
+  clientUuid     String?  @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, projectId])
+  @@index([organizationId, createdAt])
+  @@map("ai_requests")
 }

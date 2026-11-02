@@ -42,6 +42,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Painel", href: "/painel", icon: LayoutDashboard },
       { label: "Executivo", href: "/executivo", icon: LayoutDashboard },
+      { label: "IA", href: "/ai", icon: LayoutDashboard },
     ],
   },
   {
