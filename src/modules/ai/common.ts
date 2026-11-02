@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { AppError } from "@/core/errors";
 
 export {
   assertCodeFree,

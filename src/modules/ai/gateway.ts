@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
-import { assertAiProject, type ActorContext } from "@/modules/ai/common";
+import { assertAiProject } from "@/modules/ai/common";
+import type { ActorContext } from "@/modules/field/common";
 
 export interface AiRunInput {
   organizationId: string;
