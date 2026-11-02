@@ -67,6 +67,12 @@ export default async function ProjetoDetalhePage({
           <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/suprimentos`}>
             Suprimentos (E14)
           </a>
+          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/commissioning`}>
+            Comissionamento (E15)
+          </a>
+          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/sustentabilidade`}>
+            Sustentabilidade (E16)
+          </a>
         </div>
       </div>
       <ProjectDetailView
