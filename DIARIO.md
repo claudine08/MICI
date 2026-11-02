@@ -1578,3 +1578,11 @@ Estado final da sessão:
 - Smoke autenticado: GET plans → 200; rotas sem sessão → 401.
 - Testes: 268 unit + 302 integração verdes.
 - Próxima frente (amanhã): E15 Commissioning (a cargo do usuário) ou ajustes no dashboard.
+
+## 02/11/2026 - E16 Sustainability implementado e deployado
+
+- Modulo src/modules/sustainability/ (PSP, metricas, baseline, metas, medicoes, residuos) + migration phase19_sustainability.
+- API /api/v1/projects/[id]/sustainability/* e UI /projetos/[id]/sustentabilidade.
+- Deploy Vercel producao mici-theta.vercel.app; migration aplicada no Neon.
+- Smoke autenticado: GET plans -> 200; sem sessao -> 401.
+- Testes: 268 unit + 302 integracao verdes.

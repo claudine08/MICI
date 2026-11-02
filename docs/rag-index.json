@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T20:49:57.624Z",
+  "generatedAt": "2026-11-02T21:12:42.592Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 209,
+  "chunkCount": 210,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -101,7 +101,7 @@
       "level": 2,
       "file": "devcurrent.md",
       "startLine": 104,
-      "endLine": 114,
+      "endLine": 115,
       "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf...",
       "tags": [
         "devcurrent"
@@ -112,8 +112,8 @@
       "title": "8. RAG â€” Ã­ndice de chunks (auto-gerado)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 115,
-      "endLine": 124,
+      "startLine": 116,
+      "endLine": 125,
       "summary": "- Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind...",
       "tags": [
         "devcurrent"
@@ -124,8 +124,8 @@
       "title": "9. Riscos conhecidos",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 125,
-      "endLine": 133,
+      "startLine": 126,
+      "endLine": 134,
       "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n...",
       "tags": [
         "devcurrent"
@@ -1704,32 +1704,44 @@
       ]
     },
     {
-      "id": "roadmap-gate-de-verificacao-entre-fases",
-      "title": "Gate de verificação entre fases",
+      "id": "diario-02-11-2026-e16-sustainability-implementado-e-dep",
+      "title": "02/11/2026 - E16 Sustainability implementado e deployado",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1582,
+      "endLine": 1589,
+      "summary": "- Modulo src/modules/sustainability/ (PSP, metricas, baseline, metas, medicoes, residuos) + migration phase19_sustainability. - API /api/v1/projects/[id]/sus...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "roadmap-gate-de-verificaa-a-o-entre-fases",
+      "title": "Gate de verificaÃ§Ã£o entre fases",
       "level": 2,
       "file": "ROADMAP.md",
       "startLine": 11,
       "endLine": 27,
-      "summary": "Antes de iniciar uma fase, a fase anterior deve passar na suíte completa: `npm run lint` · `npm run typecheck` · `npm test` · `npm run test:integration` · `n...",
+      "summary": "Antes de iniciar uma fase, a fase anterior deve passar na suÃ­te completa: `npm run lint` Â· `npm run typecheck` Â· `npm test` Â· `npm run test:integration`...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-correcao-de-ambiente-e-sessao-07-10-2026",
-      "title": "Correção de ambiente e sessão (07/10/2026)",
+      "id": "roadmap-correa-a-o-de-ambiente-e-sessa-o-07-10-2026",
+      "title": "CorreÃ§Ã£o de ambiente e sessÃ£o (07/10/2026)",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 28,
       "endLine": 60,
-      "summary": "Bug reportado em `/selecionar-organizacao`: aviso **\"Sessão expirada ou ausente.\"** junto de \"Olá, Paulo\" e \"Você ainda não participa de nenhuma organização\"...",
+      "summary": "Bug reportado em `/selecionar-organizacao`: aviso **\"SessÃ£o expirada ou ausente.\"** junto de \"OlÃ¡, Paulo\" e \"VocÃª ainda nÃ£o participa de nenhuma organiza...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-producao-sync-de-dados-auth-url-14-10-2026",
-      "title": "Produção: sync de dados + AUTH_URL (14/10/2026)",
+      "id": "roadmap-produa-a-o-sync-de-dados-auth-url-14-10-2026",
+      "title": "ProduÃ§Ã£o: sync de dados + AUTH_URL (14/10/2026)",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 61,
@@ -1746,19 +1758,19 @@
       "file": "ROADMAP.md",
       "startLine": 90,
       "endLine": 104,
-      "summary": "| Área | Situação | |---|---| | Fases concluídas | 0–4 completas (E07 ✅, E08 ✅, E09 ✅, E10 ✅) · E11 ✅ · E12 **Fatia 1** ✅ / **Fatia 2** ✅ / **backlog Fatia 1...",
+      "summary": "| Ãrea | SituaÃ§Ã£o | |---|---| | Fases concluÃ­das | 0â€“4 completas (E07 âœ…, E08 âœ…, E09 âœ…, E10 âœ…) Â· E11 âœ… Â· E12 **Fatia 1** âœ… / **Fatia 2** â...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-incidente-de-upload-21-10-2026-resolvido",
-      "title": "Incidente de upload (21/10/2026) — resolvido",
+      "id": "roadmap-incidente-de-upload-21-10-2026-a-resolvido",
+      "title": "Incidente de upload (21/10/2026) â€” resolvido",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 105,
       "endLine": 116,
-      "summary": "- Relato: \"Falha de conexão\" ao enviar documentos em produção. Diagnóstico via XHR com progresso: arquivo de 15 KB com **0 bytes enviados** e servidor OK — o...",
+      "summary": "- Relato: \"Falha de conexÃ£o\" ao enviar documentos em produÃ§Ã£o. DiagnÃ³stico via XHR com progresso: arquivo de 15 KB com **0 bytes enviados** e servidor OK...",
       "tags": [
         "roadmap"
       ]
@@ -1770,26 +1782,26 @@
       "file": "ROADMAP.md",
       "startLine": 117,
       "endLine": 125,
-      "summary": "| Release | Escopo | |---|---| | **Release 1** | Projetos, templates, requisitos, WBS, gates, cronograma básico, orçamento, físico, documentos, riscos, mudan...",
+      "summary": "| Release | Escopo | |---|---| | **Release 1** | Projetos, templates, requisitos, WBS, gates, cronograma bÃ¡sico, orÃ§amento, fÃ­sico, documentos, riscos, mu...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-epicos-e01-e18-e-status",
-      "title": "Épicos (E01–E18) e status",
+      "id": "roadmap-a-picos-e01a-e18-e-status",
+      "title": "Ã‰picos (E01â€“E18) e status",
       "level": 2,
       "file": "ROADMAP.md",
       "startLine": 126,
       "endLine": 153,
-      "summary": "| Épico | Escopo resumido | Status | |---|---|---| | **E01 Platform Foundation** | Base do sistema, CI, observabilidade | ✅ Fase 0 | | **E02 Identity** | Usu...",
+      "summary": "| Ã‰pico | Escopo resumido | Status | |---|---|---| | **E01 Platform Foundation** | Base do sistema, CI, observabilidade | âœ… Fase 0 | | **E02 Identity** |...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-plano-de-execucao-por-fases",
-      "title": "Plano de execução por fases",
+      "id": "roadmap-plano-de-execua-a-o-por-fases",
+      "title": "Plano de execuÃ§Ã£o por fases",
       "level": 2,
       "file": "ROADMAP.md",
       "startLine": 154,
@@ -1800,44 +1812,44 @@
       ]
     },
     {
-      "id": "roadmap-fase-0-foundation",
-      "title": "Fase 0 — Foundation ✅",
+      "id": "roadmap-fase-0-a-foundation-a",
+      "title": "Fase 0 â€” Foundation âœ…",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 156,
       "endLine": 172,
-      "summary": "- [x] Scaffold Next 16 + TypeScript + Tailwind 4 + configs (lint/typecheck/format/CI) - [x] Prisma 7 + schema base: tenancy, usuários, memberships, papéis, p...",
+      "summary": "- [x] Scaffold Next 16 + TypeScript + Tailwind 4 + configs (lint/typecheck/format/CI) - [x] Prisma 7 + schema base: tenancy, usuÃ¡rios, memberships, papÃ©is,...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-fase-1-identity-tenancy-e02",
-      "title": "Fase 1 — Identity/Tenancy (E02) ✅",
+      "id": "roadmap-fase-1-a-identity-tenancy-e02-a",
+      "title": "Fase 1 â€” Identity/Tenancy (E02) âœ…",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 173,
       "endLine": 185,
-      "summary": "- [x] UI de administração: usuários, convites, papéis e permissões (`/administracao/usuarios`, `/administracao/papeis`) - [x] Troca de organização completa +...",
+      "summary": "- [x] UI de administraÃ§Ã£o: usuÃ¡rios, convites, papÃ©is e permissÃµes (`/administracao/usuarios`, `/administracao/papeis`) - [x] Troca de organizaÃ§Ã£o com...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-fase-2-portfolio-e-projetos-e03-gates-e06",
-      "title": "Fase 2 — Portfólio e Projetos (E03) + Gates (E06) ✅",
+      "id": "roadmap-fase-2-a-portfa-lio-e-projetos-e03-gates-e06-a",
+      "title": "Fase 2 â€” PortfÃ³lio e Projetos (E03) + Gates (E06) âœ…",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 186,
       "endLine": 203,
-      "summary": "- [x] CRUD Project/Client/ProjectTemplate com validação e escopo de tenant (`/projetos`, `/clientes`, `/templates` + 6 endpoints `/api/v1`) - [x] Gates G0–G8...",
+      "summary": "- [x] CRUD Project/Client/ProjectTemplate com validaÃ§Ã£o e escopo de tenant (`/projetos`, `/clientes`, `/templates` + 6 endpoints `/api/v1`) - [x] Gates G0â...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-fase-3-requirements-drp-e04-wbs-e05",
-      "title": "Fase 3 — Requirements/DRP (E04) + WBS (E05) ✅",
+      "id": "roadmap-fase-3-a-requirements-drp-e04-wbs-e05-a",
+      "title": "Fase 3 â€” Requirements/DRP (E04) + WBS (E05) âœ…",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 204,
@@ -1848,49 +1860,49 @@
       ]
     },
     {
-      "id": "roadmap-fase-4-planejamento-e-custos-e07-e08-documentos-",
-      "title": "Fase 4 — Planejamento e Custos (E07, E08), Documentos (E09) ✅",
+      "id": "roadmap-fase-4-a-planejamento-e-custos-e07-e08-documento",
+      "title": "Fase 4 â€” Planejamento e Custos (E07, E08), Documentos (E09) âœ…",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 226,
       "endLine": 289,
-      "summary": "**E07 Schedule ✅** (ver DIARIO 08/10 — commits locais `phase4_schedule*`): - [x] Modelos + migrations `phase4_schedule`, `phase4_schedule_baseline`, `phase5_...",
+      "summary": "**E07 Schedule âœ…** (ver DIARIO 08/10 â€” commits locais `phase4_schedule*`): - [x] Modelos + migrations `phase4_schedule`, `phase4_schedule_baseline`, `pha...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-fase-5-releases-1-4",
-      "title": "Fase 5+ — Releases 1→4 ⬜",
+      "id": "roadmap-fase-5-a-releases-1a-4-a",
+      "title": "Fase 5+ â€” Releases 1â†’4 â¬œ",
       "level": 3,
       "file": "ROADMAP.md",
       "startLine": 290,
       "endLine": 293,
-      "summary": "Executar épicos E10–E18 conforme prioridade de Release 1, depois Releases 2–4.",
+      "summary": "Executar Ã©picos E10â€“E18 conforme prioridade de Release 1, depois Releases 2â€“4.",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-criterios-de-aceite-do-mvp-101",
-      "title": "Critérios de aceite do MVP (§101)",
+      "id": "roadmap-crita-rios-de-aceite-do-mvp-a-101",
+      "title": "CritÃ©rios de aceite do MVP (Â§101)",
       "level": 2,
       "file": "ROADMAP.md",
       "startLine": 294,
       "endLine": 308,
-      "summary": "O MVP é aceito quando um projeto real executar o ciclo completo: ```text Oportunidade → Requisitos → Orçamento → Projeto → Baseline → Execução → Avanço → Cus...",
+      "summary": "O MVP Ã© aceito quando um projeto real executar o ciclo completo: ```text Oportunidade â†’ Requisitos â†’ OrÃ§amento â†’ Projeto â†’ Baseline â†’ ExecuÃ§Ã£o...",
       "tags": [
         "roadmap"
       ]
     },
     {
-      "id": "roadmap-gates-do-projeto-de-implantacao-referencia",
-      "title": "Gates do projeto de implantação (referência)",
+      "id": "roadmap-gates-do-projeto-de-implantaa-a-o-refera-ncia",
+      "title": "Gates do projeto de implantaÃ§Ã£o (referÃªncia)",
       "level": 2,
       "file": "ROADMAP.md",
       "startLine": 309,
-      "endLine": 314,
-      "summary": "G0 Oportunidade qualificada · G1 Requisitos suficientes · G2 Viabilidade · G3 Proposta/orçamento · G4 Contrato e plano · G5 Projeto liberado · G6 Pronto para...",
+      "endLine": 315,
+      "summary": "G0 Oportunidade qualificada Â· G1 Requisitos suficientes Â· G2 Viabilidade Â· G3 Proposta/orÃ§amento Â· G4 Contrato e plano Â· G5 Projeto liberado Â· G6 Pron...",
       "tags": [
         "roadmap"
       ]
