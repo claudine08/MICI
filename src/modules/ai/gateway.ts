@@ -12,7 +12,7 @@ export interface AiRunInput {
   input: string;
   systemPrompt?: string;
   model?: string;
-  mode?: "mock" | "opencode" | "openai";
+  mode?: "mock" | "demo" | "opencode" | "openai";
 }
 
 export interface AiRunResult {
@@ -35,9 +35,20 @@ function mockResponse(model: string, userInput: string): { output: string; token
   };
 }
 
-async function callLlm(model: string, systemPrompt: string, userInput: string, mode: "mock" | "opencode" | "openai" = "opencode"): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
+function demoResponse(model: string, userInput: string): { output: string; tokensIn: number | null; tokensOut: number | null } {
+  return {
+    output: `[DEMO AI - ${model}] Resposta elaborada (simulada) para: "${userInput.slice(0, 60)}..."\n\n• Ponto 1: análise do cenário.\n• Ponto 2: recomendação.\n• Ponto 3: próximos passos.\n\n(Tokens simulados: 120 in / 80 out)`,
+    tokensIn: 120,
+    tokensOut: 80,
+  };
+}
+
+async function callLlm(model: string, systemPrompt: string, userInput: string, mode: "mock" | "demo" | "opencode" | "openai" = "opencode"): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
   if (mode === "mock") {
     return mockResponse(model, userInput);
+  }
+  if (mode === "demo") {
+    return demoResponse(model, userInput);
   }
 
   const openCodeKey = process.env.OPENCODE_API_KEY;
