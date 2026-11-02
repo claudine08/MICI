@@ -26,6 +26,7 @@ export const createCostItemSchema = z.object({
   quantity: z.number().finite().gte(0),
   unitPrice: amount,
   wbsNodeId: z.string().uuid().nullable().optional(),
+  activityId: z.string().uuid().nullable().optional(),
   origin: z.string().trim().max(32).optional(),
   fontePreco: z.string().trim().max(200).optional(),
 });
@@ -39,6 +40,9 @@ export const createCommitmentSchema = z.object({
   amount,
   committedAt: isoDate,
   costItemId: z.string().uuid().nullable().optional(),
+  wbsNodeId: z.string().uuid().nullable().optional(),
+  activityId: z.string().uuid().nullable().optional(),
+  purchaseOrderId: z.string().uuid().nullable().optional(),
 });
 
 export const updateCommitmentSchema = createCommitmentSchema
@@ -52,6 +56,9 @@ export const createActualSchema = z.object({
   incurredAt: isoDate,
   costItemId: z.string().uuid().nullable().optional(),
   commitmentId: z.string().uuid().nullable().optional(),
+  wbsNodeId: z.string().uuid().nullable().optional(),
+  activityId: z.string().uuid().nullable().optional(),
+  goodsReceiptId: z.string().uuid().nullable().optional(),
 });
 
 export const updateActualSchema = createActualSchema.partial();

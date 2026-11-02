@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T01:25:51.973Z",
+  "generatedAt": "2026-11-02T01:50:35.963Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -17,104 +17,104 @@
       "level": 2,
       "file": "devcurrent.md",
       "startLine": 21,
-      "endLine": 26,
-      "summary": "E01–E14 completos e em produção (E14 agora com PO + recebimento). **Próxima frente: E15 Commissioning** (plano, teste, reteste, aceite). Working tree com `q....",
+      "endLine": 28,
+      "summary": "E01â€“E14 completos e em produÃ§Ã£o (E14 com PO + recebimento). **E19 Project Dashboard Fatia 1 implementada** (portfÃ³lio + KPIs + as-of date + tabela de pr...",
       "tags": [
         "devcurrent"
       ]
     },
     {
-      "id": "devcurrent-2-ambiente-e-comandos-nao-precisa-rediscover",
-      "title": "2. Ambiente e comandos (não precisa rediscover)",
+      "id": "devcurrent-2-ambiente-e-comandos-na-o-precisa-rediscover",
+      "title": "2. Ambiente e comandos (nÃ£o precisa rediscover)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 27,
-      "endLine": 45,
-      "summary": "| Item | Valor | |---|---| | Repo | `https://github.com/claudine08/MICI.git`, branch `main` | | Produção | Vercel `mici-theta.vercel.app` (projeto `mici`, te...",
+      "startLine": 29,
+      "endLine": 47,
+      "summary": "| Item | Valor | |---|---| | Repo | `https://github.com/claudine08/MICI.git`, branch `main` | | ProduÃ§Ã£o | Vercel `mici-theta.vercel.app` (projeto `mici`,...",
       "tags": [
         "devcurrent"
       ]
     },
     {
-      "id": "devcurrent-3-convencoes-do-repo-seguir-a-risca",
-      "title": "3. Convenções do repo (seguir à risca)",
+      "id": "devcurrent-3-convena-a-es-do-repo-seguir-a-risca",
+      "title": "3. ConvenÃ§Ãµes do repo (seguir Ã  risca)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 46,
-      "endLine": 55,
-      "summary": "- **Commits**: só quando o usuário pedir. Padrão: `feat: <área> - <resumo> - E<NN> US<NN>` (ASCII, sem acento) e depois `docs: registra …`. `main` direto, se...",
+      "startLine": 48,
+      "endLine": 57,
+      "summary": "- **Commits**: sÃ³ quando o usuÃ¡rio pedir. PadrÃ£o: `feat: <Ã¡rea> - <resumo> - E<NN> US<NN>` (ASCII, sem acento) e depois `docs: registra â€¦`. `main` dire...",
       "tags": [
         "devcurrent"
       ]
     },
     {
-      "id": "devcurrent-4-backlog-e12-pwa-fila-offline-completa-fechado-",
-      "title": "4. Backlog E12: PWA/fila offline completa — ✅ FECHADO (29/10)",
+      "id": "devcurrent-4-backlog-e12-pwa-fila-offline-completa-a-a-fech",
+      "title": "4. Backlog E12: PWA/fila offline completa â€” âœ… FECHADO (29/10)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 56,
-      "endLine": 63,
-      "summary": "Contexto e implementação detalhada em `docs/rag-index.md` (chunks `diario-*` e `devcurrent-*`) e no DIARIO 29/10. Resumo: PWA (manifest + SW) + fila offline...",
+      "startLine": 58,
+      "endLine": 65,
+      "summary": "Contexto e implementaÃ§Ã£o detalhada em `docs/rag-index.md` (chunks `diario-*` e `devcurrent-*`) e no DIARIO 29/10. Resumo: PWA (manifest + SW) + fila offlin...",
       "tags": [
         "devcurrent"
       ]
     },
     {
-      "id": "devcurrent-5-e08-cost-tracking-cash-flow-implementado-01-11",
-      "title": "5. E08+ Cost Tracking & Cash Flow — ✅ IMPLEMENTADO (01/11)",
+      "id": "devcurrent-5-e08-cost-tracking-cash-flow-a-a-implementado-0",
+      "title": "5. E08+ Cost Tracking & Cash Flow â€” âœ… IMPLEMENTADO (01/11)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 64,
-      "endLine": 82,
-      "summary": "Extensão do módulo de Custos (E08) + integração com Procurement (E14) + Schedule (E07): - **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e `Cos...",
+      "startLine": 66,
+      "endLine": 84,
+      "summary": "ExtensÃ£o do mÃ³dulo de Custos (E08) + integraÃ§Ã£o com Procurement (E14) + Schedule (E07): - **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e...",
       "tags": [
         "devcurrent"
       ]
     },
     {
-      "id": "devcurrent-6-e14-procurement-completo-fatia-1-fatia-2",
-      "title": "6. E14 Procurement — ✅ COMPLETO (Fatia 1 + Fatia 2)",
+      "id": "devcurrent-6-e14-procurement-a-a-completo-fatia-1-fatia-2",
+      "title": "6. E14 Procurement â€” âœ… COMPLETO (Fatia 1 + Fatia 2)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 83,
-      "endLine": 92,
-      "summary": "- **Fatia 1** (produção 30/10): fornecedores (SP), requisições (PR), cotações (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procurement`...",
+      "startLine": 85,
+      "endLine": 94,
+      "summary": "- **Fatia 1** (produÃ§Ã£o 30/10): fornecedores (SP), requisiÃ§Ãµes (PR), cotaÃ§Ãµes (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procur...",
       "tags": [
         "devcurrent"
       ]
     },
     {
-      "id": "devcurrent-6-restante-do-roadmap-apos-e14",
-      "title": "6. Restante do roadmap (após E14)",
+      "id": "devcurrent-6-restante-do-roadmap-apa-s-e14",
+      "title": "6. Restante do roadmap (apÃ³s E14)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 93,
-      "endLine": 101,
-      "summary": "| Épico | Escopo curto | |---|---| | E15 Commissioning | Plano, teste, reteste, aceite | | E16 Sustainability | PSP, baseline, metas, medições, resíduo, rela...",
+      "startLine": 95,
+      "endLine": 110,
+      "summary": "| Ã‰pico | Escopo curto | |---|---| | E19 Project Dashboard | PortfÃ³lio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat...",
       "tags": [
         "devcurrent"
       ]
     },
     {
-      "id": "devcurrent-7-ponteiros-rapidos-de-codigo",
-      "title": "7. Ponteiros rápidos de código",
+      "id": "devcurrent-7-ponteiros-ra-pidos-de-ca-digo",
+      "title": "7. Ponteiros rÃ¡pidos de cÃ³digo",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 102,
-      "endLine": 111,
-      "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` · rotas `api/v1/projects/[id]/cost/cashfl...",
+      "startLine": 111,
+      "endLine": 120,
+      "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf...",
       "tags": [
         "devcurrent"
       ]
     },
     {
-      "id": "devcurrent-8-rag-indice-de-chunks-auto-gerado",
-      "title": "8. RAG — índice de chunks (auto-gerado)",
+      "id": "devcurrent-8-rag-a-a-ndice-de-chunks-auto-gerado",
+      "title": "8. RAG â€” Ã­ndice de chunks (auto-gerado)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 112,
-      "endLine": 121,
-      "summary": "- Índice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar após editar docs: `npm run rag:index...",
+      "startLine": 121,
+      "endLine": 130,
+      "summary": "- Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind...",
       "tags": [
         "devcurrent"
       ]
@@ -124,9 +124,9 @@
       "title": "9. Riscos conhecidos",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 122,
-      "endLine": 129,
-      "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI já orienta). - `vercel --prod` deploya o diretório local (não...",
+      "startLine": 131,
+      "endLine": 139,
+      "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n...",
       "tags": [
         "devcurrent"
       ]
@@ -1685,7 +1685,7 @@
       "level": 2,
       "file": "ROADMAP.md",
       "startLine": 126,
-      "endLine": 152,
+      "endLine": 153,
       "summary": "| Épico | Escopo resumido | Status | |---|---|---| | **E01 Platform Foundation** | Base do sistema, CI, observabilidade | ✅ Fase 0 | | **E02 Identity** | Usu...",
       "tags": [
         "roadmap"
@@ -1696,8 +1696,8 @@
       "title": "Plano de execução por fases",
       "level": 2,
       "file": "ROADMAP.md",
-      "startLine": 153,
-      "endLine": 154,
+      "startLine": 154,
+      "endLine": 155,
       "summary": "(secao sem corpo)",
       "tags": [
         "roadmap"
@@ -1708,8 +1708,8 @@
       "title": "Fase 0 — Foundation ✅",
       "level": 3,
       "file": "ROADMAP.md",
-      "startLine": 155,
-      "endLine": 171,
+      "startLine": 156,
+      "endLine": 172,
       "summary": "- [x] Scaffold Next 16 + TypeScript + Tailwind 4 + configs (lint/typecheck/format/CI) - [x] Prisma 7 + schema base: tenancy, usuários, memberships, papéis, p...",
       "tags": [
         "roadmap"
@@ -1720,8 +1720,8 @@
       "title": "Fase 1 — Identity/Tenancy (E02) ✅",
       "level": 3,
       "file": "ROADMAP.md",
-      "startLine": 172,
-      "endLine": 184,
+      "startLine": 173,
+      "endLine": 185,
       "summary": "- [x] UI de administração: usuários, convites, papéis e permissões (`/administracao/usuarios`, `/administracao/papeis`) - [x] Troca de organização completa +...",
       "tags": [
         "roadmap"
@@ -1732,8 +1732,8 @@
       "title": "Fase 2 — Portfólio e Projetos (E03) + Gates (E06) ✅",
       "level": 3,
       "file": "ROADMAP.md",
-      "startLine": 185,
-      "endLine": 202,
+      "startLine": 186,
+      "endLine": 203,
       "summary": "- [x] CRUD Project/Client/ProjectTemplate com validação e escopo de tenant (`/projetos`, `/clientes`, `/templates` + 6 endpoints `/api/v1`) - [x] Gates G0–G8...",
       "tags": [
         "roadmap"
@@ -1744,8 +1744,8 @@
       "title": "Fase 3 — Requirements/DRP (E04) + WBS (E05) ✅",
       "level": 3,
       "file": "ROADMAP.md",
-      "startLine": 203,
-      "endLine": 224,
+      "startLine": 204,
+      "endLine": 225,
       "summary": "- [x] Modelos Prisma + migration `phase3_requirements_wbs` (`Requirement`, `RequirementRevision`, `RequirementEvidence`, `WBSNode`, `WBSVersion`) - [x] Requi...",
       "tags": [
         "roadmap"
@@ -1756,8 +1756,8 @@
       "title": "Fase 4 — Planejamento e Custos (E07, E08), Documentos (E09) ✅",
       "level": 3,
       "file": "ROADMAP.md",
-      "startLine": 225,
-      "endLine": 288,
+      "startLine": 226,
+      "endLine": 289,
       "summary": "**E07 Schedule ✅** (ver DIARIO 08/10 — commits locais `phase4_schedule*`): - [x] Modelos + migrations `phase4_schedule`, `phase4_schedule_baseline`, `phase5_...",
       "tags": [
         "roadmap"
@@ -1768,8 +1768,8 @@
       "title": "Fase 5+ — Releases 1→4 ⬜",
       "level": 3,
       "file": "ROADMAP.md",
-      "startLine": 289,
-      "endLine": 292,
+      "startLine": 290,
+      "endLine": 293,
       "summary": "Executar épicos E10–E18 conforme prioridade de Release 1, depois Releases 2–4.",
       "tags": [
         "roadmap"
@@ -1780,8 +1780,8 @@
       "title": "Critérios de aceite do MVP (§101)",
       "level": 2,
       "file": "ROADMAP.md",
-      "startLine": 293,
-      "endLine": 307,
+      "startLine": 294,
+      "endLine": 308,
       "summary": "O MVP é aceito quando um projeto real executar o ciclo completo: ```text Oportunidade → Requisitos → Orçamento → Projeto → Baseline → Execução → Avanço → Cus...",
       "tags": [
         "roadmap"
@@ -1792,8 +1792,8 @@
       "title": "Gates do projeto de implantação (referência)",
       "level": 2,
       "file": "ROADMAP.md",
-      "startLine": 308,
-      "endLine": 313,
+      "startLine": 309,
+      "endLine": 314,
       "summary": "G0 Oportunidade qualificada · G1 Requisitos suficientes · G2 Viabilidade · G3 Proposta/orçamento · G4 Contrato e plano · G5 Projeto liberado · G6 Pronto para...",
       "tags": [
         "roadmap"

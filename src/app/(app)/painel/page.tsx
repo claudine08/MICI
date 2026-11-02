@@ -1,164 +1,172 @@
 import { getTenantContext } from "@/core/tenant";
-import { prisma } from "@/lib/prisma";
+import { getPortfolioDashboard } from "@/modules/dashboard/portfolio";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Users, KeyRound, ShieldCheck, ScrollText, FolderKanban, Milestone } from "lucide-react";
 
-const PROJECT_PHASES = [
-  { code: "F0", name: "Oportunidade" },
-  { code: "F1", name: "Descoberta e Requisitos" },
-  { code: "F2", name: "Viabilidade e Concepção" },
-  { code: "F3", name: "Orçamentação" },
-  { code: "F4", name: "Contratação e Mobilização" },
-  { code: "F5", name: "Projeto Executivo" },
-  { code: "F6", name: "Suprimentos" },
-  { code: "F7", name: "Execução" },
-  { code: "F8", name: "Entrega" },
-  { code: "F9", name: "Encerramento" },
-  { code: "F10", name: "Pós-ocupação / Garantia" },
-] as const;
+function fmt(n: number): string {
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-const PROJECT_GATES = [
-  { code: "G0", name: "Oportunidade qualificada" },
-  { code: "G1", name: "Requisitos suficientes" },
-  { code: "G2", name: "Viabilidade" },
-  { code: "G3", name: "Proposta/orçamento" },
-  { code: "G4", name: "Contrato e plano" },
-  { code: "G5", name: "Projeto liberado" },
-  { code: "G6", name: "Pronto para comissionamento" },
-  { code: "G7", name: "Aceite operacional" },
-  { code: "G8", name: "Encerramento" },
-] as const;
+function colorForRatio(ratio: number | null): string {
+  if (ratio === null) return "text-muted-foreground";
+  if (ratio >= 1) return "text-emerald-600";
+  if (ratio >= 0.9) return "text-amber-600";
+  return "text-red-600";
+}
 
-export default async function PainelPage() {
+export default async function PainelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ asOf?: string }>;
+}) {
   const context = (await getTenantContext())!;
-  const [memberCount, roleCount, auditCount, projectCount, recentProjects, pendingGates] =
-    await Promise.all([
-      prisma.organizationMembership.count({
-        where: { organizationId: context.organizationId, status: "ACTIVE", deletedAt: null },
-      }),
-      prisma.role.count({ where: { organizationId: context.organizationId, deletedAt: null } }),
-      prisma.auditEvent.count({
-        where: { organizationId: context.organizationId },
-      }),
-      prisma.project.count({
-        where: { organizationId: context.organizationId, deletedAt: null },
-      }),
-      prisma.project.findMany({
-        where: { organizationId: context.organizationId, deletedAt: null },
-        select: { id: true, code: true, name: true, currentPhase: true, status: true },
-        orderBy: { updatedAt: "desc" },
-        take: 5,
-      }),
-      prisma.gateInstance.count({
-        where: {
-          organizationId: context.organizationId,
-          status: { in: ["NOT_STARTED", "IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW", "REJECTED"] },
-          project: { deletedAt: null },
-        },
-      }),
-    ]);
+  const sp = await searchParams;
+  const asOf = sp.asOf && /^\d{4}-\d{2}-\d{2}$/.test(sp.asOf)
+    ? sp.asOf
+    : new Date().toISOString().slice(0, 10);
 
-  const stats = [
-    { label: "Membros", value: memberCount, icon: Users },
-    { label: "Papéis", value: roleCount, icon: KeyRound },
-    { label: "Projetos", value: projectCount, icon: FolderKanban },
-    { label: "Gates pendentes", value: pendingGates, icon: Milestone },
-    { label: "Permissões suas", value: context.permissions.size, icon: ShieldCheck },
-    { label: "Eventos de auditoria", value: auditCount, icon: ScrollText },
-  ];
+  const data = await getPortfolioDashboard(context.organizationId, asOf);
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">
-          Olá, {context.userName.split(" ")[0]}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Organização <span className="font-medium text-foreground">{context.organizationName}</span>{" "}
-          · {context.roleCodes.join(", ")}
-        </p>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard de Projetos</h1>
+          <p className="text-sm text-muted-foreground">
+            Visão portfólio — reporte as-of {asOf}. Power BI / Jira style.
+          </p>
+        </div>
+        <form method="get" className="flex items-center gap-2">
+          <label className="text-sm" htmlFor="asOf">Data de reporte</label>
+          <input
+            id="asOf"
+            name="asOf"
+            type="date"
+            defaultValue={asOf}
+            className="rounded border px-2 py-1 text-sm"
+          />
+          <button type="submit" className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground">
+            Aplicar
+          </button>
+        </form>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <stat.icon className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-lg font-semibold leading-none">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.label}</div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* KPIs agregados */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs">Projetos</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold">{data.kpis.totalProjects}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs">BAC (planejado)</CardTitle></CardHeader>
+          <CardContent><div className="text-lg font-bold">{fmt(data.kpis.totalBac)}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs">PV (planejado até {asOf})</CardTitle></CardHeader>
+          <CardContent><div className="text-lg font-bold">{fmt(data.kpis.totalPv)}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs">EV (realizado físico)</CardTitle></CardHeader>
+          <CardContent><div className="text-lg font-bold">{fmt(data.kpis.totalEv)}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs">AC (custo real)</CardTitle></CardHeader>
+          <CardContent><div className="text-lg font-bold">{fmt(data.kpis.totalAc)}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs">SPI</CardTitle></CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${colorForRatio(data.kpis.spi)}`}>
+              {data.kpis.spi ?? "—"}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-xs">CPI</CardTitle></CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${colorForRatio(data.kpis.cpi)}`}>
+              {data.kpis.cpi ?? "—"}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* Tabela de projetos */}
       <Card>
-          <CardHeader>
-            <CardTitle>
-              {recentProjects.length > 0 ? "Projetos recentes" : "Nenhum projeto ainda"}
-            </CardTitle>
-            <CardDescription>
-              {recentProjects.length > 0
-                ? "Últimos projetos do portfólio — abra para ver fases e gates."
-                : "Crie o primeiro projeto em Portfólio → Projetos. Gates oficiais G0–G8 já "
-                  + "estão configurados para a organização."}
-            </CardDescription>
-          </CardHeader>
-          {recentProjects.length > 0 && (
-            <CardContent className="flex flex-col gap-2">
-              {recentProjects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/projetos/${project.id}`}
-                  className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm hover:bg-surface-hover"
-                >
-                  <span>
-                    <span className="font-mono text-xs text-muted-foreground">{project.code}</span>{" "}
-                    <span className="font-medium">{project.name}</span>
-                  </span>
-                  <Badge variant="outline">{project.currentPhase}</Badge>
-                </Link>
-              ))}
-            </CardContent>
-          )}
-        </Card>
+        <CardHeader>
+          <CardTitle>Projetos</CardTitle>
+          <CardDescription>
+            Datas (planejado), custos (BAC/PV/EV/AC) e percentuais para a data de reporte.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="py-2 pr-4">Código</th>
+                  <th className="py-2 pr-4">Nome</th>
+                  <th className="py-2 pr-4">Status</th>
+                  <th className="py-2 pr-4">Fase</th>
+                  <th className="py-2 pr-4">Início (plan.)</th>
+                  <th className="py-2 pr-4">Fim (plan.)</th>
+                  <th className="py-2 pr-4 text-right">BAC</th>
+                  <th className="py-2 pr-4 text-right">PV</th>
+                  <th className="py-2 pr-4 text-right">EV</th>
+                  <th className="py-2 pr-4 text-right">AC</th>
+                  <th className="py-2 pr-4 text-right">% Plan.</th>
+                  <th className="py-2 pr-4 text-right">% Real</th>
+                  <th className="py-2 pr-4 text-right">SPI</th>
+                  <th className="py-2 pr-4 text-right">CPI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.projects.map((p) => (
+                  <tr key={p.id} className="border-b">
+                    <td className="py-2 pr-4 font-medium">
+                      <Link href={`/projetos/${p.id}`} className="hover:underline">
+                        {p.code}
+                      </Link>
+                    </td>
+                    <td className="py-2 pr-4">{p.name}</td>
+                    <td className="py-2 pr-4">
+                      <Badge variant="outline">{p.status}</Badge>
+                    </td>
+                    <td className="py-2 pr-4">{p.currentPhase}</td>
+                    <td className="py-2 pr-4">{p.plannedStart ?? "—"}</td>
+                    <td className="py-2 pr-4">{p.plannedEnd ?? "—"}</td>
+                    <td className="py-2 pr-4 text-right">{fmt(p.bac)}</td>
+                    <td className="py-2 pr-4 text-right">{fmt(p.pv)}</td>
+                    <td className="py-2 pr-4 text-right">{fmt(p.ev)}</td>
+                    <td className="py-2 pr-4 text-right">{fmt(p.ac)}</td>
+                    <td className="py-2 pr-4 text-right">{p.plannedPct.toFixed(1)}%</td>
+                    <td className="py-2 pr-4 text-right">{p.actualPct.toFixed(1)}%</td>
+                    <td className={`py-2 pr-4 text-right ${colorForRatio(p.spi)}`}>
+                      {p.spi ?? "—"}
+                    </td>
+                    <td className={`py-2 pr-4 text-right ${colorForRatio(p.cpi)}`}>
+                      {p.cpi ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+                {data.projects.length === 0 && (
+                  <tr>
+                    <td colSpan={14} className="py-4 text-center text-muted-foreground">
+                      Nenhum projeto cadastrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Ciclo de vida do projeto</CardTitle>
-            <CardDescription>Fases do template MICI (referência).</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {PROJECT_PHASES.map((phase) => (
-              <Badge key={phase.code} variant="outline" title={phase.name}>
-                {phase.code} · {phase.name}
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Port gates</CardTitle>
-            <CardDescription>
-              Critérios e evidências obrigatórios por gate (BR-001/BR-002) — definidos por
-              template de projeto.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {PROJECT_GATES.map((gate) => (
-              <Badge key={gate.code} variant="secondary" title={gate.name}>
-                {gate.code} · {gate.name}
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
+      <div className="text-xs text-muted-foreground">
+        PV = BAC × (dias decorridos / duração) (time-phased linear). EV = BAC × avanço físico médio (schedule). AC = soma de CostActual.
+        SPI = EV/PV · CPI = EV/AC. Drill-down, curva S, Gantt, burndown e heat map de riscos nas próximas fatias (E19).
+        <Link href="/administracao" className="ml-2 underline">Administração</Link>
       </div>
     </div>
   );

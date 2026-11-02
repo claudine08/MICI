@@ -1,4 +1,4 @@
-﻿-- Phase 17: Cost tracking por WBS/atividade + integracao Procurement -> Cost
+-- Phase 17: Cost tracking por WBS/atividade + integracao Procurement -> Cost
 -- (E08+): CostItem/Commitment/Actual passam a carregar wbsNodeId/activityId;
 -- Commitment referencia PurchaseOrder; Actual referencia GoodsReceipt.
 
