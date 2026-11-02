@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T02:32:54.450Z",
+  "generatedAt": "2026-11-02T02:39:51.676Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -9,7 +9,7 @@
     "qualidade.md",
     "custos.md"
   ],
-  "chunkCount": 205,
+  "chunkCount": 206,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -1649,8 +1649,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1529,
-      "endLine": 1537,
+      "endLine": 1539,
       "summary": "- Graficos visuais com Recharts (v3.10.1): - CurveSChart (LineChart PV/EV/AC), BurndownChart (atividades restantes), RiskHeatmap (grid colorido). - Substitui...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-02-11-2026-deploy-em-producao-e19-dashboard-fati-3",
+      "title": "02/11/2026 - Deploy em producao (E19 dashboard fatia 3)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1540,
+      "endLine": 1547,
+      "summary": "- Deploy Vercel: mici-f2euprnxn-homeland1 (Production, Ready), alias mici-theta.vercel.app. Sem migration nova. - Smoke autenticado: login 302 -> /api/v1/hea...",
       "tags": [
         "diario"
       ]
