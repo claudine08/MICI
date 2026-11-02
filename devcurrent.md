@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 02/11/2026 (retomada). E01-E14 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em producao. E15 Commissioning implementado (local): plano, itens de teste/reteste, aceite formal; migration `phase18_commissioning` aplicada no banco local; build/typecheck/lint/testes verdes. Pendente: deploy, smoke, docs. Proxima frente apos deploy: E16 Sustainability.
+**Ultima atualizacao:** 02/11/2026 (encerramento). E01-E15 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em producao. E15 Commissioning deployado: plano, itens de teste/reteste, aceite formal; migration `phase18_commissioning` aplicada no Neon (20 migrations); permissões sincronizadas. Smoke autenticado OK. Working tree limpa. Proxima frente: E16 Sustainability.
 
 ---
 
