@@ -30,6 +30,7 @@ export const MODULES = [
   "DOCUMENT",
   "RISK",
   "CHANGE",
+  "COMMISSIONING",
   "GATE",
   "REPORT",
   "DASHBOARD",
@@ -117,6 +118,7 @@ export const ROLE_GRANTS: Record<RoleCode, RoleGrant[]> = {
         "CONTRACT",
         "PROCUREMENT",
         "INVOICE",
+        "COMMISSIONING",
       ],
       actions: ["VIEW", "CREATE", "EDIT", "APPROVE", "REJECT", "DELETE", "EXPORT"],
     },
@@ -132,16 +134,16 @@ export const ROLE_GRANTS: Record<RoleCode, RoleGrant[]> = {
       modules: ["PROJECT", "WBS", "SCHEDULE", "COST", "RISK", "CHANGE", "GATE", "FIELD", "DOCUMENT", "REPORT", "DASHBOARD", "INVOICE"],
       actions: ["VIEW", "CREATE", "EDIT", "APPROVE", "REJECT", "DELETE", "EXPORT"],
     },
-    { modules: ["REQUIREMENT", "QUALITY", "SAFETY", "CONTRACT", "PROCUREMENT"], actions: ["VIEW", "CREATE", "EDIT", "APPROVE", "REJECT"] },
+    { modules: ["REQUIREMENT", "QUALITY", "SAFETY", "CONTRACT", "PROCUREMENT", "COMMISSIONING"], actions: ["VIEW", "CREATE", "EDIT", "APPROVE", "REJECT"] },
     { modules: ["USER", "NOTIFICATION"], actions: ["VIEW"] },
   ],
   SITE_COORDINATOR: [
-    { modules: ["FIELD", "QUALITY", "SAFETY"], actions: ["VIEW", "CREATE", "EDIT"] },
+    { modules: ["FIELD", "QUALITY", "SAFETY", "COMMISSIONING"], actions: ["VIEW", "CREATE", "EDIT"] },
     { modules: ["PROJECT", "WBS", "SCHEDULE", "DOCUMENT", "DASHBOARD", "RISK", "REPORT"], actions: ["VIEW"] },
   ],
   ENGINEERING: [
     { modules: ["REQUIREMENT", "WBS", "SCHEDULE", "DOCUMENT"], actions: ["VIEW", "CREATE", "EDIT"] },
-    { modules: ["PROJECT", "COST", "RISK", "GATE", "CHANGE", "DASHBOARD", "QUALITY"], actions: ["VIEW"] },
+    { modules: ["PROJECT", "COST", "RISK", "GATE", "CHANGE", "DASHBOARD", "QUALITY", "COMMISSIONING"], actions: ["VIEW"] },
   ],
   ARCHITECTURE: [
     { modules: ["REQUIREMENT", "WBS", "DOCUMENT"], actions: ["VIEW", "CREATE", "EDIT"] },
@@ -156,7 +158,7 @@ export const ROLE_GRANTS: Record<RoleCode, RoleGrant[]> = {
     { modules: ["CONTRACT", "PROCUREMENT", "REPORT", "PROJECT", "DASHBOARD"], actions: ["VIEW"] },
   ],
   QUALITY: [
-    { modules: ["QUALITY", "FIELD"], actions: ["VIEW", "CREATE", "EDIT", "APPROVE", "REJECT"] },
+    { modules: ["QUALITY", "FIELD", "COMMISSIONING"], actions: ["VIEW", "CREATE", "EDIT", "APPROVE", "REJECT"] },
     { modules: ["PROJECT", "REQUIREMENT", "DOCUMENT", "REPORT", "DASHBOARD"], actions: ["VIEW"] },
   ],
   SAFETY: [
@@ -164,7 +166,7 @@ export const ROLE_GRANTS: Record<RoleCode, RoleGrant[]> = {
     { modules: ["PROJECT", "DOCUMENT", "REPORT", "DASHBOARD"], actions: ["VIEW"] },
   ],
   SUSTAINABILITY: [
-    { modules: ["SUSTAINABILITY", "QUALITY", "FIELD"], actions: ["VIEW", "CREATE", "EDIT"] },
+    { modules: ["SUSTAINABILITY", "QUALITY", "FIELD", "COMMISSIONING"], actions: ["VIEW", "CREATE", "EDIT"] },
     { modules: ["PROJECT", "DOCUMENT", "REPORT", "DASHBOARD"], actions: ["VIEW"] },
   ],
   SUPPLIER: [
@@ -179,7 +181,7 @@ export const ROLE_GRANTS: Record<RoleCode, RoleGrant[]> = {
     { modules: ["DASHBOARD", "REPORT", "PROJECT", "GATE", "DOCUMENT"], actions: ["VIEW"] },
   ],
   RESPONSIBLE_TECHNICAL: [
-    { modules: ["QUALITY", "GATE", "DOCUMENT"], actions: ["VIEW", "APPROVE", "REJECT", "EDIT"] },
+    { modules: ["QUALITY", "GATE", "DOCUMENT", "COMMISSIONING"], actions: ["VIEW", "APPROVE", "REJECT", "EDIT"] },
     { modules: ["PROJECT", "REQUIREMENT", "SAFETY", "REPORT", "DASHBOARD"], actions: ["VIEW"] },
   ],
   AUDITOR: [{ modules: "*", actions: ["VIEW", "EXPORT"] }],

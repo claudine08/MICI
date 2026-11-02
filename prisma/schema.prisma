@@ -534,6 +534,9 @@ model Project {
   nonConformities NonConformity[]
   correctiveActions CorrectiveAction[]
   punchItems      PunchItem[]
+  commissioningPlans CommissioningPlan[]
+  commissioningItems CommissioningItem[]
+  acceptances     Acceptance[]
   purchaseRequests PurchaseRequest[]
   quotations      Quotation[]
   bidComparisons  BidComparison[]
@@ -800,6 +803,9 @@ model WBSNode {
   progressMeasurements ProgressMeasurement[]
   inspections  Inspection[]
   punchItems   PunchItem[]
+  commissioningPlans CommissioningPlan[]
+  commissioningItems CommissioningItem[]
+  acceptances  Acceptance[]
   purchaseRequests PurchaseRequest[]
   purchaseOrders PurchaseOrder[]
 
@@ -910,6 +916,9 @@ model ScheduleActivity {
   progressMeasurements ProgressMeasurement[]
   inspections   Inspection[]
   punchItems    PunchItem[]
+  commissioningPlans CommissioningPlan[]
+  commissioningItems CommissioningItem[]
+  acceptances   Acceptance[]
   purchaseRequests PurchaseRequest[]
   purchaseOrders PurchaseOrder[]
   costItems CostItem[]
@@ -1800,6 +1809,7 @@ model PhotoEvidence {
 
   punchItemPhotos      PunchItem[] @relation("PunchItemPhotoEvidence")
   punchItemCorrections PunchItem[] @relation("PunchItemCorrectionEvidence")
+  commissioningItemEvidences CommissioningItem[] @relation("CommissioningItemEvidence")
 
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])
@@ -2554,4 +2564,169 @@ model GoodsReceiptItem {
   @@index([goodsReceiptId])
   @@index([purchaseOrderItemId])
   @@map("goods_receipt_items")
+}
+
+// ---------------------------------------------------------------------------
+// Commissioning (E15, §49): plano de comissionamento, itens de teste/reteste
+// e aceite formal. Status e transições no motor puro (engine.ts).
+// ---------------------------------------------------------------------------
+
+enum CommissioningPlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+
+  @@map("commissioning_plan_status")
+}
+
+enum CommissioningItemStatus {
+  PLANNED
+  IN_PROGRESS
+  PASSED
+  FAILED
+  RETESTING
+  ACCEPTED
+
+  @@map("commissioning_item_status")
+}
+
+enum CommissioningItemResult {
+  PASS
+  FAIL
+  NA
+
+  @@map("commissioning_item_result")
+}
+
+enum AcceptanceStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+
+  @@map("acceptance_status")
+}
+
+model CommissioningPlan {
+  id             String                  @id @default(uuid()) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  projectId      String                  @map("project_id") @db.Uuid
+  code           String                  @db.VarChar(32)
+  title          String                  @db.VarChar(200)
+  description    String?                 @db.Text
+  status         CommissioningPlanStatus @default(DRAFT)
+  ownerId        String?                 @map("owner_id") @db.Uuid
+  startDate      DateTime?               @map("start_date") @db.Date
+  plannedEndDate DateTime?               @map("planned_end_date") @db.Date
+  wbsNodeId      String?                 @map("wbs_node_id") @db.Uuid
+  activityId     String?                 @map("activity_id") @db.Uuid
+  clientUuid     String?                 @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project   Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode   WBSNode?              @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity  ScheduleActivity?     @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  items     CommissioningItem[]
+  acceptances Acceptance[]
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@map("commissioning_plans")
+}
+
+model CommissioningItem {
+  id             String                   @id @default(uuid()) @db.Uuid
+  organizationId String                   @map("organization_id") @db.Uuid
+  projectId      String                   @map("project_id") @db.Uuid
+  planId         String                   @map("plan_id") @db.Uuid
+  code           String                   @db.VarChar(32)
+  title          String                   @db.VarChar(200)
+  description    String?                  @db.Text
+  systemName     String?                  @map("system_name") @db.VarChar(200)
+  testMethod     String?                  @map("test_method") @db.Text
+  acceptanceCriteria String?              @map("acceptance_criteria") @db.Text
+  status         CommissioningItemStatus  @default(PLANNED)
+  result         CommissioningItemResult?
+  notes          String?                  @db.Text
+  rejectReason   String?                  @map("reject_reason") @db.VarChar(1000)
+  retestCount    Int                      @default(0) @map("retest_count")
+  evidencePhotoId String?                 @map("evidence_photo_id") @db.Uuid
+  evidenceNotes  String?                  @map("evidence_notes") @db.Text
+  executedById   String?                  @map("executed_by") @db.Uuid
+  executedAt     DateTime?                @map("executed_at")
+  verifiedById   String?                  @map("verified_by") @db.Uuid
+  verifiedAt     DateTime?                @map("verified_at")
+  acceptedAt     DateTime?                @map("accepted_at")
+  wbsNodeId      String?                  @map("wbs_node_id") @db.Uuid
+  activityId     String?                  @map("activity_id") @db.Uuid
+  inspectionId   String?                  @map("inspection_id") @db.Uuid
+  clientUuid     String?                  @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project   Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  plan      CommissioningPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  wbsNode   WBSNode?           @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity  ScheduleActivity?  @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  photoEvidence PhotoEvidence? @relation("CommissioningItemEvidence", fields: [evidencePhotoId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([planId])
+  @@index([organizationId, projectId, status])
+  @@map("commissioning_items")
+}
+
+model Acceptance {
+  id                String           @id @default(uuid()) @db.Uuid
+  organizationId    String           @map("organization_id") @db.Uuid
+  projectId         String           @map("project_id") @db.Uuid
+  code              String           @db.VarChar(32)
+  commissioningPlanId String?         @map("commissioning_plan_id") @db.Uuid
+  scope             String           @db.Text
+  status            AcceptanceStatus @default(DRAFT)
+  acceptedById      String?          @map("accepted_by") @db.Uuid
+  acceptedAt        DateTime?        @map("accepted_at")
+  notes             String?          @db.Text
+  rejectReason      String?          @map("reject_reason") @db.VarChar(1000)
+  wbsNodeId         String?          @map("wbs_node_id") @db.Uuid
+  activityId        String?          @map("activity_id") @db.Uuid
+  documentId        String?          @map("document_id") @db.Uuid
+  clientUuid        String?          @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project            Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  commissioningPlan  CommissioningPlan? @relation(fields: [commissioningPlanId], references: [id], onDelete: SetNull)
+  wbsNode            WBSNode?           @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity           ScheduleActivity?  @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([commissioningPlanId])
+  @@index([organizationId, projectId, status])
+  @@map("acceptances")
 }
