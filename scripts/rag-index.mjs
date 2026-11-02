@@ -26,6 +26,9 @@ const SOURCES = [
   { file: "qualidade.md", label: "qualidade" },
   { file: "campo.md", label: "campo" },
   { file: "custos.md", label: "custos" },
+  { file: "comissionamento.md", label: "comissionamento" },
+  { file: "sustentabilidade.md", label: "sustentabilidade" },
+  { file: "AI.md", label: "ai" },
   { file: "metodologia.md", label: "metodologia" },
 ];
 

@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md. Total de chunks: 211.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 235.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -217,3 +217,27 @@
 | `custos-6-rastreio-por-wbs-atividade-e-fluxo-de-caixa-e0` | 6. Rastreio por WBS/atividade e fluxo de caixa (E08+) | custos.md:138-139 | (secao sem corpo) |
 | `custos-6-1-rastreio` | 6.1 Rastreio | custos.md:140-149 | - CostItem, CostCommitment e CostActual carregam wbsNodeId e ctivityId (opcionais, FKs para WBS e ScheduleActivity). - CostCommitment.purchaseOrderId vincul... |
 | `custos-6-2-fluxo-de-caixa-csv` | 6.2 Fluxo de caixa CSV | custos.md:150-159 | - Export: GET /api/v1/projects/[id]/cost/cashflow/export retorna CSV com colunas date,type,code,description,category,wbs,activity,amount,source (planejado/co... |
+| `comissionamento-entidades` | Entidades | comissionamento.md:5-10 | - **CommissioningPlan** (`CP001`): plano por projeto; status DRAFT → ACTIVE → COMPLETED / CANCELLED. - **CommissioningItem** (`CI001`): item de teste vincula... |
+| `comissionamento-api` | API | comissionamento.md:11-20 | Base: `/api/v1/projects/[id]/commissioning/...` - `plans` (GET/POST), `plans/[planId]` (GET/PATCH/DELETE), `plans/[planId]/status` (POST). - `items` (GET/POS... |
+| `comissionamento-ui` | UI | comissionamento.md:21-24 | `/projetos/[id]/commissioning` — tabs Planos, Itens, Aceites com dialogs de criação e transições. |
+| `comissionamento-testes` | Testes | comissionamento.md:25-28 | - Unit: motor de estados (a adicionar). - Integração: a adicionar. |
+| `sustentabilidade-acesso` | Acesso | sustentabilidade.md:3-7 | - URL: https://mici-theta.vercel.app - Login: admin@mici.demo / Demo@1234 - Projeto demo: DEMO-001 → menu Sustentabilidade → /projetos/{id}/sustentabilidade |
+| `sustentabilidade-fluxo-ui` | Fluxo UI | sustentabilidade.md:8-9 | (secao sem corpo) |
+| `sustentabilidade-a-plano-psp` | a) Plano (PSP) | sustentabilidade.md:10-14 | 1. Aba Planos → "Novo plano". 2. Preencha título, descrição, responsável, datas, WBS/atividade. 3. Criar → status DRAFT. Use ações ACTIVATE → ACTIVE, COMPLET... |
+| `sustentabilidade-b-metrica` | b) Métrica | sustentabilidade.md:15-19 | 1. Aba Métricas → "Nova métrica". 2. Nome, unidade, categoria, descrição, plano (opcional). 3. Criar → contadores de baselines/metas/medições. |
+| `sustentabilidade-c-residuo` | c) Resíduo | sustentabilidade.md:20-24 | 1. Aba Resíduos → "Novo resíduo". 2. Tipo, quantidade, unidade, destino, data, WBS/atividade, notas. 3. Criar → excluir disponível. |
+| `sustentabilidade-baselines-metas-medicoes` | Baselines / Metas / Medições | sustentabilidade.md:25-27 | Listagem + exclusão na UI. Criação/edição via API (abaixo). |
+| `sustentabilidade-endpoints-api` | Endpoints API | sustentabilidade.md:28-38 | Base: /api/v1/projects/{id}/sustainability - GET/POST /plans ; PATCH/DELETE /plans/{planId} ; POST /plans/{planId}/status (body: {"action":"ACTIVATE"}) - GET... |
+| `sustentabilidade-permissoes` | Permissões | sustentabilidade.md:39-42 | - Sem sessão → 401. - VIEWER → lista (VIEW) mas não cria (403 em POST). |
+| `sustentabilidade-integridade` | Integridade | sustentabilidade.md:43-46 | - Códigos automáticos por projeto: SP001, SM001, SB001, ST001, MS001, WR001. - Soft delete (deletedAt); idempotência por clientUuid. |
+| `sustentabilidade-limitacoes-ui` | Limitações UI | sustentabilidade.md:47-48 | - Baselines, metas e medições: apenas listagem + exclusão na UI; criação via API. |
+| `ai-visao-geral` | Visão geral | AI.md:3-5 | Módulo de inteligência artificial do MICI: gateway unificado para LLMs, registro de prompts e histórico de requisições. Permite resumo diário de obra, classi... |
+| `ai-configuracao` | Configuração | AI.md:6-10 | Variáveis de ambiente (Vercel / `.env.local`): - `OPENAI_API_KEY` — chave da OpenAI. Se ausente, o gateway retorna respostas **mock** (desenvolvimento). - `A... |
+| `ai-entidades-schema` | Entidades (schema) | AI.md:11-14 | - **AiPrompt** (`ai_prompts`): registro de prompts (código, nome, descrição, template, modelo, isSystem). Escopo por organização (organizationId nullable par... |
+| `ai-modulo-src-modules-ai` | Módulo (`src/modules/ai/`) | AI.md:15-21 | - `common.ts` — helpers (assertAiProject). - `gateway.ts` — `runAi(input)` executa a chamada ao LLM (OpenAI ou mock) e persiste o log. - `prompts.ts` — `AI_P... |
+| `ai-prompts-padrao` | Prompts padrão | AI.md:22-29 | \| Código \| Nome \| Uso \| \|---\|---\|---\| \| `DAILY_SUMMARY` \| Resumo diário de obra \| Resume diário em 5 bullet points \| \| `RISK_CLASSIFY` \| Classificação de ris... |
+| `ai-api` | API | AI.md:30-37 | Base: `/api/v1/ai` - `POST /ai/run` — body: `{ "promptCode": "DAILY_SUMMARY", "input": "...", "projectId": "uuid (opcional)" }`. Retorna `{ output, model, to... |
+| `ai-ui` | UI | AI.md:38-41 | - Rota: `/ai` (menu lateral → Geral → IA). - Tela com seletor de prompt, campo de input, projectId opcional, botão Executar e histórico de requisições (statu... |
+| `ai-gateway-detalhes` | Gateway (detalhes) | AI.md:42-46 | - Se `OPENAI_API_KEY` estiver definida: chama `https://api.openai.com/v1/chat/completions` com o modelo configurado. - Caso contrário: retorna `[MOCK AI - {m... |
+| `ai-testes` | Testes | AI.md:47-50 | - Smoke autenticado: `GET /ai` → 200; `POST /ai/run` → 200 com `status: "SUCCESS"`. - Sem sessão → 401. |
+| `ai-como-habilitar-ia-real` | Como habilitar IA real | AI.md:51-55 | 1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. No Vercel: Settings → Environment Variables → adicione `OPENAI_API_KEY`. 3. (Opcional) `AI_M... |

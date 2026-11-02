@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T22:32:29.248Z",
+  "generatedAt": "2026-11-02T22:34:40.463Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -7,9 +7,12 @@
     "ROADMAP.md",
     "suprimentos.md",
     "qualidade.md",
-    "custos.md"
+    "custos.md",
+    "comissionamento.md",
+    "sustentabilidade.md",
+    "AI.md"
   ],
-  "chunkCount": 211,
+  "chunkCount": 235,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -2541,6 +2544,294 @@
       "summary": "- Export: GET /api/v1/projects/[id]/cost/cashflow/export retorna CSV com colunas date,type,code,description,category,wbs,activity,amount,source (planejado/co...",
       "tags": [
         "custos"
+      ]
+    },
+    {
+      "id": "comissionamento-entidades",
+      "title": "Entidades",
+      "level": 2,
+      "file": "comissionamento.md",
+      "startLine": 5,
+      "endLine": 10,
+      "summary": "- **CommissioningPlan** (`CP001`): plano por projeto; status DRAFT → ACTIVE → COMPLETED / CANCELLED. - **CommissioningItem** (`CI001`): item de teste vincula...",
+      "tags": [
+        "comissionamento"
+      ]
+    },
+    {
+      "id": "comissionamento-api",
+      "title": "API",
+      "level": 2,
+      "file": "comissionamento.md",
+      "startLine": 11,
+      "endLine": 20,
+      "summary": "Base: `/api/v1/projects/[id]/commissioning/...` - `plans` (GET/POST), `plans/[planId]` (GET/PATCH/DELETE), `plans/[planId]/status` (POST). - `items` (GET/POS...",
+      "tags": [
+        "comissionamento"
+      ]
+    },
+    {
+      "id": "comissionamento-ui",
+      "title": "UI",
+      "level": 2,
+      "file": "comissionamento.md",
+      "startLine": 21,
+      "endLine": 24,
+      "summary": "`/projetos/[id]/commissioning` — tabs Planos, Itens, Aceites com dialogs de criação e transições.",
+      "tags": [
+        "comissionamento"
+      ]
+    },
+    {
+      "id": "comissionamento-testes",
+      "title": "Testes",
+      "level": 2,
+      "file": "comissionamento.md",
+      "startLine": 25,
+      "endLine": 28,
+      "summary": "- Unit: motor de estados (a adicionar). - Integração: a adicionar.",
+      "tags": [
+        "comissionamento"
+      ]
+    },
+    {
+      "id": "sustentabilidade-acesso",
+      "title": "Acesso",
+      "level": 2,
+      "file": "sustentabilidade.md",
+      "startLine": 3,
+      "endLine": 7,
+      "summary": "- URL: https://mici-theta.vercel.app - Login: admin@mici.demo / Demo@1234 - Projeto demo: DEMO-001 → menu Sustentabilidade → /projetos/{id}/sustentabilidade",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-fluxo-ui",
+      "title": "Fluxo UI",
+      "level": 2,
+      "file": "sustentabilidade.md",
+      "startLine": 8,
+      "endLine": 9,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-a-plano-psp",
+      "title": "a) Plano (PSP)",
+      "level": 3,
+      "file": "sustentabilidade.md",
+      "startLine": 10,
+      "endLine": 14,
+      "summary": "1. Aba Planos → \"Novo plano\". 2. Preencha título, descrição, responsável, datas, WBS/atividade. 3. Criar → status DRAFT. Use ações ACTIVATE → ACTIVE, COMPLET...",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-b-metrica",
+      "title": "b) Métrica",
+      "level": 3,
+      "file": "sustentabilidade.md",
+      "startLine": 15,
+      "endLine": 19,
+      "summary": "1. Aba Métricas → \"Nova métrica\". 2. Nome, unidade, categoria, descrição, plano (opcional). 3. Criar → contadores de baselines/metas/medições.",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-c-residuo",
+      "title": "c) Resíduo",
+      "level": 3,
+      "file": "sustentabilidade.md",
+      "startLine": 20,
+      "endLine": 24,
+      "summary": "1. Aba Resíduos → \"Novo resíduo\". 2. Tipo, quantidade, unidade, destino, data, WBS/atividade, notas. 3. Criar → excluir disponível.",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-baselines-metas-medicoes",
+      "title": "Baselines / Metas / Medições",
+      "level": 3,
+      "file": "sustentabilidade.md",
+      "startLine": 25,
+      "endLine": 27,
+      "summary": "Listagem + exclusão na UI. Criação/edição via API (abaixo).",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-endpoints-api",
+      "title": "Endpoints API",
+      "level": 2,
+      "file": "sustentabilidade.md",
+      "startLine": 28,
+      "endLine": 38,
+      "summary": "Base: /api/v1/projects/{id}/sustainability - GET/POST /plans ; PATCH/DELETE /plans/{planId} ; POST /plans/{planId}/status (body: {\"action\":\"ACTIVATE\"}) - GET...",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-permissoes",
+      "title": "Permissões",
+      "level": 2,
+      "file": "sustentabilidade.md",
+      "startLine": 39,
+      "endLine": 42,
+      "summary": "- Sem sessão → 401. - VIEWER → lista (VIEW) mas não cria (403 em POST).",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-integridade",
+      "title": "Integridade",
+      "level": 2,
+      "file": "sustentabilidade.md",
+      "startLine": 43,
+      "endLine": 46,
+      "summary": "- Códigos automáticos por projeto: SP001, SM001, SB001, ST001, MS001, WR001. - Soft delete (deletedAt); idempotência por clientUuid.",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "sustentabilidade-limitacoes-ui",
+      "title": "Limitações UI",
+      "level": 2,
+      "file": "sustentabilidade.md",
+      "startLine": 47,
+      "endLine": 48,
+      "summary": "- Baselines, metas e medições: apenas listagem + exclusão na UI; criação via API.",
+      "tags": [
+        "sustentabilidade"
+      ]
+    },
+    {
+      "id": "ai-visao-geral",
+      "title": "Visão geral",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 3,
+      "endLine": 5,
+      "summary": "Módulo de inteligência artificial do MICI: gateway unificado para LLMs, registro de prompts e histórico de requisições. Permite resumo diário de obra, classi...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-configuracao",
+      "title": "Configuração",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 6,
+      "endLine": 10,
+      "summary": "Variáveis de ambiente (Vercel / `.env.local`): - `OPENAI_API_KEY` — chave da OpenAI. Se ausente, o gateway retorna respostas **mock** (desenvolvimento). - `A...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-entidades-schema",
+      "title": "Entidades (schema)",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 11,
+      "endLine": 14,
+      "summary": "- **AiPrompt** (`ai_prompts`): registro de prompts (código, nome, descrição, template, modelo, isSystem). Escopo por organização (organizationId nullable par...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-modulo-src-modules-ai",
+      "title": "Módulo (`src/modules/ai/`)",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 15,
+      "endLine": 21,
+      "summary": "- `common.ts` — helpers (assertAiProject). - `gateway.ts` — `runAi(input)` executa a chamada ao LLM (OpenAI ou mock) e persiste o log. - `prompts.ts` — `AI_P...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-prompts-padrao",
+      "title": "Prompts padrão",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 22,
+      "endLine": 29,
+      "summary": "| Código | Nome | Uso | |---|---|---| | `DAILY_SUMMARY` | Resumo diário de obra | Resume diário em 5 bullet points | | `RISK_CLASSIFY` | Classificação de ris...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-api",
+      "title": "API",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 30,
+      "endLine": 37,
+      "summary": "Base: `/api/v1/ai` - `POST /ai/run` — body: `{ \"promptCode\": \"DAILY_SUMMARY\", \"input\": \"...\", \"projectId\": \"uuid (opcional)\" }`. Retorna `{ output, model, to...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-ui",
+      "title": "UI",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 38,
+      "endLine": 41,
+      "summary": "- Rota: `/ai` (menu lateral → Geral → IA). - Tela com seletor de prompt, campo de input, projectId opcional, botão Executar e histórico de requisições (statu...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-gateway-detalhes",
+      "title": "Gateway (detalhes)",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 42,
+      "endLine": 46,
+      "summary": "- Se `OPENAI_API_KEY` estiver definida: chama `https://api.openai.com/v1/chat/completions` com o modelo configurado. - Caso contrário: retorna `[MOCK AI - {m...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-testes",
+      "title": "Testes",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 47,
+      "endLine": 50,
+      "summary": "- Smoke autenticado: `GET /ai` → 200; `POST /ai/run` → 200 com `status: \"SUCCESS\"`. - Sem sessão → 401.",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-como-habilitar-ia-real",
+      "title": "Como habilitar IA real",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 51,
+      "endLine": 55,
+      "summary": "1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. No Vercel: Settings → Environment Variables → adicione `OPENAI_API_KEY`. 3. (Opcional) `AI_M...",
+      "tags": [
+        "ai"
       ]
     }
   ]
