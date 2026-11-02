@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T22:34:40.463Z",
+  "generatedAt": "2026-11-02T22:56:09.461Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -12,7 +12,7 @@
     "sustentabilidade.md",
     "AI.md"
   ],
-  "chunkCount": 235,
+  "chunkCount": 236,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -2828,8 +2828,20 @@
       "level": 2,
       "file": "AI.md",
       "startLine": 51,
-      "endLine": 55,
-      "summary": "1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. No Vercel: Settings → Environment Variables → adicione `OPENAI_API_KEY`. 3. (Opcional) `AI_M...",
+      "endLine": 57,
+      "summary": "1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. Garanta créditos na conta (billing) — sem créditos, a API retorna 429. 3. No Vercel: Setting...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-tratamento-de-falhas",
+      "title": "Tratamento de falhas",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 58,
+      "endLine": 59,
+      "summary": "Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: \"SUCCESS\"` com um aviso no o...",
       "tags": [
         "ai"
       ]

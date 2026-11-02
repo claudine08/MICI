@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 235.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 236.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -240,4 +240,5 @@
 | `ai-ui` | UI | AI.md:38-41 | - Rota: `/ai` (menu lateral → Geral → IA). - Tela com seletor de prompt, campo de input, projectId opcional, botão Executar e histórico de requisições (statu... |
 | `ai-gateway-detalhes` | Gateway (detalhes) | AI.md:42-46 | - Se `OPENAI_API_KEY` estiver definida: chama `https://api.openai.com/v1/chat/completions` com o modelo configurado. - Caso contrário: retorna `[MOCK AI - {m... |
 | `ai-testes` | Testes | AI.md:47-50 | - Smoke autenticado: `GET /ai` → 200; `POST /ai/run` → 200 com `status: "SUCCESS"`. - Sem sessão → 401. |
-| `ai-como-habilitar-ia-real` | Como habilitar IA real | AI.md:51-55 | 1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. No Vercel: Settings → Environment Variables → adicione `OPENAI_API_KEY`. 3. (Opcional) `AI_M... |
+| `ai-como-habilitar-ia-real` | Como habilitar IA real | AI.md:51-57 | 1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. Garanta créditos na conta (billing) — sem créditos, a API retorna 429. 3. No Vercel: Setting... |
+| `ai-tratamento-de-falhas` | Tratamento de falhas | AI.md:58-59 | Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: "SUCCESS"` com um aviso no o... |

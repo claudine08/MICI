@@ -50,6 +50,10 @@ Permissão: `AI:VIEW` (leitura) / `AI:CREATE` (execução).
 
 ## Como habilitar IA real
 1. Obtenha uma chave em https://platform.openai.com/api-keys.
-2. No Vercel: Settings → Environment Variables → adicione `OPENAI_API_KEY`.
-3. (Opcional) `AI_MODEL` (ex.: `gpt-4o`).
-4. Redeploy. As requisições passarão a usar o modelo real e retornar tokens.
+2. Garanta créditos na conta (billing) — sem créditos, a API retorna 429.
+3. No Vercel: Settings → Environment Variables → adicione `OPENAI_API_KEY`.
+4. (Opcional) `AI_MODEL` (ex.: `gpt-4o`).
+5. Redeploy. As requisições passarão a usar o modelo real e retornar tokens.
+
+## Tratamento de falhas
+Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: "SUCCESS"` com um aviso no output e `errorMessage` preenchido. A UI continua funcionando. O histórico registra a falha.
