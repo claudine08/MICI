@@ -1,29 +1,48 @@
-# Sustentabilidade (E16)
+# Sustentabilidade (E16) — Guia de Teste
 
-Módulo de sustentabilidade: PSP (plano), métricas, baseline, metas, medições e resíduos.
+## Acesso
+- URL: https://mici-theta.vercel.app
+- Login: admin@mici.demo / Demo@1234
+- Projeto demo: DEMO-001 → menu Sustentabilidade → /projetos/{id}/sustentabilidade
 
-## Entidades
+## Fluxo UI
 
-- **SustainabilityPlan** (`SP001`): plano por projeto; status DRAFT → ACTIVE → COMPLETED / CANCELLED.
-- **SustainabilityMetric** (`SM001`): métrica (nome, unidade, categoria) vinculada a plano opcional.
-- **SustainabilityBaseline** (`SB001`): baseline por métrica.
-- **SustainabilityTarget** (`ST001`): meta por métrica (valor alvo + prazo).
-- **SustainabilityMeasurement** (`MS001`): medição por métrica (valor, data, WBS/atividade).
-- **WasteRecord** (`WR001`): registro de resíduo (tipo, quantidade, unidade, destino, data).
+### a) Plano (PSP)
+1. Aba Planos → "Novo plano".
+2. Preencha título, descrição, responsável, datas, WBS/atividade.
+3. Criar → status DRAFT. Use ações ACTIVATE → ACTIVE, COMPLETE → COMPLETED, CANCEL.
 
-## API
+### b) Métrica
+1. Aba Métricas → "Nova métrica".
+2. Nome, unidade, categoria, descrição, plano (opcional).
+3. Criar → contadores de baselines/metas/medições.
 
-Base: `/api/v1/projects/[id]/sustainability/...`
+### c) Resíduo
+1. Aba Resíduos → "Novo resíduo".
+2. Tipo, quantidade, unidade, destino, data, WBS/atividade, notas.
+3. Criar → excluir disponível.
 
-- `plans` (GET/POST), `plans/[planId]` (PATCH/DELETE), `plans/[planId]/status` (POST).
-- `metrics` (GET/POST), `metrics/[metricId]` (PATCH/DELETE).
-- `baselines` (GET/POST), `baselines/[baselineId]` (PATCH/DELETE).
-- `targets` (GET/POST), `targets/[targetId]` (PATCH/DELETE).
-- `measurements` (GET/POST), `measurements/[measurementId]` (PATCH/DELETE).
-- `wastes` (GET/POST), `wastes/[wasteId]` (PATCH/DELETE).
+### Baselines / Metas / Medições
+Listagem + exclusão na UI. Criação/edição via API (abaixo).
 
-Permissão: `SUSTAINABILITY:VIEW/CREATE/EDIT/DELETE`.
+## Endpoints API
 
-## UI
+Base: /api/v1/projects/{id}/sustainability
 
-`/projetos/[id]/sustentabilidade` — tabs Planos, Métricas, Baselines, Metas, Medições, Resíduos.
+- GET/POST /plans ; PATCH/DELETE /plans/{planId} ; POST /plans/{planId}/status (body: {"action":"ACTIVATE"})
+- GET/POST /metrics ; PATCH/DELETE /metrics/{metricId}
+- GET/POST /baselines (body: {"metricId":"...","value":100,"recordedAt":"2026-11-02"}) ; PATCH/DELETE /baselines/{baselineId}
+- GET/POST /targets (body: {"metricId":"...","targetValue":80,"dueDate":"2026-12-31"}) ; PATCH/DELETE /targets/{targetId}
+- GET/POST /measurements (body: {"metricId":"...","value":90,"measuredAt":"2026-11-02"}) ; PATCH/DELETE /measurements/{measurementId}
+- GET/POST /wastes ; PATCH/DELETE /wastes/{wasteId}
+
+## Permissões
+- Sem sessão → 401.
+- VIEWER → lista (VIEW) mas não cria (403 em POST).
+
+## Integridade
+- Códigos automáticos por projeto: SP001, SM001, SB001, ST001, MS001, WR001.
+- Soft delete (deletedAt); idempotência por clientUuid.
+
+## Limitações UI
+- Baselines, metas e medições: apenas listagem + exclusão na UI; criação via API.
