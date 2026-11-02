@@ -42,8 +42,10 @@ Permissão: `AI:VIEW` (leitura) / `AI:CREATE` (execução).
 - Tela com seletor de prompt, campo de input, projectId opcional, botão Executar e histórico de requisições (status, modelo, tokens).
 
 ## Gateway (detalhes)
-- Se `OPENAI_API_KEY` estiver definida: chama `https://api.openai.com/v1/chat/completions` com o modelo configurado.
-- Caso contrário: retorna `[MOCK AI - {model}] Resposta simulada para: ...` (útil para testes sem custo).
+- Prioriza `OPENCODE_API_KEY`: chama `{OPENCODE_BASE_URL}/chat/completions` (default `https://opencode.ai/zen/v1`) com o modelo configurado (default `glm-5.3-flash-free`).
+- Fallback: se `OPENCODE_API_KEY` ausente, usa `OPENAI_API_KEY` em `https://api.openai.com/v1`.
+- Se nenhuma chave: retorna mock `[MOCK AI - {model}] ...`.
+- Em caso de falha (quota/auth/rede), faz fallback para mock e retorna `status: "SUCCESS"` com aviso.
 - Toda requisição é persistida em `ai_requests` com status `SUCCESS`/`FAILED`, tokens e mensagem de erro.
 
 ## Testes
