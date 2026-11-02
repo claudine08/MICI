@@ -537,6 +537,12 @@ model Project {
   commissioningPlans CommissioningPlan[]
   commissioningItems CommissioningItem[]
   acceptances     Acceptance[]
+  sustainabilityPlans SustainabilityPlan[]
+  sustainabilityMetrics SustainabilityMetric[]
+  sustainabilityBaselines SustainabilityBaseline[]
+  sustainabilityTargets SustainabilityTarget[]
+  sustainabilityMeasurements SustainabilityMeasurement[]
+  wasteRecords    WasteRecord[]
   purchaseRequests PurchaseRequest[]
   quotations      Quotation[]
   bidComparisons  BidComparison[]
@@ -806,6 +812,9 @@ model WBSNode {
   commissioningPlans CommissioningPlan[]
   commissioningItems CommissioningItem[]
   acceptances  Acceptance[]
+  sustainabilityPlans SustainabilityPlan[]
+  sustainabilityMeasurements SustainabilityMeasurement[]
+  wasteRecords WasteRecord[]
   purchaseRequests PurchaseRequest[]
   purchaseOrders PurchaseOrder[]
 
@@ -919,6 +928,9 @@ model ScheduleActivity {
   commissioningPlans CommissioningPlan[]
   commissioningItems CommissioningItem[]
   acceptances   Acceptance[]
+  sustainabilityPlans SustainabilityPlan[]
+  sustainabilityMeasurements SustainabilityMeasurement[]
+  wasteRecords  WasteRecord[]
   purchaseRequests PurchaseRequest[]
   purchaseOrders PurchaseOrder[]
   costItems CostItem[]
@@ -2729,4 +2741,212 @@ model Acceptance {
   @@index([commissioningPlanId])
   @@index([organizationId, projectId, status])
   @@map("acceptances")
+}
+
+// ---------------------------------------------------------------------------
+// Sustainability (E16): plano PSP, métricas, baseline, metas, medições,
+// resíduos. Status e transições no motor puro (engine.ts).
+// ---------------------------------------------------------------------------
+
+enum SustainabilityPlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+
+  @@map("sustainability_plan_status")
+}
+
+model SustainabilityPlan {
+  id             String                    @id @default(uuid()) @db.Uuid
+  organizationId String                    @map("organization_id") @db.Uuid
+  projectId      String                    @map("project_id") @db.Uuid
+  code           String                    @db.VarChar(32)
+  title          String                    @db.VarChar(200)
+  description    String?                   @db.Text
+  status         SustainabilityPlanStatus  @default(DRAFT)
+  ownerId        String?                   @map("owner_id") @db.Uuid
+  startDate      DateTime?                 @map("start_date") @db.Date
+  plannedEndDate DateTime?                 @map("planned_end_date") @db.Date
+  wbsNodeId      String?                   @map("wbs_node_id") @db.Uuid
+  activityId     String?                   @map("activity_id") @db.Uuid
+  clientUuid     String?                   @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project   Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode   WBSNode?           @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity  ScheduleActivity?  @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  metrics   SustainabilityMetric[]
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([organizationId, projectId, status])
+  @@map("sustainability_plans")
+}
+
+model SustainabilityMetric {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  planId         String?  @map("plan_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  name           String   @db.VarChar(200)
+  unit           String   @db.VarChar(32)
+  category       String?  @db.VarChar(64)
+  description    String?  @db.Text
+  clientUuid     String?  @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project   Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  plan      SustainabilityPlan?  @relation(fields: [planId], references: [id], onDelete: SetNull)
+  baselines SustainabilityBaseline[]
+  targets   SustainabilityTarget[]
+  measurements SustainabilityMeasurement[]
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([planId])
+  @@map("sustainability_metrics")
+}
+
+model SustainabilityBaseline {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  metricId       String   @map("metric_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  value          Decimal  @db.Decimal(14, 4)
+  recordedAt     DateTime @map("recorded_at") @db.Date
+  source         String?  @db.VarChar(200)
+  notes          String?  @db.Text
+  clientUuid     String?  @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project  Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  metric   SustainabilityMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([metricId])
+  @@map("sustainability_baselines")
+}
+
+model SustainabilityTarget {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  metricId       String   @map("metric_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  targetValue    Decimal  @map("target_value") @db.Decimal(14, 4)
+  dueDate        DateTime? @map("due_date") @db.Date
+  notes          String?  @db.Text
+  clientUuid     String?  @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project  Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  metric   SustainabilityMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([metricId])
+  @@map("sustainability_targets")
+}
+
+model SustainabilityMeasurement {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  metricId       String   @map("metric_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  value          Decimal  @db.Decimal(14, 4)
+  measuredAt     DateTime @map("measured_at") @db.Date
+  wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
+  activityId     String?  @map("activity_id") @db.Uuid
+  notes          String?  @db.Text
+  evidenceNotes  String?  @map("evidence_notes") @db.Text
+  clientUuid     String?  @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project  Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  metric   SustainabilityMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  wbsNode  WBSNode?            @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity ScheduleActivity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@index([metricId])
+  @@map("sustainability_measurements")
+}
+
+model WasteRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  code           String   @db.VarChar(32)
+  wasteType      String   @map("waste_type") @db.VarChar(120)
+  quantity       Decimal  @db.Decimal(14, 4)
+  unit           String   @db.VarChar(32)
+  destination    String?  @db.VarChar(200)
+  recordedAt     DateTime @map("recorded_at") @db.Date
+  wbsNodeId      String?  @map("wbs_node_id") @db.Uuid
+  activityId     String?  @map("activity_id") @db.Uuid
+  notes          String?  @db.Text
+  clientUuid     String?  @map("client_uuid") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  version   Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsNode  WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
+  activity ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, code])
+  @@unique([projectId, clientUuid])
+  @@index([organizationId, projectId])
+  @@map("waste_records")
 }
