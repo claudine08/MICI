@@ -22,7 +22,7 @@ beforeAll(async () => {
   orgA = await createOrganization({ name: `Org DASH ${suffix}`, slug: `dash-${suffix}`, actorId: userA.id, actorEmail: userA.email });
   const project = await createProject({ ...actorA(), code: `PRJ-DASH-${suffix.toUpperCase()}`, name: "Projeto Dashboard Teste", startDate: "2026-10-01", plannedEndDate: "2026-12-31" });
   projectId = project.id;
-  await createCostItem({ ...actorA(), projectId, description: "Item de custo", category: "EQUIPAMENTO", unit: "un", quantity: 2, unitPrice: 100, amount: 200 });
+  await createCostItem({ ...actorA(), projectId, description: "Item de custo", category: "EQUIPAMENTO", unit: "un", quantity: 2, unitPrice: 100 });
 });
 
 describe("Dashboard (E17/E19) — integração", () => {

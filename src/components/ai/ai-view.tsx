@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { apiRequest } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,10 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
   const [isPending, startTransition] = useTransition();
   const [requests, setRequests] = useState(initialRequests);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ realAiAvailable: boolean; providers: { opencode: { configured: boolean }; openai: { configured: boolean }; ollama: { available: boolean } } } | null>(null);
+  useEffect(() => {
+    fetch("/api/v1/ai/status").then((r) => r.json()).then(setStatus).catch(() => {});
+  }, []);
 
   const run = async () => {
     setError(""); setOutput("");
@@ -39,6 +43,28 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
+      {status && (
+        <Card className="p-4">
+          <h2 className="mb-2 text-sm font-semibold">Status da IA</h2>
+          <p className="text-sm">
+            {status.realAiAvailable ? (
+              <span className="text-emerald-600 font-medium">IA real disponível</span>
+            ) : (
+              <span className="text-amber-600 font-medium">Modo mock (nenhum provedor configurado)</span>
+            )}
+          </p>
+          <ul className="mt-2 text-xs text-muted-foreground space-y-1">
+            <li>OpenCode Zen: {status.providers.opencode.configured ? "configurado" : "não configurado"}</li>
+            <li>OpenAI: {status.providers.openai.configured ? "configurado" : "não configurado"}</li>
+            <li>Ollama (local): {status.providers.ollama.available ? "disponível" : "indisponível"}</li>
+          </ul>
+          {!status.realAiAvailable && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Para habilitar IA real: configure <code>OPENAI_API_KEY</code> (com créditos) ou <code>OPENCODE_API_KEY</code> no Vercel, ou rode Ollama localmente.
+            </p>
+          )}
+        </Card>
+      )}
       <Card className="p-4">
         <h2 className="mb-3 text-sm font-semibold">Executar prompt</h2>
         <div className="space-y-3">
