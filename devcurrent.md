@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 02/11/2026 (encerramento). E01-E18 + E08+ (Cost Tracking & Cash Flow) + E19 (Project Dashboard Fatia 1+2+3) completos e em producao. E18 AI deployado: gateway, prompts, resumo diario, classificacao, busca (mock sem OPENAI_API_KEY); migration `phase20_ai` aplicada no Neon (22 migrations). Smoke autenticado OK. Working tree limpa. Proxima frente: nenhuma (roadmap E01-E18 completo).
+**Ultima atualizacao:** 02/11/2026 (encerramento). E01-E19 + E08+ (Cost Tracking & Cash Flow) completos e em producao. Todas as frentes do roadmap (E01-E19) implementadas e deployadas. Smoke autenticado OK. Working tree limpa. Proxima frente: nenhuma (roadmap completo). Possiveis melhorias: testes de integracao para E15/E16/E17/E18, Ollama local, creditos OpenAI.
 
 ---
 

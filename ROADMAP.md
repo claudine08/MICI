@@ -143,7 +143,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E14 Procurement** | Completo (Fatia 1+2): Fatia 1 (produÃ§Ã£o, 30/10) â€” fornecedores (SP), requisiÃ§Ãµes (PR), cotaÃ§Ãµes (QT), mapa comparativo (BC); Fatia 2 â€” PO (`PO001`) + recebimento (`GR001`), rotas `procurement/orders` e `procurement/receipts`, migration `phase16_procurement`. Commits `2ea90bb` â€¦ `9e5c259`. | âœ… Completo |
 | **E15 Commissioning** | Plano, teste, reteste, aceite | âœ… Implementado e em produÃ§Ã£o (02/11) | â¬œ |
 | **E16 Sustainability** | PSP, baseline, metas, medicoes, residuo, relatorio ambiental | Implementado e em producao (02/11) |
-| **E17 Dashboard** | PortfÃ³lio, executivo, projeto, campo | â¬œ |
+| **E17 Dashboard** | Portfólio, executivo, projeto, campo | Implementado e em produção (02/11) |
 | **E18 AI** | AI Gateway, prompts, extração, resumo diário, classificação, busca semântica | Implementado e em produção (02/11) |
 | **E19 Project Dashboard** | Dashboard de projetos no painel (portfÃ³lio + drill-down): datas inÃ­cio/fim (planejado/real), custos (planejado/real), percentuais planejado/real por data de reporte (as-of), KPIs (PV/EV/AC/SPI/CPI), curva S, Gantt resumido, burndown, heat map de riscos, alertas. Visuais com Recharts (curva S, burndown, heat map). Inspirado em Power BI/Jira. | âœ… Completo (Fatia 1+2+3 em produÃ§Ã£o) |
 

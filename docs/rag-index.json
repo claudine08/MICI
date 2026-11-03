@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T23:02:12.285Z",
+  "generatedAt": "2026-11-03T01:07:56.772Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -2804,8 +2804,8 @@
       "level": 2,
       "file": "AI.md",
       "startLine": 44,
-      "endLine": 48,
-      "summary": "- Se `OPENAI_API_KEY` estiver definida: chama `https://api.openai.com/v1/chat/completions` com o modelo configurado. - Caso contrário: retorna `[MOCK AI - {m...",
+      "endLine": 50,
+      "summary": "- Prioriza `OPENCODE_API_KEY`: chama `{OPENCODE_BASE_URL}/chat/completions` (default `https://opencode.ai/zen/v1`) com o modelo configurado (default `glm-5.3...",
       "tags": [
         "ai"
       ]
@@ -2815,21 +2815,21 @@
       "title": "Testes",
       "level": 2,
       "file": "AI.md",
-      "startLine": 49,
-      "endLine": 52,
+      "startLine": 51,
+      "endLine": 54,
       "summary": "- Smoke autenticado: `GET /ai` → 200; `POST /ai/run` → 200 com `status: \"SUCCESS\"`. - Sem sessão → 401.",
       "tags": [
         "ai"
       ]
     },
     {
-      "id": "ai-provedor-padrao-opencode-zen-modelo-free",
-      "title": "Provedor padrão: OpenCode Zen (modelo free)",
+      "id": "ai-provedor-padrao-opencode-zen",
+      "title": "Provedor padrão: OpenCode Zen",
       "level": 2,
       "file": "AI.md",
-      "startLine": 53,
-      "endLine": 55,
-      "summary": "O MICI usa por padrão o **OpenCode Zen** com o modelo free **`glm-5.3-flash-free`** (zero retention, sem uso para treino), adequado para resumo, classificaçã...",
+      "startLine": 55,
+      "endLine": 61,
+      "summary": "O MICI usa por padrão o **OpenCode Zen** com o modelo **`glm-5.3-flash-free`**. **Importante:** os modelos *free* do OpenCode funcionam **apenas dentro do ap...",
       "tags": [
         "ai"
       ]
@@ -2839,8 +2839,8 @@
       "title": "Como habilitar IA real (OpenCode Zen)",
       "level": 3,
       "file": "AI.md",
-      "startLine": 56,
-      "endLine": 61,
+      "startLine": 62,
+      "endLine": 67,
       "summary": "1. Crie uma conta em https://opencode.ai e gere uma API key (Console → API keys). 2. No Vercel: Settings → Environment Variables → adicione `OPENCODE_API_KEY...",
       "tags": [
         "ai"
@@ -2851,8 +2851,8 @@
       "title": "Alternativa: OpenAI",
       "level": 3,
       "file": "AI.md",
-      "startLine": 62,
-      "endLine": 67,
+      "startLine": 68,
+      "endLine": 73,
       "summary": "1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. Garanta créditos na conta (billing). 3. No Vercel: adicione `OPENAI_API_KEY` (e opcionalment...",
       "tags": [
         "ai"
@@ -2863,8 +2863,8 @@
       "title": "Tratamento de falhas",
       "level": 2,
       "file": "AI.md",
-      "startLine": 68,
-      "endLine": 69,
+      "startLine": 74,
+      "endLine": 75,
       "summary": "Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: \"SUCCESS\"` com um aviso no o...",
       "tags": [
         "ai"
