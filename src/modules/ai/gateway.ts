@@ -147,8 +147,21 @@ export async function runAi(input: AiRunInput): Promise<AiRunResult> {
     const raw = err instanceof Error ? err.message : String(err);
     // Mensagem amigável conforme o provider
     let msg = raw;
-    if (raw.includes("FreeUsageLimitError")) {
-      msg = "Limite de uso gratuito do OpenCode atingido. Assine o OpenCode Go (https://opencode.ai/go) ou use uma chave OpenAI.";
+    if (raw.includes("FreeUsageLimitError") || raw.includes("free tier can only be used from within OpenCode")) {
+      msg = "Os modelos FREE do OpenCode só funcionam dentro do app OpenCode, não via API. Assine o OpenCode Go (https://opencode.ai/go) ou use uma chave OpenAI com créditos.";
+      // Tentar fallback para OpenAI se disponível
+      if (process.env.OPENAI_API_KEY) {
+        try {
+          const openAiResult = await callLlm(model, systemPrompt, input.input, "openai");
+          const updated = await prisma.aiRequest.update({
+            where: { id: request.id },
+            data: { output: openAiResult.output, status: "SUCCESS", tokensIn: openAiResult.tokensIn, tokensOut: openAiResult.tokensOut },
+          });
+          return { output: openAiResult.output, model, tokensIn: openAiResult.tokensIn, tokensOut: openAiResult.tokensOut, status: "SUCCESS", requestId: updated.id };
+        } catch (e2) {
+          msg += ` (OpenAI também falhou: ${e2 instanceof Error ? e2.message : String(e2)})`;
+        }
+      }
     } else if (raw.includes("insufficient_quota") || raw.includes("credit_balance_exhausted")) {
       msg = "Sem créditos na conta OpenAI. Adicione créditos em platform.openai.com/settings/organization/billing.";
     }
