@@ -52,8 +52,12 @@ Permissão: `AI:VIEW` (leitura) / `AI:CREATE` (execução).
 - Smoke autenticado: `GET /ai` → 200; `POST /ai/run` → 200 com `status: "SUCCESS"`.
 - Sem sessão → 401.
 
-## Provedor padrão: OpenCode Zen (modelo free)
-O MICI usa por padrão o **OpenCode Zen** com o modelo free **`glm-5.3-flash-free`** (zero retention, sem uso para treino), adequado para resumo, classificação e extração de textos de projeto. O gateway prioriza `OPENCODE_API_KEY`; se ausente, tenta `OPENAI_API_KEY`; se nenhuma, usa mock.
+## Provedor padrão: OpenCode Zen
+O MICI usa por padrão o **OpenCode Zen** com o modelo **`glm-5.3-flash-free`**. 
+
+**Importante:** os modelos *free* do OpenCode funcionam **apenas dentro do app OpenCode** — não via API externa. Ao usar a chave do OpenCode Zen via API, o serviço retorna `FreeUsageLimitError`. Nesse caso, o gateway faz fallback automático para **OpenAI** (se `OPENAI_API_KEY` estiver configurada) ou para **mock**.
+
+Para usar IA real via API, configure `OPENAI_API_KEY` (com créditos) no Vercel. O OpenCode Zen via API só funciona com modelos pagos / OpenCode Go.
 
 ### Como habilitar IA real (OpenCode Zen)
 1. Crie uma conta em https://opencode.ai e gere uma API key (Console → API keys).
