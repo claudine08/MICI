@@ -51,6 +51,8 @@ export function SustainabilityView(props: Props) {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const [planOpen, setPlanOpen] = useState(false);
+  const [editPlanOpen, setEditPlanOpen] = useState(false);
+  const [editPlan, setEditPlan] = useState<{ id: string; title: string; description: string; ownerId: string; startDate: string; plannedEndDate: string; wbsNodeId: string; activityId: string } | null>(null);
   const [metricOpen, setMetricOpen] = useState(false);
   const [baselineOpen, setBaselineOpen] = useState(false);
   const [targetOpen, setTargetOpen] = useState(false);
@@ -80,6 +82,20 @@ export function SustainabilityView(props: Props) {
   const createPlan = async () => {
     await apiRequest(`/api/v1/projects/${projectId}/sustainability/plans`, { method: "POST", body: JSON.stringify({ title: planForm.title, description: planForm.description || undefined, ownerId: planForm.ownerId || null, startDate: planForm.startDate || undefined, plannedEndDate: planForm.plannedEndDate || undefined, wbsNodeId: planForm.wbsNodeId || null, activityId: planForm.activityId || null }) });
     setPlanOpen(false); setPlanForm({ title: "", description: "", ownerId: "", startDate: "", plannedEndDate: "", wbsNodeId: "", activityId: "" }); refresh();
+  };
+  const openEditPlan = (p: PlanRow) => {
+    setEditPlan({ id: p.id, title: p.title, description: p.description ?? "", ownerId: p.ownerId ?? "", startDate: p.startDate ?? "", plannedEndDate: p.plannedEndDate ?? "", wbsNodeId: p.wbsNodeId ?? "", activityId: p.activityId ?? "" });
+    setEditPlanOpen(true);
+  };
+  const updatePlan = async () => {
+    if (!editPlan) return;
+    await apiRequest(`/api/v1/projects/${projectId}/sustainability/plans/${editPlan.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title: editPlan.title, description: editPlan.description || undefined, ownerId: editPlan.ownerId || null, startDate: editPlan.startDate || null, plannedEndDate: editPlan.plannedEndDate || null, wbsNodeId: editPlan.wbsNodeId || null, activityId: editPlan.activityId || null }),
+    });
+    setEditPlanOpen(false);
+    setEditPlan(null);
+    refresh();
   };
   const createMetric = async () => {
     await apiRequest(`/api/v1/projects/${projectId}/sustainability/metrics`, { method: "POST", body: JSON.stringify({ planId: metricForm.planId || null, name: metricForm.name, unit: metricForm.unit, category: metricForm.category || undefined, description: metricForm.description || undefined }) });
@@ -153,6 +169,7 @@ export function SustainabilityView(props: Props) {
                   <td className="py-2 pr-3"><Badge variant="outline">{p.status}</Badge></td>
                   <td className="py-2 pr-3">{p.metricCount}</td>
                   <td className="py-2 pr-3 flex gap-1 flex-wrap">
+                    {canEdit && <Button size="sm" variant="outline" onClick={() => openEditPlan(p)}>Editar</Button>}
                     {canEdit && p.availableActions.map(a => <Button key={a} size="sm" variant="outline" onClick={() => transitionPlan(p.id, a)}>{a}</Button>)}
                     {canDelete && (p.status === "DRAFT" || p.status === "CANCELLED") && <Button size="sm" variant="ghost" onClick={() => deletePlan(p.id)}><Trash2 className="h-4 w-4" /></Button>}
                   </td>
@@ -292,6 +309,37 @@ export function SustainabilityView(props: Props) {
         </Card>
       )}
 
+      {editPlan && (
+        <Dialog open={editPlanOpen} title="Editar plano de sustentabilidade" onClose={() => { setEditPlanOpen(false); setEditPlan(null); }}>
+          <div className="space-y-3 p-4">
+            <div><Label>Título</Label><Input value={editPlan.title} onChange={(e) => setEditPlan({ ...editPlan, title: e.target.value })} /></div>
+            <div><Label>Descrição</Label><Input value={editPlan.description} onChange={(e) => setEditPlan({ ...editPlan, description: e.target.value })} /></div>
+            <div><Label>Responsável</Label>
+              <select className="w-full rounded border p-2" value={editPlan.ownerId} onChange={(e) => setEditPlan({ ...editPlan, ownerId: e.target.value })}>
+                <option value="">—</option>{members.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label>Início</Label><Input type="date" value={editPlan.startDate} onChange={(e) => setEditPlan({ ...editPlan, startDate: e.target.value })} /></div>
+              <div><Label>Fim previsto</Label><Input type="date" value={editPlan.plannedEndDate} onChange={(e) => setEditPlan({ ...editPlan, plannedEndDate: e.target.value })} /></div>
+            </div>
+            <div><Label>WBS</Label>
+              <select className="w-full rounded border p-2" value={editPlan.wbsNodeId} onChange={(e) => setEditPlan({ ...editPlan, wbsNodeId: e.target.value })}>
+                <option value="">—</option>{wbsNodes.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
+              </select>
+            </div>
+            <div><Label>Atividade</Label>
+              <select className="w-full rounded border p-2" value={editPlan.activityId} onChange={(e) => setEditPlan({ ...editPlan, activityId: e.target.value })}>
+                <option value="">—</option>{activities.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setEditPlanOpen(false); setEditPlan(null); }}>Cancelar</Button>
+              <Button onClick={updatePlan} disabled={isPending || !editPlan.title}>Salvar</Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
       <Dialog open={planOpen} title="Novo plano de sustentabilidade" onClose={() => setPlanOpen(false)}>
         <div className="space-y-3 p-4">
           <div><Label>Título</Label><Input value={planForm.title} onChange={e => setPlanForm({ ...planForm, title: e.target.value })} /></div>
