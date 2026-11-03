@@ -48,6 +48,7 @@ export function SustainabilityView(props: Props) {
   const [targets] = useState(initialTargets);
   const [measurements] = useState(initialMeasurements);
   const [wastes] = useState(initialWastes);
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const [planOpen, setPlanOpen] = useState(false);
   const [metricOpen, setMetricOpen] = useState(false);
@@ -63,6 +64,18 @@ export function SustainabilityView(props: Props) {
   const [measurementForm, setMeasurementForm] = useState({ metricId: "", value: "", measuredAt: "", wbsNodeId: "", activityId: "", notes: "", evidenceNotes: "" });
 
   const refresh = () => startTransition(() => router.refresh());
+  const exportCsv = (rows: any[], name: string) => {
+    if (rows.length === 0) return;
+    const headers = Object.keys(rows[0]);
+    const csv = [headers.join(";"), ...rows.map((r) => headers.map((h) => JSON.stringify(r[h] ?? "")).join(";"))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${name}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const createPlan = async () => {
     await apiRequest(`/api/v1/projects/${projectId}/sustainability/plans`, { method: "POST", body: JSON.stringify({ title: planForm.title, description: planForm.description || undefined, ownerId: planForm.ownerId || null, startDate: planForm.startDate || undefined, plannedEndDate: planForm.plannedEndDate || undefined, wbsNodeId: planForm.wbsNodeId || null, activityId: planForm.activityId || null }) });
@@ -116,14 +129,24 @@ export function SustainabilityView(props: Props) {
 
       {tab === "plans" && (
         <Card className="p-4">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-semibold">Planos de sustentabilidade (PSP)</h2>
-            {canCreate && <Button size="sm" onClick={() => setPlanOpen(true)}><Plus className="mr-1 h-4 w-4" /> Novo plano</Button>}
+            <div className="flex flex-wrap items-center gap-2">
+              <select className="rounded border p-1 text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="ALL">Todos os status</option>
+                <option value="DRAFT">Rascunho</option>
+                <option value="ACTIVE">Ativo</option>
+                <option value="COMPLETED">Concluído</option>
+                <option value="CANCELLED">Cancelado</option>
+              </select>
+              <Button size="sm" variant="outline" onClick={() => exportCsv(plans.filter((p) => statusFilter === "ALL" || p.status === statusFilter), "plans-sustainability")}>Exportar CSV</Button>
+              {canCreate && <Button size="sm" onClick={() => setPlanOpen(true)}><Plus className="mr-1 h-4 w-4" /> Novo plano</Button>}
+            </div>
           </div>
           <table className="w-full text-sm">
             <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2 pr-3">Código</th><th className="py-2 pr-3">Título</th><th className="py-2 pr-3">Status</th><th className="py-2 pr-3">Métricas</th><th className="py-2 pr-3">Ações</th></tr></thead>
             <tbody>
-              {plans.map(p => (
+              {plans.filter((p) => statusFilter === "ALL" || p.status === statusFilter).map(p => (
                 <tr key={p.id} className="border-b">
                   <td className="py-2 pr-3 font-mono">{p.code}</td>
                   <td className="py-2 pr-3">{p.title}</td>
@@ -145,6 +168,7 @@ export function SustainabilityView(props: Props) {
         <Card className="p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold">Métricas</h2>
+            <Button size="sm" variant="outline" onClick={() => exportCsv(metrics, "metrics-sustainability")}>Exportar CSV</Button>
             {canCreate && <Button size="sm" onClick={() => setMetricOpen(true)}><Plus className="mr-1 h-4 w-4" /> Nova métrica</Button>}
           </div>
           <table className="w-full text-sm">
@@ -245,6 +269,7 @@ export function SustainabilityView(props: Props) {
         <Card className="p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold">Resíduos</h2>
+            <Button size="sm" variant="outline" onClick={() => exportCsv(wastes, "wastes-sustainability")}>Exportar CSV</Button>
             {canCreate && <Button size="sm" onClick={() => setWasteOpen(true)}><Plus className="mr-1 h-4 w-4" /> Novo resíduo</Button>}
           </div>
           <table className="w-full text-sm">

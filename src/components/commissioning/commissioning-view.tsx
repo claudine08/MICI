@@ -113,6 +113,7 @@ export function CommissioningView({
   const [plans] = useState(initialPlans);
   const [items] = useState(initialItems);
   const [acceptances] = useState(initialAcceptances);
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
@@ -124,6 +125,20 @@ export function CommissioningView({
 
   const refresh = () => {
     startTransition(() => router.refresh());
+  };
+
+  const exportCsv = (kind: "plans" | "items") => {
+    const rows = kind === "plans" ? plans : items;
+    if (rows.length === 0) return;
+    const headers = Object.keys(rows[0]);
+    const csv = [headers.join(";"), ...rows.map((r) => headers.map((h) => JSON.stringify((r as any)[h] ?? "")).join(";"))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${kind}-commissioning.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const createPlan = async () => {
@@ -231,11 +246,21 @@ export function CommissioningView({
 
       {tab === "plans" && (
         <Card className="p-4">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-semibold">Planos de comissionamento</h2>
-            {canCreate && (
-              <Button size="sm" onClick={() => setPlanDialogOpen(true)}><Plus className="mr-1 h-4 w-4" /> Novo plano</Button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <select className="rounded border p-1 text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="ALL">Todos os status</option>
+                <option value="DRAFT">Rascunho</option>
+                <option value="ACTIVE">Ativo</option>
+                <option value="COMPLETED">Concluído</option>
+                <option value="CANCELLED">Cancelado</option>
+              </select>
+              <Button size="sm" variant="outline" onClick={() => exportCsv("plans")}>Exportar CSV</Button>
+              {canCreate && (
+                <Button size="sm" onClick={() => setPlanDialogOpen(true)}><Plus className="mr-1 h-4 w-4" /> Novo plano</Button>
+              )}
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -250,7 +275,7 @@ export function CommissioningView({
                 </tr>
               </thead>
               <tbody>
-                {plans.map((plan) => (
+                {plans.filter((p) => statusFilter === "ALL" || p.status === statusFilter).map((plan) => (
                   <tr key={plan.id} className="border-b">
                     <td className="py-2 pr-3 font-mono">{plan.code}</td>
                     <td className="py-2 pr-3">{plan.title}</td>
