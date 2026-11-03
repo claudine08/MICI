@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T01:07:56.772Z",
+  "generatedAt": "2026-11-03T01:12:26.761Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -12,7 +12,7 @@
     "sustentabilidade.md",
     "AI.md"
   ],
-  "chunkCount": 238,
+  "chunkCount": 239,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -1918,6 +1918,18 @@
       "startLine": 309,
       "endLine": 315,
       "summary": "G0 Oportunidade qualificada Â· G1 Requisitos suficientes Â· G2 Viabilidade Â· G3 Proposta/orÃ§amento Â· G4 Contrato e plano Â· G5 Projeto liberado Â· G6 Pron...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-backlog-de-melhorias-pos-roadmap",
+      "title": "Backlog de melhorias (pos-roadmap)",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 316,
+      "endLine": 327,
+      "summary": "| # | Item | Escopo | |---|---|---| | B01 | Testes de integracao E15 | ✅ Concluido (commissioning.test.ts) | | B02 | Testes de integracao E16 | ✅ Concluido (...",
       "tags": [
         "roadmap"
       ]

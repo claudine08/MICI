@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 238.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 239.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -165,6 +165,7 @@
 | `roadmap-fase-5-a-releases-1a-4-a` | Fase 5+ â€” Releases 1â†’4 â¬œ | ROADMAP.md:290-293 | Executar Ã©picos E10â€“E18 conforme prioridade de Release 1, depois Releases 2â€“4. |
 | `roadmap-crita-rios-de-aceite-do-mvp-a-101` | CritÃ©rios de aceite do MVP (Â§101) | ROADMAP.md:294-308 | O MVP Ã© aceito quando um projeto real executar o ciclo completo: ```text Oportunidade â†’ Requisitos â†’ OrÃ§amento â†’ Projeto â†’ Baseline â†’ ExecuÃ§Ã£o... |
 | `roadmap-gates-do-projeto-de-implantaa-a-o-refera-ncia` | Gates do projeto de implantaÃ§Ã£o (referÃªncia) | ROADMAP.md:309-315 | G0 Oportunidade qualificada Â· G1 Requisitos suficientes Â· G2 Viabilidade Â· G3 Proposta/orÃ§amento Â· G4 Contrato e plano Â· G5 Projeto liberado Â· G6 Pron... |
+| `roadmap-backlog-de-melhorias-pos-roadmap` | Backlog de melhorias (pos-roadmap) | ROADMAP.md:316-327 | \| # \| Item \| Escopo \| \|---\|---\|---\| \| B01 \| Testes de integracao E15 \| ✅ Concluido (commissioning.test.ts) \| \| B02 \| Testes de integracao E16 \| ✅ Concluido (... |
 | `suprimentos-1-visao-geral-do-processo-end-to-end` | 1. Visão geral do processo (end-to-end) | suprimentos.md:15-74 | O módulo de Suprimentos (E14, RF-019) cobre todo o ciclo de aquisição de um projeto, da identificação da necessidade até o fechamento financeiro. A Fatia 1 e... |
 | `suprimentos-2-os-conceitos-entidades` | 2. Os conceitos (entidades) | suprimentos.md:75-76 | (secao sem corpo) |
 | `suprimentos-fatia-1-implementada` | Fatia 1 (implementada) | suprimentos.md:77-87 | \| Conceito \| Entidade \| O que é \| Código \| \|---\|---\|---\|---\| \| **Fornecedor** \| `Supplier` \| Cadastro central (escopo da **organização**) de fornecedores hom... |
