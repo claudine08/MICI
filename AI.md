@@ -72,4 +72,7 @@ Para usar IA real via API, configure `OPENAI_API_KEY` (com créditos) no Vercel.
 4. Redeploy.
 
 ## Tratamento de falhas
-Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: "SUCCESS"` com um aviso no output e `errorMessage` preenchido. A UI continua funcionando. O histórico registra a falha.
+Se a OpenAI/OpenCode estiver indisponível (sem créditos, quota, auth, limite free), o gateway faz **fallback automático para mock** e retorna `status: "SUCCESS"` com um aviso no output e `errorMessage` preenchido. A UI continua funcionando. O histórico registra a falha.
+
+## Modelo free local (Ollama)
+Para desenvolvimento local sem custo, use o **Ollama** (modelo free local). Veja `OLLAMA.md` para setup. No modo `ollama`, o gateway chama `http://127.0.0.1:11434/v1/chat/completions` com o modelo configurado em `OLLAMA_MODEL` (default `llama3.2`). Em produção (Vercel), o modo Ollama não está disponível (localhost inacessível) e cai para mock/OpenAI.

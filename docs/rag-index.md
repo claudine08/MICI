@@ -2,7 +2,7 @@
 
 > Gerado por `npm run rag:index` (scripts/rag-index.mjs).
 > Use `npm run rag:query <termo>` para recuperar so os chunks relevantes.
-> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 239.
+> Fontes: devcurrent.md, docs/fluxo-e01-e14.md, DIARIO.md, ROADMAP.md, suprimentos.md, qualidade.md, custos.md, comissionamento.md, sustentabilidade.md, AI.md. Total de chunks: 240.
 
 | ID | Titulo | Fonte:linhas | Resumo |
 |---|---|---|---|
@@ -244,4 +244,5 @@
 | `ai-provedor-padrao-opencode-zen` | Provedor padrão: OpenCode Zen | AI.md:55-61 | O MICI usa por padrão o **OpenCode Zen** com o modelo **`glm-5.3-flash-free`**. **Importante:** os modelos *free* do OpenCode funcionam **apenas dentro do ap... |
 | `ai-como-habilitar-ia-real-opencode-zen` | Como habilitar IA real (OpenCode Zen) | AI.md:62-67 | 1. Crie uma conta em https://opencode.ai e gere uma API key (Console → API keys). 2. No Vercel: Settings → Environment Variables → adicione `OPENCODE_API_KEY... |
 | `ai-alternativa-openai` | Alternativa: OpenAI | AI.md:68-73 | 1. Obtenha uma chave em https://platform.openai.com/api-keys. 2. Garanta créditos na conta (billing). 3. No Vercel: adicione `OPENAI_API_KEY` (e opcionalment... |
-| `ai-tratamento-de-falhas` | Tratamento de falhas | AI.md:74-75 | Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: "SUCCESS"` com um aviso no o... |
+| `ai-tratamento-de-falhas` | Tratamento de falhas | AI.md:74-76 | Se a OpenAI/OpenCode estiver indisponível (sem créditos, quota, auth, limite free), o gateway faz **fallback automático para mock** e retorna `status: "SUCCE... |
+| `ai-modelo-free-local-ollama` | Modelo free local (Ollama) | AI.md:77-78 | Para desenvolvimento local sem custo, use o **Ollama** (modelo free local). Veja `OLLAMA.md` para setup. No modo `ollama`, o gateway chama `http://127.0.0.1:... |

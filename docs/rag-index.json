@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T01:25:27.146Z",
+  "generatedAt": "2026-11-03T01:28:06.086Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -12,7 +12,7 @@
     "sustentabilidade.md",
     "AI.md"
   ],
-  "chunkCount": 239,
+  "chunkCount": 240,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -2876,8 +2876,20 @@
       "level": 2,
       "file": "AI.md",
       "startLine": 74,
-      "endLine": 75,
-      "summary": "Se a OpenAI estiver indisponível (sem créditos, quota, auth), o gateway faz **fallback automático para mock** e retorna `status: \"SUCCESS\"` com um aviso no o...",
+      "endLine": 76,
+      "summary": "Se a OpenAI/OpenCode estiver indisponível (sem créditos, quota, auth, limite free), o gateway faz **fallback automático para mock** e retorna `status: \"SUCCE...",
+      "tags": [
+        "ai"
+      ]
+    },
+    {
+      "id": "ai-modelo-free-local-ollama",
+      "title": "Modelo free local (Ollama)",
+      "level": 2,
+      "file": "AI.md",
+      "startLine": 77,
+      "endLine": 78,
+      "summary": "Para desenvolvimento local sem custo, use o **Ollama** (modelo free local). Veja `OLLAMA.md` para setup. No modo `ollama`, o gateway chama `http://127.0.0.1:...",
       "tags": [
         "ai"
       ]
