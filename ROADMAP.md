@@ -323,4 +323,4 @@ G6 Pronto para comissionamento Â· G7 Aceite operacional Â· G8 Encerramento
 | B04 | Testes de integracao E18 | ✅ Concluido (ai.test.ts) |
 | B05 | Creditos OpenAI / OpenCode Go | ✅ Concluido (status endpoint + UI) |
 | B06 | Ollama local (dev) | ✅ Concluido (OLLAMA.md) |
-| B07 | Melhorias de UI | Dialogs de edicao, filtros, exportacao CSV nos modulos novos |
+| B07 | Melhorias de UI | ✅ Concluido (filtros + export CSV) |
