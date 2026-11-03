@@ -118,6 +118,10 @@ export function CommissioningView({
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [editPlanOpen, setEditPlanOpen] = useState(false);
   const [editPlan, setEditPlan] = useState<{ id: string; title: string; description: string; ownerId: string; startDate: string; plannedEndDate: string; wbsNodeId: string; activityId: string } | null>(null);
+  const [editItemOpen, setEditItemOpen] = useState(false);
+  const [editItem, setEditItem] = useState<{ id: string; title: string; description: string; systemName: string; testMethod: string; acceptanceCriteria: string; wbsNodeId: string; activityId: string } | null>(null);
+  const [editAcceptanceOpen, setEditAcceptanceOpen] = useState(false);
+  const [editAcceptance, setEditAcceptance] = useState<{ id: string; scope: string; notes: string; commissioningPlanId: string; wbsNodeId: string; activityId: string } | null>(null);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [acceptanceDialogOpen, setAcceptanceDialogOpen] = useState(false);
 
@@ -173,6 +177,36 @@ export function CommissioningView({
     });
     setEditPlanOpen(false);
     setEditPlan(null);
+    refresh();
+  };
+
+  const openEditItem = (it: ItemRow) => {
+    setEditItem({ id: it.id, title: it.title, description: it.description ?? "", systemName: it.systemName ?? "", testMethod: it.testMethod ?? "", acceptanceCriteria: it.acceptanceCriteria ?? "", wbsNodeId: it.wbsNodeId ?? "", activityId: it.activityId ?? "" });
+    setEditItemOpen(true);
+  };
+  const updateItem = async () => {
+    if (!editItem) return;
+    await apiRequest(`/api/v1/projects/${projectId}/commissioning/items/${editItem.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title: editItem.title, description: editItem.description || undefined, systemName: editItem.systemName || undefined, testMethod: editItem.testMethod || undefined, acceptanceCriteria: editItem.acceptanceCriteria || undefined, wbsNodeId: editItem.wbsNodeId || null, activityId: editItem.activityId || null }),
+    });
+    setEditItemOpen(false);
+    setEditItem(null);
+    refresh();
+  };
+
+  const openEditAcceptance = (a: AcceptanceRow) => {
+    setEditAcceptance({ id: a.id, scope: a.scope, notes: a.notes ?? "", commissioningPlanId: a.commissioningPlanId ?? "", wbsNodeId: a.wbsNodeId ?? "", activityId: a.activityId ?? "" });
+    setEditAcceptanceOpen(true);
+  };
+  const updateAcceptance = async () => {
+    if (!editAcceptance) return;
+    await apiRequest(`/api/v1/projects/${projectId}/commissioning/acceptances/${editAcceptance.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ scope: editAcceptance.scope, notes: editAcceptance.notes || undefined, commissioningPlanId: editAcceptance.commissioningPlanId || null, wbsNodeId: editAcceptance.wbsNodeId || null, activityId: editAcceptance.activityId || null }),
+    });
+    setEditAcceptanceOpen(false);
+    setEditAcceptance(null);
     refresh();
   };
 
@@ -352,6 +386,9 @@ export function CommissioningView({
                     <td className="py-2 pr-3">{item.result ?? "—"}</td>
                     <td className="py-2 pr-3">{item.retestCount}</td>
                     <td className="py-2 pr-3 flex gap-1 flex-wrap">
+                      {canEdit && (
+                        <Button size="sm" variant="outline" onClick={() => openEditItem(item)}>Editar</Button>
+                      )}
                       {canEdit && item.availableActions.map((a) => (
                         <Button key={a} size="sm" variant="outline" onClick={() => {
                           if (a === "PASS") transitionItem(item.id, a, { result: "PASS" });
@@ -404,6 +441,9 @@ export function CommissioningView({
                     <td className="py-2 pr-3"><Badge variant="outline">{acc.status}</Badge></td>
                     <td className="py-2 pr-3">{acc.acceptedByName ?? "—"}</td>
                     <td className="py-2 pr-3 flex gap-1 flex-wrap">
+                      {canEdit && (
+                        <Button size="sm" variant="outline" onClick={() => openEditAcceptance(acc)}>Editar</Button>
+                      )}
                       {canEdit && acc.availableActions.map((a) => (
                         <Button key={a} size="sm" variant="outline" onClick={() => {
                           if (a === "REJECT") {
@@ -549,6 +589,58 @@ export function CommissioningView({
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => { setEditPlanOpen(false); setEditPlan(null); }}>Cancelar</Button>
               <Button onClick={updatePlan} disabled={isPending || !editPlan.title}>Salvar</Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
+      {editItem && (
+        <Dialog open={editItemOpen} title="Editar item de teste" onClose={() => { setEditItemOpen(false); setEditItem(null); }}>
+          <div className="space-y-3 p-4">
+            <div><Label>Título</Label><Input value={editItem.title} onChange={(e) => setEditItem({ ...editItem, title: e.target.value })} /></div>
+            <div><Label>Descrição</Label><Input value={editItem.description} onChange={(e) => setEditItem({ ...editItem, description: e.target.value })} /></div>
+            <div><Label>Sistema/Equipamento</Label><Input value={editItem.systemName} onChange={(e) => setEditItem({ ...editItem, systemName: e.target.value })} /></div>
+            <div><Label>Método de teste</Label><Input value={editItem.testMethod} onChange={(e) => setEditItem({ ...editItem, testMethod: e.target.value })} /></div>
+            <div><Label>Critério de aceite</Label><Input value={editItem.acceptanceCriteria} onChange={(e) => setEditItem({ ...editItem, acceptanceCriteria: e.target.value })} /></div>
+            <div><Label>WBS</Label>
+              <select className="w-full rounded border p-2" value={editItem.wbsNodeId} onChange={(e) => setEditItem({ ...editItem, wbsNodeId: e.target.value })}>
+                <option value="">—</option>{wbsNodes.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
+              </select>
+            </div>
+            <div><Label>Atividade</Label>
+              <select className="w-full rounded border p-2" value={editItem.activityId} onChange={(e) => setEditItem({ ...editItem, activityId: e.target.value })}>
+                <option value="">—</option>{activities.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setEditItemOpen(false); setEditItem(null); }}>Cancelar</Button>
+              <Button onClick={updateItem} disabled={isPending || !editItem.title}>Salvar</Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
+      {editAcceptance && (
+        <Dialog open={editAcceptanceOpen} title="Editar aceite" onClose={() => { setEditAcceptanceOpen(false); setEditAcceptance(null); }}>
+          <div className="space-y-3 p-4">
+            <div><Label>Escopo</Label><Input value={editAcceptance.scope} onChange={(e) => setEditAcceptance({ ...editAcceptance, scope: e.target.value })} /></div>
+            <div><Label>Notas</Label><Input value={editAcceptance.notes} onChange={(e) => setEditAcceptance({ ...editAcceptance, notes: e.target.value })} /></div>
+            <div><Label>Plano (opcional)</Label>
+              <select className="w-full rounded border p-2" value={editAcceptance.commissioningPlanId} onChange={(e) => setEditAcceptance({ ...editAcceptance, commissioningPlanId: e.target.value })}>
+                <option value="">—</option>{plans.map((p) => <option key={p.id} value={p.id}>{p.code} — {p.title}</option>)}
+              </select>
+            </div>
+            <div><Label>WBS</Label>
+              <select className="w-full rounded border p-2" value={editAcceptance.wbsNodeId} onChange={(e) => setEditAcceptance({ ...editAcceptance, wbsNodeId: e.target.value })}>
+                <option value="">—</option>{wbsNodes.map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
+              </select>
+            </div>
+            <div><Label>Atividade</Label>
+              <select className="w-full rounded border p-2" value={editAcceptance.activityId} onChange={(e) => setEditAcceptance({ ...editAcceptance, activityId: e.target.value })}>
+                <option value="">—</option>{activities.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setEditAcceptanceOpen(false); setEditAcceptance(null); }}>Cancelar</Button>
+              <Button onClick={updateAcceptance} disabled={isPending || !editAcceptance.scope}>Salvar</Button>
             </div>
           </div>
         </Dialog>
