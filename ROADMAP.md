@@ -320,7 +320,7 @@ G6 Pronto para comissionamento Â· G7 Aceite operacional Â· G8 Encerramento
 | B01 | Testes de integracao E15 | ✅ Concluido (commissioning.test.ts) |
 | B02 | Testes de integracao E16 | ✅ Concluido (sustainability.test.ts) |
 | B03 | Testes de integracao E17/E19 | ✅ Concluido (dashboard.test.ts) |
-| B04 | Testes de integracao E18 | AI: run (mock/demo), requests, permissoes |
+| B04 | Testes de integracao E18 | ✅ Concluido (ai.test.ts) |
 | B05 | Creditos OpenAI / OpenCode Go | Habilitar IA real em producao |
 | B06 | Ollama local (dev) | Documentar setup para desenvolvimento local |
 | B07 | Melhorias de UI | Dialogs de edicao, filtros, exportacao CSV nos modulos novos |
