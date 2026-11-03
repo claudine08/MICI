@@ -12,7 +12,7 @@ export interface AiRunInput {
   input: string;
   systemPrompt?: string;
   model?: string;
-  mode?: "mock" | "demo" | "opencode" | "openai";
+  mode?: "mock" | "demo" | "ollama" | "opencode" | "openai";
 }
 
 export interface AiRunResult {
@@ -43,12 +43,38 @@ function demoResponse(model: string, userInput: string): { output: string; token
   };
 }
 
-async function callLlm(model: string, systemPrompt: string, userInput: string, mode: "mock" | "demo" | "opencode" | "openai" = "opencode"): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
+async function callLlm(model: string, systemPrompt: string, userInput: string, mode: "mock" | "demo" | "ollama" | "opencode" | "openai" = "opencode"): Promise<{ output: string; tokensIn: number | null; tokensOut: number | null }> {
   if (mode === "mock") {
     return mockResponse(model, userInput);
   }
   if (mode === "demo") {
     return demoResponse(model, userInput);
+  }
+  if (mode === "ollama") {
+    const baseUrl = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434/v1";
+    const ollamaModel = process.env.OLLAMA_MODEL || "llama3.2";
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: ollamaModel,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userInput },
+        ],
+        temperature: 0.3,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Ollama ${res.status}: ${err}`);
+    }
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[]; usage?: { prompt_tokens?: number; completion_tokens?: number } };
+    return {
+      output: data.choices?.[0]?.message?.content ?? "",
+      tokensIn: data.usage?.prompt_tokens ?? null,
+      tokensOut: data.usage?.completion_tokens ?? null,
+    };
   }
 
   const openCodeKey = process.env.OPENCODE_API_KEY;

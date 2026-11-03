@@ -15,7 +15,7 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
   const [selected, setSelected] = useState(prompts[0]?.code ?? "");
   const [input, setInput] = useState("");
   const [projectId, setProjectId] = useState("");
-  const [mode, setMode] = useState<"mock" | "demo" | "opencode" | "openai">("mock");
+  const [mode, setMode] = useState<"mock" | "demo" | "ollama" | "opencode" | "openai">("mock");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -51,9 +51,10 @@ export function AiView({ prompts, initialRequests, canCreate }: Props) {
           </div>
           <div>
             <Label>Modo</Label>
-            <select className="w-full rounded border p-2" value={mode} onChange={(e) => setMode(e.target.value as "mock" | "demo" | "opencode" | "openai")}>
+            <select className="w-full rounded border p-2" value={mode} onChange={(e) => setMode(e.target.value as "mock" | "demo" | "ollama" | "opencode" | "openai")}>
               <option value="mock">Mock (sem custo)</option>
               <option value="demo">Demo (resposta elaborada simulada)</option>
+              <option value="ollama">Ollama (modelo local free)</option>
               <option value="opencode">OpenCode AI (modelo free)</option>
               <option value="openai">OpenAI</option>
             </select>

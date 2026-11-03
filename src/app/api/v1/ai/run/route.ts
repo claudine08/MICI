@@ -14,7 +14,7 @@ export const { POST } = apiHandler({
     if (!body || typeof body.input !== "string" || typeof body.promptCode !== "string") {
       throw new AppError("VALIDATION_ERROR", "input e promptCode são obrigatórios.");
     }
-    const mode = body.mode === "mock" || body.mode === "demo" || body.mode === "openai" || body.mode === "opencode" ? body.mode : "opencode";
+    const mode = body.mode === "mock" || body.mode === "demo" || body.mode === "ollama" || body.mode === "openai" || body.mode === "opencode" ? body.mode : "opencode";
     const prompt = AI_PROMPTS.find((p) => p.code === body.promptCode);
     const systemPrompt = prompt ? prompt.template.replace("{{input}}", "") : undefined;
     const result = await runAi({
