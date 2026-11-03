@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { CurveSChart, BurndownChart, RiskHeatmap } from "@/components/dashboard/project-charts";
+import { GanttChart } from "@/components/dashboard/gantt-chart";
 
 function fmt(n: number): string {
   return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -80,44 +81,7 @@ export default async function ProjetoDashboardPage({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Gantt resumido (atividades)</CardTitle></CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-xs text-muted-foreground">
-                  <th className="py-2 pr-4">Código</th>
-                  <th className="py-2 pr-4">Nome</th>
-                  <th className="py-2 pr-4">Início</th>
-                  <th className="py-2 pr-4">Fim</th>
-                  <th className="py-2 pr-4 text-right">Dur.</th>
-                  <th className="py-2 pr-4 text-right">Float</th>
-                  <th className="py-2 pr-4 text-right">Avanço</th>
-                  <th className="py-2 pr-4">Crítico</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.gantt.map((g) => (
-                  <tr key={g.code} className="border-b">
-                    <td className="py-1 pr-4 font-medium">{g.code}</td>
-                    <td className="py-1 pr-4">{g.name}</td>
-                    <td className="py-1 pr-4">{g.start ?? "—"}</td>
-                    <td className="py-1 pr-4">{g.end ?? "—"}</td>
-                    <td className="py-1 pr-4 text-right">{g.duration}</td>
-                    <td className="py-1 pr-4 text-right">{g.float}</td>
-                    <td className="py-1 pr-4 text-right">{g.progress}%</td>
-                    <td className="py-1 pr-4">{g.critical ? <Badge variant="destructive">Sim</Badge> : "—"}</td>
-                  </tr>
-                ))}
-                {data.gantt.length === 0 && (
-                  <tr><td colSpan={8} className="py-4 text-center text-muted-foreground">Sem atividades.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <GanttChart rows={data.gantt} />
 
       <Card>
         <CardHeader><CardTitle>Heat map de riscos (probabilidade x impacto)</CardTitle></CardHeader>
