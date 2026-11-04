@@ -1624,6 +1624,18 @@ Estado final da sessão:
   melhorias em improvement.md (Onda 1: webhooks, testes E15-E18 ja presentes,
   backup Neon, Ollama VPS).
 
+## 03/11/2026 (c) — config do sistema exclusiva de SUPER_USER + ADMIN
+
+- Matriz RBAC (`src/core/rbac.ts`): PMO perdeu `USER/ROLE/ORGANIZATION/SETTING/INTEGRATION/
+  NOTIFICATION` (config do sistema); mantém `AUDIT` VIEW/EXPORT (oversight).
+  SUPER_USER + ADMIN permanecem os únicos com configuração.
+- `ensure-system-roles.ts`: ganhou passo de **convergência** — revoga grants de papéis
+  do sistema que não estão mais na matriz (idempotente, seguro: só `isSystem`).
+  Local: 28 grants revogados de PMO (922→894). Neon: idem (28 revogados, 894 grants).
+- Deploy `mici-6kbg3fxyp-homeland1` → alias `mici-theta.vercel.app`.
+- Smoke: PMO perde Usuários/Papéis; SUPER mantém tudo. PMO mantém Auditoria (oversight
+  deliberado — se quiser revogar também, avisar).
+
 ## 03/11/2026 (b) — super@mici.demo criado no Neon + scripts de atribuição
 
 - `scripts/create-demo-super.ts`: garante `super@mici.demo` (SUPER_USER) na org
