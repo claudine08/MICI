@@ -44,6 +44,10 @@ export const updateMemberSchema = z
     message: "Informe roleCodes e/ou status.",
   });
 
+export const updateRoleSchema = z.object({
+  permissionCodes: z.array(z.string().min(1)).min(1, "Selecione ao menos uma permissão."),
+});
+
 export const createRoleSchema = z.object({
   code: z
     .string()

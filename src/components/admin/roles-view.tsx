@@ -111,15 +111,21 @@ export function RolesView({
   roles,
   catalog,
   canCreate,
+  canEdit,
 }: {
   roles: RoleRow[];
   catalog: PermissionRow[];
   canCreate: boolean;
+  canEdit: boolean;
 }) {
   const router = useRouter();
   const modules = modulesFromCatalog(catalog);
 
   const [viewRole, setViewRole] = useState<RoleRow | null>(null);
+  const [editRole, setEditRole] = useState<RoleRow | null>(null);
+  const [editSelected, setEditSelected] = useState<ReadonlySet<string>>(new Set());
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editBusy, setEditBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
@@ -144,6 +150,39 @@ export function RolesView({
     setSelected(new Set());
     setError(null);
     setCreateOpen(true);
+  };
+
+  const toggleEdit = (permCode: string, checked: boolean) => {
+    setEditSelected((current) => {
+      const next = new Set(current);
+      if (checked) next.add(permCode);
+      else next.delete(permCode);
+      return next;
+    });
+  };
+
+  const openEdit = (role: RoleRow) => {
+    setEditRole(role);
+    setEditSelected(new Set(role.permissionCodes));
+    setEditError(null);
+  };
+
+  const submitEdit = async () => {
+    if (!editRole) return;
+    setEditError(null);
+    setEditBusy(true);
+    try {
+      await apiRequest(`/api/v1/roles/${editRole.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ permissionCodes: [...editSelected] }),
+      });
+      setEditRole(null);
+      router.refresh();
+    } catch (caught) {
+      setEditError(caught instanceof Error ? caught.message : "Falha ao atualizar papel.");
+    } finally {
+      setEditBusy(false);
+    }
   };
 
   const submitCreate = async () => {
@@ -172,8 +211,8 @@ export function RolesView({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {roles.length} papéis · papéis do sistema são imutáveis; customizados são criados
-          aqui (E02-US03/US04).
+          {roles.length} papéis · papéis do sistema são editáveis por Super Usuário/Admin
+          (código e nome imutáveis); customizados são criados aqui (E02-US03/US04).
         </p>
         {canCreate && (
           <Button onClick={openCreate}>
@@ -205,13 +244,24 @@ export function RolesView({
               <span>
                 {role.memberCount} membro{role.memberCount === 1 ? "" : "s"}
               </span>
-              <button
-                type="button"
-                className="font-medium text-primary hover:underline"
-                onClick={() => setViewRole(role)}
-              >
-                {role.permissionCodes.length} permissões →
-              </button>
+              <div className="flex items-center gap-2">
+                {canEdit && (
+                  <button
+                    type="button"
+                    className="font-medium text-primary hover:underline"
+                    onClick={() => openEdit(role)}
+                  >
+                    Editar
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="font-medium text-primary hover:underline"
+                  onClick={() => setViewRole(role)}
+                >
+                  {role.permissionCodes.length} permissões →
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -282,6 +332,30 @@ export function RolesView({
               disabled={busy || !code || !name || selected.size === 0}
             >
               {busy ? "Criando…" : "Criar papel"}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+      <Dialog open={!!editRole} title={editRole ? `Editar permissÃµes â€” ` : ""} onClose={() => setEditRole(null)} wide>
+        <div className="flex flex-col gap-4">
+          <ErrorBox message={editError} />
+          <p className="text-sm text-muted-foreground">
+            {editRole?.isSystem
+              ? "Papel do sistema: cÃ³digo e nome permanecem imutÃ¡veis; apenas as permissÃµes podem ser ajustadas."
+              : "Ajuste as permissÃµes deste papel customizado."}
+          </p>
+          <div className="grid gap-2">
+            <Label>
+              PermissÃµes <span className="text-muted-foreground">({editSelected.size} marcadas)</span>
+            </Label>
+            <PermissionMatrix modules={modules} selected={editSelected} editable onToggle={toggleEdit} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditRole(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => void submitEdit()} disabled={editBusy || editSelected.size === 0}>
+              {editBusy ? "Salvandoâ€¦" : "Salvar permissÃµes"}
             </Button>
           </div>
         </div>

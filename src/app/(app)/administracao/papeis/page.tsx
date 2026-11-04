@@ -32,6 +32,7 @@ export default async function PapeisPage() {
         roles={roles}
         catalog={catalog}
         canCreate={can(permissions, "ROLE", "CREATE")}
+        canEdit={can(permissions, "ROLE", "EDIT")}
       />
     </div>
   );

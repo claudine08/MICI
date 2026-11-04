@@ -16,6 +16,73 @@ export interface CreateCustomRoleInput {
   ipAddress?: string;
 }
 
+export interface UpdateRolePermissionsInput {
+  organizationId: string;
+  roleId: string;
+  actorId: string;
+  actorLabel: string;
+  permissionCodes: string[];
+  correlationId?: string;
+  ipAddress?: string;
+}
+
+export async function updateRolePermissions(input: UpdateRolePermissionsInput) {
+  if (input.permissionCodes.length === 0) {
+    throw new AppError("VALIDATION_ERROR", "Selecione ao menos uma permissão.");
+  }
+
+  const role = await prisma.role.findFirst({
+    where: { id: input.roleId, organizationId: input.organizationId, deletedAt: null },
+    select: { id: true, code: true, name: true, isSystem: true },
+  });
+  if (!role) {
+    throw new AppError("NOT_FOUND", "Papel não encontrado.");
+  }
+
+  const permissions = await prisma.permission.findMany({
+    where: { code: { in: input.permissionCodes } },
+  });
+  const found = new Set(permissions.map((p) => p.code));
+  const missing = input.permissionCodes.filter((code_) => !found.has(code_));
+  if (missing.length > 0) {
+    throw new AppError("VALIDATION_ERROR", `Permissões desconhecidas: ${missing.join(", ")}`);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.rolePermission.deleteMany({ where: { roleId: role.id } });
+    await tx.rolePermission.createMany({
+      data: permissions.map((permission) => ({
+        roleId: role.id,
+        permissionId: permission.id,
+      })),
+    });
+    await tx.auditEvent.create({
+      data: {
+        organizationId: input.organizationId,
+        actorId: input.actorId,
+        actorLabel: input.actorLabel,
+        objectType: "Role",
+        objectId: role.id,
+        action: "UPDATE",
+        newValue: { code: role.code, permissionCodes: input.permissionCodes },
+        correlationId: input.correlationId ?? null,
+        ipAddress: input.ipAddress ?? null,
+      },
+    });
+    await tx.domainEvent.create({
+      data: {
+        organizationId: input.organizationId,
+        actorId: input.actorId,
+        eventType: "Role.PermissionsUpdated",
+        aggregateType: "Role",
+        aggregateId: role.id,
+        payload: { code: role.code, permissionCount: permissions.length },
+      },
+    });
+  });
+
+  return { id: role.id, code: role.code, name: role.name };
+}
 export async function createCustomRole(input: CreateCustomRoleInput) {
   const code = input.code.trim().toUpperCase();
   if (!/^[A-Z][A-Z0-9_]{1,63}$/.test(code)) {
