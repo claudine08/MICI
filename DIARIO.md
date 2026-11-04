@@ -1624,7 +1624,23 @@ Estado final da sessão:
   melhorias em improvement.md (Onda 1: webhooks, testes E15-E18 ja presentes,
   backup Neon, Ollama VPS).
 
-## 03/11/2026 (c) — config do sistema exclusiva de SUPER_USER + ADMIN
+## 04/11/2026 — UI de edição de permissões de papéis (E02)
+
+- `src/components/admin/roles-view.tsx`: botão "Editar" em cada papel (system + custom)
+  quando o usuário tem `ROLE:EDIT`; dialog com `PermissionMatrix` editável (toggle
+  por ação + "Todas" por módulo), salvando via PATCH.
+- Nova rota `src/app/api/v1/roles/[id]/route.ts` (PATCH) + `updateRolePermissions`
+  em `src/modules/identity/roles.ts` + `updateRoleSchema` em `schemas.ts`.
+- Papéis do sistema agora editáveis (código/nome imutáveis; só permissões).
+  `/administracao/papeis` passa `canEdit={can(permissions, "ROLE", "EDIT")}`.
+- Deploy `mici-fvlvmiazm-homeland1` → alias `mici-theta.vercel.app`.
+- Smoke real: PATCH sem sessão → 401; SUPER vê "Editar", PMO não; fluxo create
+  custom role → PATCH → verificado persistência (PROJECT:VIEW, PROJECT:CREATE,
+  DASHBOARD:VIEW); papel de teste `UIEDITTEST` removido do Neon após smoke.
+- Nota: o filtro de navegação por perfil já funcionava via papéis customizados;
+  esta UI adiciona a edição de papéis do sistema para SUPER_USER/ADMIN.
+
+## 03/11/2026 (c) - config do sistema exclusiva de SUPER_USER + ADMIN
 
 - Matriz RBAC (`src/core/rbac.ts`): PMO perdeu `USER/ROLE/ORGANIZATION/SETTING/INTEGRATION/
   NOTIFICATION` (config do sistema); mantém `AUDIT` VIEW/EXPORT (oversight).
