@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 02/11/2026 (encerramento). E01-E19 + E08+ (Cost Tracking & Cash Flow) completos e em producao. Todas as frentes do roadmap (E01-E19) implementadas e deployadas. Smoke autenticado OK. Working tree limpa. Proxima frente: nenhuma (roadmap completo). Possiveis melhorias: testes de integracao para E15/E16/E17/E18, Ollama local, creditos OpenAI.
+**Ultima atualizacao:** 03/11/2026 (encerramento). E01-E19 + E08+ (Cost Tracking & Cash Flow) completos e em producao. Todas as frentes do roadmap (E01-E19) implementadas e em producao, agora com **E02 Super Usuário (SUPER_USER)** — papel configurador 19x25x8 + navegacao por perfil + script `scripts/ensure-system-roles.ts` rodado no Neon. Smoke autenticado OK. Working tree limpa. Proxima frente: atribuir `SUPER_USER` a usuarios reais na UI (/administracao/usuarios); depois melhorias de `improvement.md` (Onda 1: webhooks sobre domain_events, backup Neon, Ollama VPS). Possiveis melhorias: Ollama local, creditos OpenAI.
 
 ---
 
@@ -125,6 +125,16 @@ Schedule (E07):
   ler `DIARIO.md`/`ROADMAP.md` inteiros.
 
 ## 9. Riscos conhecidos
+
+- **Pós-03/11: testes de integração nesta máquina exigem `--maxWorkers 1`** —
+  com 20 arquivos/332 testes paralelos o Postgres local (disco lento + OneDrive/AV)
+  trava o postmaster (`LISTENING` + `CLOSE_WAIT`, `pg_isready` sem resposta);
+  também ocorre `P1001` intermitente no `db push` do global-setup. Recuperar com
+  `pg_ctl stop -m immediate` + tarefa agendada `mici-postgres` e rodar a suíte
+  serializada. 20 papéis do sistema (incl. `SUPER_USER`) existem por organização —
+  papéis de novas versões: rodar `scripts/ensure-system-roles.ts`.
+- **Vercel CLI sem `--team homeland1` retorna "Not authorized"** no deploy —
+  usar `npx vercel --prod --team homeland1`.
 
 - Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta).
 - `vercel --prod` deploya o diretÃ³rio local (nÃ£o sÃ³ o push) â€” working tree limpa antes.

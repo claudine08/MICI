@@ -128,7 +128,7 @@ para `http://localhost:3000`. Duas causas independentes:
 | Ã‰pico | Escopo resumido | Status |
 |---|---|---|
 | **E01 Platform Foundation** | Base do sistema, CI, observabilidade | âœ… Fase 0 |
-| **E02 Identity** | UsuÃ¡rioâ†”organizaÃ§Ã£o, roles, permissions, tenant isolation | âœ… Fase 0/1 (OIDC/Keycloak no backlog) |
+| **E02 Identity** | UsuÃ¡rioâ†”organizaÃ§Ã£o, roles, permissions, tenant isolation | âœ… Fase 0/1 (OIDC/Keycloak no backlog) Â· **03/11: SUPER_USER configurador (19Âº papel do sistema) + navegaÃ§Ã£o por perfil (`nav-items`/`sidebar` com permissÃµes) + `scripts/ensure-system-roles.ts` (Neon ok)** |
 | **E03 Project** | Organization, Client, Project, ProjectTemplate, clonagem | âœ… Fase 2 (clonagem plena em Fase 3+) |
 | **E04 Requirements** | Requisito, versionamento, vÃ­nculo WBS/evidÃªncia, DRP | âœ… Fase 3 |
 | **E05 WBS** | Ãrvore, reordenar, importar/exportar, versionar | âœ… Fase 3 |

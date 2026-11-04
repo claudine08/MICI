@@ -1594,3 +1594,32 @@ Estado final da sessão:
 - Deploy Vercel producao; migration aplicada no Neon (22 migrations); permissoes sincronizadas.
 - Smoke: /ai -> 200; run -> SUCCESS (mock sem OPENAI_API_KEY).
 - Testes: 268 unit + 302 integracao verdes.
+
+## 03/11/2026 — E02 Super Usuário (SUPER_USER) implementado e deployado
+
+- Novo papel do sistema `SUPER_USER` (19x25x8) em `src/core/rbac.ts`: configurador
+  do sistema — `modules:*` com VIEW/CREATE/EDIT/DELETE/EXPORT + administração plena
+  (USER, ROLE, ORGANIZATION, SETTING, INTEGRATION, NOTIFICATION, GATE) incl. ADMIN.
+  Sem APPROVE/REJECT: configurar ≠ governar (governança fica com SPONSOR/PMO).
+- Navegacao por perfil: `nav-items.ts` ganhou `permission {module, action}` por item e
+  `sidebar.tsx` filtra itens/grupos vazios por permissoes da sessao (RBAC 9.1);
+  paginas seguem guardadas no servidor (`can()`/`assertPermission`).
+- Usuario demo `super@mici.demo` / Demo@1234 (seed idempotente) + `ensureSystemRoles`
+  no seed: papeis do sistema ausentes em organizacoes antigas sao criados no seed.
+- Novo script `scripts/ensure-system-roles.ts`: cria papeis/grants faltantes em
+  qualquer organizacao (idempotente, aditivo). Rodado no Neon: `SUPER_USER` criado
+  na org demo (142 grants). Outras orgs ja estavam completas.
+- Deploy Vercel producao `mici-mtk7lkiml-homeland1` -> alias `mici-theta.vercel.app`
+  (CLI precisa `--team homeland1` — sem flag, "Not authorized"). 22 migrations (sem
+  pending). Smoke autenticado: sem sessao -> 401; login admin 200; /painel,
+  /administracao/papeis, /templates, /projetos -> 200.
+- Testes verdes: lint 0 erros (2 erros preexistentes de E15/E16 corrigidos —
+  `any` em export CSV) · typecheck · 269 unit · **332 integracao (20 arquivos)** ·
+  build 46 paginas. Integracao deu timeout/P1001 com 20 workers paralelos (Postgres
+  local pesado com OneDrive/AV): passou com `--maxWorkers 1` e PG reiniciado
+  (postmaster travado: LISTENING + CLOSE_WAIT, pg_isready "no response").
+- Extras deployados (commits do usuario): painel com card "Projetos por fase"
+  (E17/E19), commit `2bf4bdb`.
+- Proxima frente: atribuir `SUPER_USER` a usuarios na UI (/administracao/usuarios);
+  melhorias em improvement.md (Onda 1: webhooks, testes E15-E18 ja presentes,
+  backup Neon, Ollama VPS).
