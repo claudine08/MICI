@@ -52,6 +52,34 @@ export function PainelView({ kpis, projects, asOf }: Props) {
         <span className="text-sm text-muted-foreground">{filtered.length} de {projects.length} projetos</span>
       </div>
 
+      {/* Projetos por fase */}
+      <Card>
+        <CardHeader><CardTitle>Projetos por fase (integrado com gates)</CardTitle><CardDescription>Agrupamento por fase atual do projeto.</CardDescription></CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Array.from(new Set(filtered.map((p) => p.currentPhase))).sort().map((phase) => {
+              const inPhase = filtered.filter((p) => p.currentPhase === phase);
+              return (
+                <div key={phase} className="rounded border p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="font-medium">Fase {phase}</span>
+                    <span className="text-xs text-muted-foreground">{inPhase.length} projeto(s)</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {inPhase.map((p) => (
+                      <Link key={p.id} href={`/projetos/${p.id}`} className="rounded border px-2 py-1 text-xs hover:bg-muted">
+                        {p.code} — {p.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            {filtered.length === 0 && <p className="text-sm text-muted-foreground">Nenhum projeto.</p>}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Projetos</CardTitle>
