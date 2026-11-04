@@ -1,6 +1,6 @@
 import { prisma } from "../src/lib/prisma";
 import { hashPassword } from "../src/lib/password";
-import { allPermissionCodes } from "../src/core/rbac";
+import { allPermissionCodes, ROLE_CODES, expandRolePermissions } from "../src/core/rbac";
 import { createOrganization } from "../src/modules/identity/services";
 import { ensureDefaultGateDefinitions } from "../src/modules/gates/definitions";
 import { createProject } from "../src/modules/portfolio/projects";
@@ -18,6 +18,7 @@ const DEMO_PASSWORD = "Demo@1234";
 
 const DEMO_USERS = [
   { email: "admin@mici.demo", name: "Alice Admin", role: "ADMIN" as const },
+  { email: "super@mici.demo", name: "Sofia Super Usuário", role: "SUPER_USER" as const },
   { email: "pmo@mici.demo", name: "Paulo PMO", role: "PMO" as const },
   { email: "gerente@mici.demo", name: "Gilda Gerente", role: "PROJECT_MANAGER" as const },
   { email: "qualidade@mici.demo", name: "Quinto Qualidade", role: "QUALITY" as const },
@@ -38,6 +39,47 @@ async function ensurePermissionCatalog(): Promise<Map<string, string>> {
     }
   }
   return byCode;
+}
+
+// Garante que a organização possua todos os papéis do sistema (idempotente).
+// Necessário quando RODA o seed sobre uma organização criada antes de novas
+// entradas em ROLE_CODES (ex.: SUPER_USER) — organizações novas já nascem
+// completas via createOrganization.
+async function ensureSystemRoles(
+  organizationId: string,
+): Promise<Map<string, string>> {
+  const permissionRows = await prisma.permission.findMany({
+    select: { id: true, code: true },
+  });
+  const permissionIds = new Map(permissionRows.map((p) => [p.code, p.id]));
+
+  for (const roleCode of ROLE_CODES) {
+    const existing = await prisma.role.findFirst({
+      where: { organizationId, code: roleCode, deletedAt: null },
+      select: { id: true },
+    });
+    if (existing) continue;
+    const role = await prisma.role.create({
+      data: { organizationId, code: roleCode, name: roleCode, isSystem: true },
+      select: { id: true },
+    });
+    const grants = expandRolePermissions(roleCode)
+      .map((code) => ({ roleId: role.id, permissionId: permissionIds.get(code) }))
+      .filter(
+        (grant): grant is { roleId: string; permissionId: string } =>
+          grant.permissionId !== undefined,
+      );
+    if (grants.length > 0) {
+      await prisma.rolePermission.createMany({ data: grants, skipDuplicates: true });
+    }
+    console.log(`[seed] papel do sistema "${roleCode}" criado na organização`);
+  }
+
+  const roles = await prisma.role.findMany({
+    where: { organizationId, deletedAt: null },
+    select: { id: true, code: true },
+  });
+  return new Map(roles.map((r) => [r.code, r.id]));
 }
 
 async function main() {
@@ -82,11 +124,7 @@ async function main() {
   }
   const organizationId = organization!.id;
 
-  const roles = await prisma.role.findMany({
-    where: { organizationId },
-    select: { id: true, code: true },
-  });
-  const roleIdByCode = new Map(roles.map((r) => [r.code, r.id]));
+  const roleIdByCode = await ensureSystemRoles(organizationId);
 
   for (const demo of DEMO_USERS) {
     const userId = users[demo.email];
@@ -280,7 +318,9 @@ async function main() {
   }
 
   console.log("[seed] concluído.");
-  console.log("[seed] login: admin@mici.demo / Demo@1234");
+  console.log("[seed] logins (senha Demo@1234):");
+  console.log("[seed]   admin@mici.demo  (Administrador)");
+  console.log("[seed]   super@mici.demo  (Super Usuário — configurações do sistema)");
 }
 
 main()

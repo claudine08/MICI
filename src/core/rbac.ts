@@ -1,4 +1,4 @@
-// RBAC (§9.1, §111): 18 papéis × 25 módulos × ações VIEW..ADMIN.
+// RBAC (§9.1, §111): 19 papéis × 25 módulos × ações VIEW..ADMIN.
 // A matriz é declarada como dados e expandida para códigos "modulo:acao".
 // Padrão de código de permissão: `${module}:${action}` (§9.2).
 
@@ -49,6 +49,7 @@ export type Module = (typeof MODULES)[number];
 
 export const ROLE_CODES = [
   "ADMIN",
+  "SUPER_USER",
   "PMO",
   "SPONSOR",
   "PROJECT_MANAGER",
@@ -72,6 +73,7 @@ export type RoleCode = (typeof ROLE_CODES)[number];
 
 export const ROLE_NAMES_PT: Record<RoleCode, string> = {
   ADMIN: "Administrador",
+  SUPER_USER: "Super Usuário",
   PMO: "PMO",
   SPONSOR: "Patrocinador",
   PROJECT_MANAGER: "Gerente de Projeto",
@@ -99,6 +101,23 @@ export interface RoleGrant {
 // Matriz de permissões por papel (dados — alterar aqui altera autorização).
 export const ROLE_GRANTS: Record<RoleCode, RoleGrant[]> = {
   ADMIN: [{ modules: "*", actions: "*" }],
+  // SUPER_USER (configurador do sistema): responsável pelas configurações
+  // corporativas — criação/importação de templates e gate definitions,
+  // parâmetros, integrações e habilitação de telas por perfil.
+  // Diferente do ADMIN: não aprova nem rejeita o negócio (governança fica
+  // com SPONSOR/PMO); concede e revoga acesso, mas não executa operação.
+  SUPER_USER: [
+    // Visão completa do sistema + operação de configuração: cria, edita,
+    // importa, exporta e remove dados/template em qualquer módulo.
+    { modules: "*", actions: ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT"] },
+    // Administração plena (incl. ADMIN): usuários, papéis, organização,
+    // parâmetros, integrações, notificações e gates (definições/critérios).
+    // Sem APPROVE/REJECT mesmo aqui: configurar ≠ governar.
+    {
+      modules: ["USER", "ROLE", "ORGANIZATION", "SETTING", "INTEGRATION", "NOTIFICATION", "GATE"],
+      actions: ["VIEW", "CREATE", "EDIT", "DELETE", "EXPORT", "ADMIN"],
+    },
+  ],
   PMO: [
     {
       modules: [

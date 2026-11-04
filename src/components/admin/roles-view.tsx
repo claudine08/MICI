@@ -172,7 +172,7 @@ export function RolesView({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {roles.length} papéis · 18 papéis do sistema são imutáveis; customizados são criados
+          {roles.length} papéis · papéis do sistema são imutáveis; customizados são criados
           aqui (E02-US03/US04).
         </p>
         {canCreate && (

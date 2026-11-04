@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar />
+      <Sidebar permissions={[...context.permissions]} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
           userName={context.userName}

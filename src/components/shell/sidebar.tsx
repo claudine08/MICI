@@ -3,10 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_GROUPS } from "@/components/shell/nav-items";
+import { can, toPermissionSet, type PermissionSource } from "@/core/rbac";
 import { cn } from "@/lib/utils";
 
-export function Sidebar() {
+// Visibilidade conforme o perfil: cada item de NAV_GROUPS tem permissão
+// (`module:action`); quem não a possui não vê o item — as páginas seguem
+// guardadas no servidor independentemente da navegação.
+export function Sidebar({ permissions }: { permissions: PermissionSource }) {
   const pathname = usePathname();
+  const permissionSet = toPermissionSet(permissions);
+
+  const visibleGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter(
+      (item) =>
+        !item.permission || can(permissionSet, item.permission.module, item.permission.action),
+    ),
+  })).filter((group) => group.items.length > 0);
 
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-accent bg-sidebar md:flex">
@@ -18,7 +31,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 py-3">
-        {NAV_GROUPS.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.title} className="mb-4">
             <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-accent">
               {group.title}

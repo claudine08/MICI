@@ -60,7 +60,7 @@ export async function createOrganization(input: CreateOrganizationInput) {
   }
 
   try {
-    // Bootstrap pesado (catálogo + 18 papéis + grants + gates): o default de 5s
+    // Bootstrap pesado (catálogo + 19 papéis + grants + gates): o default de 5s
     // estoura em bancos com latência de rede (Neon).
     return await prisma.$transaction(
       async (tx) => {
@@ -90,7 +90,7 @@ export async function createOrganization(input: CreateOrganizationInput) {
         }
       }
 
-      // 18 papéis do sistema por organização, com grants da matriz RBAC.
+      // 19 papéis do sistema por organização, com grants da matriz RBAC.
       // Em lote: o create um-a-um (18 inserts + nested) dominava os ~50 round
       // trips de rede que deixavam este endpoint com ~14s no Neon.
       await tx.role.createMany({

@@ -34,6 +34,25 @@ describe("rbac", () => {
     expect(codes).not.toContain("AUDIT:DELETE");
   });
 
+  it("SUPER_USER configura o sistema sem aprovar/rejeitar o negócio", () => {
+    const codes = expandRolePermissions("SUPER_USER");
+    // Configuração: templates import/export e administração plena.
+    expect(codes).toContain("PROJECT:CREATE");
+    expect(codes).toContain("PROJECT:DELETE");
+    expect(codes).toContain("GATE:EDIT");
+    expect(codes).toContain("ROLE:ADMIN");
+    expect(codes).toContain("SETTING:ADMIN");
+    expect(codes).toContain("INTEGRATION:CREATE");
+    // Todos os módulos visíveis (visualização completa das telas).
+    for (const module_ of MODULES) {
+      expect(codes).toContain(permissionCode(module_, "VIEW"));
+    }
+    // Governança do negócio não é papel dele: sem APPROVE/REJECT em módulo de negócio.
+    expect(codes).not.toContain("GATE:APPROVE");
+    expect(codes).not.toContain("CHANGE:APPROVE");
+    expect(codes).not.toContain("RISK:REJECT");
+  });
+
   it("can() valida por código de permissão", () => {
     const permissions = toPermissionSet(["PROJECT:VIEW", "GATE:APPROVE"]);
     expect(can(permissions, "PROJECT", "VIEW")).toBe(true);
