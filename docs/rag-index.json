@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T01:32:05.363Z",
+  "generatedAt": "2026-11-04T02:30:35.111Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -12,7 +12,7 @@
     "sustentabilidade.md",
     "AI.md"
   ],
-  "chunkCount": 240,
+  "chunkCount": 241,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
@@ -128,8 +128,8 @@
       "level": 2,
       "file": "devcurrent.md",
       "startLine": 127,
-      "endLine": 135,
-      "summary": "- Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta). - `vercel --prod` deploya o diretÃ³rio local (n...",
+      "endLine": 145,
+      "summary": "- **Pós-03/11: testes de integração nesta máquina exigem `--maxWorkers 1`** — com 20 arquivos/332 testes paralelos o Postgres local (disco lento + OneDrive/A...",
       "tags": [
         "devcurrent"
       ]
@@ -1726,6 +1726,18 @@
       "startLine": 1590,
       "endLine": 1597,
       "summary": "- Modulo src/modules/ai/ (gateway, prompts, logs) + migration phase20_ai + RBAC AI. - API /api/v1/ai/run e /api/v1/ai/requests; UI /ai. - Deploy Vercel produ...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-03-11-2026-e02-super-usuario-super-user-implemen",
+      "title": "03/11/2026 — E02 Super Usuário (SUPER_USER) implementado e deployado",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1598,
+      "endLine": 1626,
+      "summary": "- Novo papel do sistema `SUPER_USER` (19x25x8) em `src/core/rbac.ts`: configurador do sistema — `modules:*` com VIEW/CREATE/EDIT/DELETE/EXPORT + administraçã...",
       "tags": [
         "diario"
       ]
