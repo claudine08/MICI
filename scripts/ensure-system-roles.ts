@@ -65,6 +65,24 @@ async function ensureSystemRolesForOrganization(
     }
   }
 
+  // Convergência: remove grants de papéis do sistema que não estão mais na matriz
+  // RBAC (ex.: quando um papel perde uma permissão). Seguro: só atinge papéis
+  // do sistema (isSystem=true) da organização corrente.
+  for (const roleCode of ROLE_CODES) {
+    const roleId = roleIdByCode.get(roleCode);
+    if (!roleId) continue;
+    const desired = new Set(expandRolePermissions(roleCode));
+    const current = await prisma.rolePermission.findMany({
+      where: { roleId },
+      select: { id: true, permission: { select: { code: true } } },
+    });
+    const toRemove = current.filter((rp) => !desired.has(rp.permission.code)).map((rp) => rp.id);
+    if (toRemove.length > 0) {
+      await prisma.rolePermission.deleteMany({ where: { id: { in: toRemove } } });
+      console.log(`  - ${toRemove.length} grants revogados de "${roleCode}"`);
+    }
+  }
+
   if (missingCodes.length === 0) {
     const rolePermissionCount = await prisma.rolePermission.groupBy({
       by: ["roleId"],

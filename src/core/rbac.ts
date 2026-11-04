@@ -143,7 +143,9 @@ export const ROLE_GRANTS: Record<RoleCode, RoleGrant[]> = {
       ],
       actions: ["VIEW", "CREATE", "EDIT", "APPROVE", "REJECT", "DELETE", "EXPORT"],
     },
-    { modules: ["USER", "ROLE", "ORGANIZATION", "SETTING", "AUDIT", "NOTIFICATION"], actions: ["VIEW", "CREATE", "EDIT", "ADMIN", "EXPORT"] },
+    // Configuração do sistema é exclusiva de SUPER_USER + ADMIN (03/11).
+    // PMO mantém apenas leitura/exportação da trilha de auditoria (oversight).
+    { modules: ["AUDIT"], actions: ["VIEW", "EXPORT"] },
   ],
   SPONSOR: [
     { modules: ["DASHBOARD", "REPORT"], actions: ["VIEW", "EXPORT"] },
