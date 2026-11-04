@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 03/11/2026 (encerramento). E01-E19 + E08+ (Cost Tracking & Cash Flow) completos e em producao. Todas as frentes do roadmap (E01-E19) implementadas e em producao, agora com **E02 Super Usuário (SUPER_USER)** — papel configurador 19x25x8 + navegacao por perfil + script `scripts/ensure-system-roles.ts` rodado no Neon. Smoke autenticado OK. Working tree limpa. Proxima frente: atribuir `SUPER_USER` a usuarios reais na UI (/administracao/usuarios); depois melhorias de `improvement.md` (Onda 1: webhooks sobre domain_events, backup Neon, Ollama VPS). Possiveis melhorias: Ollama local, creditos OpenAI.
+**Ultima atualizacao:** 03/11/2026 (encerramento). E01-E19 + E08+ (Cost Tracking & Cash Flow) completos e em producao. Todas as frentes do roadmap (E01-E19) implementadas e em producao, agora com **E02 Super Usuário (SUPER_USER)** — papel configurador 19x25x8 + navegacao por perfil + script `scripts/ensure-system-roles.ts` rodado no Neon + **`super@mici.demo` criado no Neon (`create-demo-super.ts`) e smoke real OK**. Smoke autenticado OK (corrigir sempre: csrf com `-SessionVariable`). Working tree limpa. Proxima frente: usar `scripts/set-super-user.ts <email>` quando houver usuario real; depois melhorias de `improvement.md` (Onda 1: webhooks sobre domain_events, backup Neon, Ollama VPS). Possiveis melhorias: Ollama local, creditos OpenAI.
 
 ---
 

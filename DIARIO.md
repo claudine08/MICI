@@ -1623,3 +1623,20 @@ Estado final da sessão:
 - Proxima frente: atribuir `SUPER_USER` a usuarios na UI (/administracao/usuarios);
   melhorias em improvement.md (Onda 1: webhooks, testes E15-E18 ja presentes,
   backup Neon, Ollama VPS).
+
+## 03/11/2026 (b) — super@mici.demo criado no Neon + scripts de atribuição
+
+- `scripts/create-demo-super.ts`: garante `super@mici.demo` (SUPER_USER) na org
+  informada (default `demo`), idempotente. Rodado no Neon: ACTIVE + SUPER_USER.
+- `scripts/set-super-user.ts <email> [slug]`: atribui SUPER_USER a um usuario
+  real existente (sem slug = todas as memberships ativas). Para o time real.
+- Smoke REAL de produção (corrigido: GET /api/auth/csrf precisa capturar o
+  cookie via `-SessionVariable`, senão login dá redirect `error=MissingCSRF` e
+  200/200 anteriores eram falso-positivos da tela /entrar):
+  admin e super terminam em /painel; super acessa /administracao/{papeis,
+  usuarios,auditoria} e /templates (200, URL final sem redirect); nav da
+  sidebar contém /administracao/papeis. VIEWER vê itens em modo VIEW por matriz
+  (§9) — comportamento esperado.
+- Deployment atual: `mici-mtk7lkiml-homeland1` (alias mici-theta.vercel.app).
+- Proxima frente real: `set-super-user.ts` com o e-mail de quem configurará o
+  sistema no ambiente do cliente, quando houver organização real.
