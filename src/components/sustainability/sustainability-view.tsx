@@ -66,10 +66,10 @@ export function SustainabilityView(props: Props) {
   const [measurementForm, setMeasurementForm] = useState({ metricId: "", value: "", measuredAt: "", wbsNodeId: "", activityId: "", notes: "", evidenceNotes: "" });
 
   const refresh = () => startTransition(() => router.refresh());
-  const exportCsv = (rows: any[], name: string) => {
+  const exportCsv = <T extends object>(rows: T[], name: string) => {
     if (rows.length === 0) return;
     const headers = Object.keys(rows[0]);
-    const csv = [headers.join(";"), ...rows.map((r) => headers.map((h) => JSON.stringify(r[h] ?? "")).join(";"))].join("\n");
+    const csv = [headers.join(";"), ...rows.map((r) => headers.map((h) => JSON.stringify((r as Record<string, unknown>)[h] ?? "")).join(";"))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

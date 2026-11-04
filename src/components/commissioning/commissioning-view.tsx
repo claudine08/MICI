@@ -137,7 +137,7 @@ export function CommissioningView({
     const rows = kind === "plans" ? plans : items;
     if (rows.length === 0) return;
     const headers = Object.keys(rows[0]);
-    const csv = [headers.join(";"), ...rows.map((r) => headers.map((h) => JSON.stringify((r as any)[h] ?? "")).join(";"))].join("\n");
+    const csv = [headers.join(";"), ...rows.map((r) => headers.map((h) => JSON.stringify((r as unknown as Record<string, unknown>)[h] ?? "")).join(";"))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
