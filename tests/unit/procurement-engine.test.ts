@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   analyzeBidComparison,
   calculateQuotationTotals,
+  isPurchaseOrderEditable,
   isPurchaseRequestEditable,
   isPurchaseRequestOpen,
   isPurchaseRequestOverdue,
   isQuotationEditable,
   isSupplierActive,
+  nextPurchaseOrderStatus,
   nextPurchaseRequestStatus,
   nextQuotationStatus,
   summarizeProcurementBoard,
@@ -235,5 +237,42 @@ describe("Procurement Engine (E14)", () => {
       expect(summary.activeSuppliers).toBe(2);
     });
   });
-});
 
+  describe("PurchaseOrder state machine (Fatia 2)", () => {
+    it("ISSUE only from DRAFT", () => {
+      expect(nextPurchaseOrderStatus({ currentStatus: "DRAFT", action: "ISSUE" })).toEqual({ nextStatus: "ISSUED" });
+      const err = nextPurchaseOrderStatus({ currentStatus: "ISSUED", action: "ISSUE" });
+      expect("error" in err).toBe(true);
+    });
+
+    it("RECEIVE transitions to partial/total", () => {
+      expect(nextPurchaseOrderStatus({ currentStatus: "ISSUED", action: "RECEIVE", fullyReceived: false })).toEqual({
+        nextStatus: "PARTIALLY_RECEIVED",
+      });
+      expect(nextPurchaseOrderStatus({ currentStatus: "ISSUED", action: "RECEIVE", fullyReceived: true })).toEqual({
+        nextStatus: "FULLY_RECEIVED",
+      });
+      expect(nextPurchaseOrderStatus({ currentStatus: "PARTIALLY_RECEIVED", action: "RECEIVE", fullyReceived: true })).toEqual({
+        nextStatus: "FULLY_RECEIVED",
+      });
+    });
+
+    it("CLOSE only after fully received", () => {
+      expect(nextPurchaseOrderStatus({ currentStatus: "FULLY_RECEIVED", action: "CLOSE" })).toEqual({ nextStatus: "CLOSED" });
+      const err = nextPurchaseOrderStatus({ currentStatus: "ISSUED", action: "CLOSE" });
+      expect("error" in err).toBe(true);
+    });
+
+    it("CANCEL/REOPEN rules", () => {
+      expect(nextPurchaseOrderStatus({ currentStatus: "DRAFT", action: "CANCEL" })).toEqual({ nextStatus: "CANCELLED" });
+      const errCancel = nextPurchaseOrderStatus({ currentStatus: "FULLY_RECEIVED", action: "CANCEL" });
+      expect("error" in errCancel).toBe(true);
+      expect(nextPurchaseOrderStatus({ currentStatus: "CANCELLED", action: "REOPEN" })).toEqual({ nextStatus: "DRAFT" });
+    });
+
+    it("editable only in DRAFT", () => {
+      expect(isPurchaseOrderEditable("DRAFT")).toBe(true);
+      expect(isPurchaseOrderEditable("ISSUED")).toBe(false);
+    });
+  });
+});

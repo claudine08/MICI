@@ -400,6 +400,75 @@ model DomainEvent {
 }
 
 // ---------------------------------------------------------------------------
+// Webhooks outbound (integrations) — Phase 21
+// ---------------------------------------------------------------------------
+
+model WebhookEndpoint {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  url            String   @db.VarChar(2048)
+  secret         String   @db.VarChar(256)
+  events         String[] @default([])
+  isActive       Boolean  @default(true) @map("is_active")
+  description    String?  @db.VarChar(200)
+  createdAt      DateTime @default(now()) @map("created_at")
+  createdBy      String?  @map("created_by") @db.Uuid
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  updatedBy      String?  @map("updated_by") @db.Uuid
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?  @map("deleted_by") @db.Uuid
+
+  deliveries WebhookDelivery[]
+
+  @@index([organizationId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id          String   @id @default(uuid()) @db.Uuid
+  endpointId  String   @map("endpoint_id") @db.Uuid
+  eventId     String?  @map("event_id") @db.Uuid
+  eventType   String   @map("event_type") @db.VarChar(120)
+  payload     Json     @default("{}")
+  status      String   @default("PENDING") @db.VarChar(32)
+  attempts    Int      @default(0)
+  lastError   String?  @map("last_error")
+  deliveredAt DateTime? @map("delivered_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id])
+
+  @@index([endpointId])
+  @@index([status, createdAt])
+  @@map("webhook_deliveries")
+}
+
+// ---------------------------------------------------------------------------
+// Aprovações por e-mail (integrações) — Phase 22
+// ---------------------------------------------------------------------------
+
+model ApprovalRequest {
+  id            String    @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  projectId     String?   @map("project_id") @db.Uuid
+  objectType    String    @map("object_type") @db.VarChar(64)
+  objectId      String    @map("object_id") @db.Uuid
+  approverEmail String    @map("approver_email") @db.VarChar(320)
+  token         String    @unique @db.VarChar(128)
+  status        String    @default("PENDING") @db.VarChar(32)
+  decisionComment String? @map("decision_comment")
+  decidedAt     DateTime? @map("decided_at")
+  expiresAt     DateTime  @map("expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  createdBy     String?   @map("created_by") @db.Uuid
+
+  @@index([organizationId])
+  @@index([token])
+  @@index([status, expiresAt])
+  @@map("approval_requests")
+}
+
+// ---------------------------------------------------------------------------
 // Fila de jobs para Vercel Cron (decisÃ£o de stack do MVP)
 // ---------------------------------------------------------------------------
 
