@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,9 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 
-// Visão de custo do projeto (E08 §29): itens de orçamento, compromissos,
-// realizados, baseline de custo e EVM. Os dados iniciais vêm do server
-// component; após cada mutação o router.refresh() recarrega a página.
+// VisÃ£o de custo do projeto (E08 Â§29): itens de orÃ§amento, compromissos,
+// realizados, baseline de custo e EVM. Os dados iniciais vÃªm do server
+// component; apÃ³s cada mutaÃ§Ã£o o router.refresh() recarrega a pÃ¡gina.
 
 interface WbsNodeLite {
   id: string;
@@ -112,8 +112,8 @@ function brl(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// Preview do que foi extraído do JSON (arquivo colado) antes de confirmar a
-// importação. Só depende de `quantitativos`, o mesmo que a API espera.
+// Preview do que foi extraÃ­do do JSON (arquivo colado) antes de confirmar a
+// importaÃ§Ã£o. SÃ³ depende de `quantitativos`, o mesmo que a API espera.
 interface ImportPreview {
   lineCount: number;
   totalDirect: number;
@@ -122,14 +122,14 @@ interface ImportPreview {
 }
 
 // Extrai o array `quantitativos` de um JSON colado. Aceita tanto o objeto
-// completo exportado por /orcamento (BudgetEstimate) quanto um objeto já
-// reduzido no formato da API. Lança Error com mensagem em pt-BR se inválido.
+// completo exportado por /orcamento (BudgetEstimate) quanto um objeto jÃ¡
+// reduzido no formato da API. LanÃ§a Error com mensagem em pt-BR se invÃ¡lido.
 function extractQuantitativos(raw: string): unknown[] {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error("JSON inválido — verifique se o conteúdo colado é um JSON válido.");
+    throw new Error("JSON invÃ¡lido â€” verifique se o conteÃºdo colado Ã© um JSON vÃ¡lido.");
   }
   const quantitativos =
     parsed && typeof parsed === "object" && Array.isArray((parsed as { quantitativos?: unknown[] }).quantitativos)
@@ -144,7 +144,7 @@ function extractQuantitativos(raw: string): unknown[] {
 }
 
 // Monta o preview agregando por grupo e somando o custo direto, sem confiar em
-// `consolidacao` (que pode não existir).
+// `consolidacao` (que pode nÃ£o existir).
 function buildImportPreview(quantitativos: unknown[]): ImportPreview {
   const lines = quantitativos as Array<{
     grupo?: number;
@@ -171,7 +171,7 @@ function buildImportPreview(quantitativos: unknown[]): ImportPreview {
       .map(([grupo, value]) => ({ grupo, grupoNome: value.grupoNome, total: Math.round(value.total * 100) / 100 }))
       .sort((a, b) => a.grupo - b.grupo),
     firstLines: lines.slice(0, 6).map((line) => ({
-      descricao: String(line.descricao ?? "—"),
+      descricao: String(line.descricao ?? "â€”"),
       quantidade: Number(line.quantidade ?? 0) || 0,
       pu: Number(line.pu ?? 0) || 0,
       custoTotal: Number(line.custoTotal ?? 0) || 0,
@@ -244,9 +244,9 @@ const emptyActualForm: ActualForm = {
 
 const BASELINE_BADGE: Record<CostBaselineRow["status"], string> = {
   DRAFT: "Rascunho",
-  SUBMITTED: "Em análise",
+  SUBMITTED: "Em anÃ¡lise",
   APPROVED: "Aprovada",
-  SUPERSEDED: "Substituída",
+  SUPERSEDED: "SubstituÃ­da",
 };
 
 export function CostView({
@@ -262,6 +262,9 @@ export function CostView({
   const base = `/api/v1/projects/${projectId}/cost`;
   const [data, setData] = useState<CostPayload>(initialData);
   const [error, setError] = useState<string | null>(null);
+  const [approvalLink, setApprovalLink] = useState<string | null>(null);
+  const [approvalDesc, setApprovalDesc] = useState<string>("");
+  const [approvalExpires, setApprovalExpires] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
   const [itemDialog, setItemDialog] = useState(false);
@@ -282,10 +285,10 @@ export function CostView({
   const [importError, setImportError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  // Após cada mutação, busca o payload consolidado do servidor (itens,
+  // ApÃ³s cada mutaÃ§Ã£o, busca o payload consolidado do servidor (itens,
   // compromissos, realizados, baselines e EVM recalculado) e sincroniza o
-  // estado local — o EVM deriva do estado persistido, então o refetch é a
-  // única forma de mantê-lo honesto. router.refresh() mantém o server
+  // estado local â€” o EVM deriva do estado persistido, entÃ£o o refetch Ã© a
+  // Ãºnica forma de mantÃª-lo honesto. router.refresh() mantÃ©m o server
   // component alinhado com o novo estado.
   const load = async () => {
     try {
@@ -371,19 +374,21 @@ export function CostView({
     }
   };
 
-  const requestApproval = async (item: CostItemRow) => {
-    const email = window.prompt("E-mail do aprovador:", "");
+  const requestApprovalTotal = async () => {
+    const email = window.prompt("E-mail do aprovador (custo total do projeto):", "");
     if (!email) return;
     setError(null);
     try {
-      const res = await apiRequest<{ approval: { token: string } }>(
+      const res = await apiRequest<{ approval: { token: string; expiresAt: string } }>(
         `/api/v1/projects/${projectId}/approvals`,
-        { method: "POST", body: JSON.stringify({ objectType: "COST_ITEM", objectId: item.id, approverEmail: email, expiresInDays: 7 }) }
+        { method: "POST", body: JSON.stringify({ objectType: "PROJECT_COST_TOTAL", objectId: projectId, approverEmail: email, expiresInDays: 7 }) }
       );
       const link = `${window.location.origin}/aprovacoes/${res.approval.token}`;
-      window.alert(`Solicitação enviada. Link: ${link}`);
+      setApprovalLink(link);
+      setApprovalDesc("Custo total do projeto");
+      setApprovalExpires(new Date(res.approval.expiresAt).toLocaleString());
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Falha ao solicitar aprovação.");
+      setError(caught instanceof Error ? caught.message : "Falha ao solicitar aprovaÃ§Ã£o.");
     }
   };
 
@@ -516,7 +521,7 @@ export function CostView({
       });
       await load();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Falha na transição da baseline.");
+      setError(caught instanceof Error ? caught.message : "Falha na transiÃ§Ã£o da baseline.");
     }
   };
 
@@ -528,7 +533,7 @@ export function CostView({
     setDragOver(false);
   };
 
-  // Lê o conteúdo colado e monta o preview. Não envia nada ainda — só extrai.
+  // LÃª o conteÃºdo colado e monta o preview. NÃ£o envia nada ainda â€” sÃ³ extrai.
   const parseImport = (raw: string) => {
     setImportText(raw);
     if (!raw.trim()) {
@@ -546,7 +551,7 @@ export function CostView({
     }
   };
 
-  // Upload de arquivo .json — extrai o texto e roda o mesmo parse.
+  // Upload de arquivo .json â€” extrai o texto e roda o mesmo parse.
   const onImportFile = async (file: File | null | undefined) => {
     if (!file) return;
     setImportFileName(file.name);
@@ -582,7 +587,7 @@ export function CostView({
       {evm && (
         <Card className="p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold">EVM — desempenho de custo</h2>
+            <h2 className="text-sm font-semibold">EVM â€” desempenho de custo</h2>
             <span className="text-xs text-muted-foreground">
               Data de corte: {evm.dataDate}
             </span>
@@ -595,10 +600,10 @@ export function CostView({
               { label: "AC", value: brl(evm.ac) },
               { label: "EAC", value: brl(evm.eac ?? 0) },
               { label: "VAC", value: brl(evm.vac ?? 0) },
-              { label: "CPI", value: evm.cpi === null ? "—" : evm.cpi.toFixed(2) },
-              { label: "SPI", value: evm.spi === null ? "—" : evm.spi.toFixed(2) },
-              { label: "CV", value: evm.cv === null ? "—" : brl(evm.cv) },
-              { label: "SV", value: evm.sv === null ? "—" : brl(evm.sv) },
+              { label: "CPI", value: evm.cpi === null ? "â€”" : evm.cpi.toFixed(2) },
+              { label: "SPI", value: evm.spi === null ? "â€”" : evm.spi.toFixed(2) },
+              { label: "CV", value: evm.cv === null ? "â€”" : brl(evm.cv) },
+              { label: "SV", value: evm.sv === null ? "â€”" : brl(evm.sv) },
               { label: "Planejado", value: `${evm.percentPlanned.toFixed(0)}%` },
               { label: "Realizado", value: `${evm.percentEarned.toFixed(0)}%` },
             ].map((cell) => (
@@ -615,7 +620,7 @@ export function CostView({
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold">Itens de orçamento</h2>
+          <h2 className="text-sm font-semibold">Itens de orÃ§amento</h2>
           <div className="flex gap-2">
             {canCreate && (
               <>
@@ -629,6 +634,10 @@ export function CostView({
                   <Upload className="h-4 w-4" />
                   Importar estimate
                 </Button>
+                <Button variant="outline" onClick={() => void requestApprovalTotal()}>
+                  <Mail className="h-4 w-4" />
+                  Solicitar aprovação (custo total)
+                </Button>
                 <Button onClick={openCreateItem}>
                   <Plus className="h-4 w-4" />
                   Novo item
@@ -641,14 +650,14 @@ export function CostView({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                <th className="px-4 py-2.5">Código</th>
-                <th className="px-4 py-2.5">Descrição</th>
+                <th className="px-4 py-2.5">CÃ³digo</th>
+                <th className="px-4 py-2.5">DescriÃ§Ã£o</th>
                 <th className="px-4 py-2.5">Categoria</th>
                 <th className="px-4 py-2.5 text-right">Qtd</th>
                 <th className="px-4 py-2.5 text-right">PU</th>
                 <th className="px-4 py-2.5 text-right">Total</th>
                 <th className="px-4 py-2.5">WBS</th>
-                {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">Ações</th>}
+                {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">AÃ§Ãµes</th>}
               </tr>
             </thead>
             <tbody>
@@ -661,21 +670,11 @@ export function CostView({
                   <td className="px-4 py-2.5 text-right">{brl(item.unitPrice)}</td>
                   <td className="px-4 py-2.5 text-right font-medium">{brl(item.amount)}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">
-                    {item.wbsNodeCode ?? "—"}
+                    {item.wbsNodeCode ?? "â€”"}
                   </td>
                   {(canEdit || canDelete) && (
                     <td className="px-4 py-2.5">
                       <div className="flex justify-end gap-1">
-                        {canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Solicitar aprovação por e-mail"
-                            onClick={() => void requestApproval(item)}
-                          >
-                            <Mail className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
                         {canEdit && (
                           <Button
                             variant="ghost"
@@ -704,7 +703,7 @@ export function CostView({
               {(data.items.length ?? 0) === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhum item de orçamento. Importe um estimate ou crie itens manualmente.
+                    Nenhum item de orÃ§amento. Importe um estimate ou crie itens manualmente.
                   </td>
                 </tr>
               )}
@@ -727,13 +726,13 @@ export function CostView({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                <th className="px-4 py-2.5">Código</th>
-                <th className="px-4 py-2.5">Descrição</th>
+                <th className="px-4 py-2.5">CÃ³digo</th>
+                <th className="px-4 py-2.5">DescriÃ§Ã£o</th>
                 <th className="px-4 py-2.5">Fornecedor</th>
                 <th className="px-4 py-2.5">Data</th>
                 <th className="px-4 py-2.5 text-right">Valor</th>
                 <th className="px-4 py-2.5">Status</th>
-                {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">Ações</th>}
+                {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">AÃ§Ãµes</th>}
               </tr>
             </thead>
             <tbody>
@@ -742,7 +741,7 @@ export function CostView({
                   <td className="px-4 py-2.5 font-mono text-xs">{commitment.code}</td>
                   <td className="px-4 py-2.5">{commitment.description}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">
-                    {commitment.supplier ?? "—"}
+                    {commitment.supplier ?? "â€”"}
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground">{commitment.committedAt}</td>
                   <td className="px-4 py-2.5 text-right font-medium">{brl(commitment.amount)}</td>
@@ -809,12 +808,12 @@ export function CostView({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                <th className="px-4 py-2.5">Código</th>
-                <th className="px-4 py-2.5">Descrição</th>
+                <th className="px-4 py-2.5">CÃ³digo</th>
+                <th className="px-4 py-2.5">DescriÃ§Ã£o</th>
                 <th className="px-4 py-2.5">Data</th>
                 <th className="px-4 py-2.5">Item</th>
                 <th className="px-4 py-2.5 text-right">Valor</th>
-                {canDelete && <th className="px-4 py-2.5 text-right">Ações</th>}
+                {canDelete && <th className="px-4 py-2.5 text-right">AÃ§Ãµes</th>}
               </tr>
             </thead>
             <tbody>
@@ -824,7 +823,7 @@ export function CostView({
                   <td className="px-4 py-2.5">{actual.description}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{actual.incurredAt}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">
-                    {actual.costItemCode ?? "—"}
+                    {actual.costItemCode ?? "â€”"}
                   </td>
                   <td className="px-4 py-2.5 text-right font-medium">{brl(actual.amount)}</td>
                   {canDelete && (
@@ -867,13 +866,13 @@ export function CostView({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                <th className="px-4 py-2.5">Versão</th>
+                <th className="px-4 py-2.5">VersÃ£o</th>
                 <th className="px-4 py-2.5">Status</th>
-                <th className="px-4 py-2.5">Mudança</th>
+                <th className="px-4 py-2.5">MudanÃ§a</th>
                 <th className="px-4 py-2.5">Itens</th>
-                <th className="px-4 py-2.5 text-right">Orçamento</th>
+                <th className="px-4 py-2.5 text-right">OrÃ§amento</th>
                 <th className="px-4 py-2.5">Criada em</th>
-                <th className="px-4 py-2.5 text-right">Ações</th>
+                <th className="px-4 py-2.5 text-right">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody>
@@ -897,12 +896,12 @@ export function CostView({
                     {baseline.changeCode ? (
                       <span
                         className="font-mono text-xs text-primary"
-                        title={`Revisão originada pela mudança ${baseline.changeCode}`}
+                        title={`RevisÃ£o originada pela mudanÃ§a ${baseline.changeCode}`}
                       >
                         {baseline.changeCode}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">â€”</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-muted-foreground">{baseline.itemCount}</td>
@@ -941,7 +940,7 @@ export function CostView({
               {(data.baselines.length ?? 0) === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                    Nenhuma baseline de custo. Crie uma para congelar o orçamento (exigido no G4).
+                    Nenhuma baseline de custo. Crie uma para congelar o orÃ§amento (exigido no G4).
                   </td>
                 </tr>
               )}
@@ -952,7 +951,7 @@ export function CostView({
 
       <Dialog
         open={itemDialog}
-        title={editingItemId ? "Editar item" : "Novo item de orçamento"}
+        title={editingItemId ? "Editar item" : "Novo item de orÃ§amento"}
         onClose={() => setItemDialog(false)}
         wide
       >
@@ -960,7 +959,7 @@ export function CostView({
           <ErrorBox message={error} />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="item-code">Código</Label>
+              <Label htmlFor="item-code">CÃ³digo</Label>
               <Input
                 id="item-code"
                 value={itemForm.code}
@@ -974,12 +973,12 @@ export function CostView({
                 id="item-category"
                 value={itemForm.category}
                 onChange={(event) => setItem("category", event.target.value)}
-                placeholder="Grupo 1 — Projetos"
+                placeholder="Grupo 1 â€” Projetos"
               />
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="item-description">Descrição *</Label>
+            <Label htmlFor="item-description">DescriÃ§Ã£o *</Label>
             <Input
               id="item-description"
               value={itemForm.description}
@@ -993,7 +992,7 @@ export function CostView({
                 id="item-unit"
                 value={itemForm.unit}
                 onChange={(event) => setItem("unit", event.target.value)}
-                placeholder="m², un, kg…"
+                placeholder="mÂ², un, kgâ€¦"
               />
             </div>
             <div className="grid gap-2">
@@ -1006,7 +1005,7 @@ export function CostView({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="item-pu">Preço unitário *</Label>
+              <Label htmlFor="item-pu">PreÃ§o unitÃ¡rio *</Label>
               <Input
                 id="item-pu"
                 type="number"
@@ -1017,17 +1016,17 @@ export function CostView({
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="item-wbs">Nó de WBS (opcional)</Label>
+            <Label htmlFor="item-wbs">NÃ³ de WBS (opcional)</Label>
             <select
               id="item-wbs"
               value={itemForm.wbsNodeId}
               onChange={(event) => setItem("wbsNodeId", event.target.value)}
               className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
             >
-              <option value="">— sem vínculo —</option>
+              <option value="">â€” sem vÃ­nculo â€”</option>
               {wbsNodes.map((node) => (
                 <option key={node.id} value={node.id}>
-                  {node.code} — {node.name}
+                  {node.code} â€” {node.name}
                 </option>
               ))}
             </select>
@@ -1040,7 +1039,7 @@ export function CostView({
               onClick={() => void submitItem()}
               disabled={busy || !itemForm.description || !itemForm.unit}
             >
-              {busy ? "Salvando…" : "Salvar"}
+              {busy ? "Salvandoâ€¦" : "Salvar"}
             </Button>
           </div>
         </div>
@@ -1056,7 +1055,7 @@ export function CostView({
           <ErrorBox message={error} />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="commit-code">Código</Label>
+              <Label htmlFor="commit-code">CÃ³digo</Label>
               <Input
                 id="commit-code"
                 value={commitmentForm.code}
@@ -1074,7 +1073,7 @@ export function CostView({
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="commit-description">Descrição *</Label>
+            <Label htmlFor="commit-description">DescriÃ§Ã£o *</Label>
             <Input
               id="commit-description"
               value={commitmentForm.description}
@@ -1110,7 +1109,7 @@ export function CostView({
               onClick={() => void submitCommitment()}
               disabled={busy || !commitmentForm.description}
             >
-              {busy ? "Salvando…" : "Salvar"}
+              {busy ? "Salvandoâ€¦" : "Salvar"}
             </Button>
           </div>
         </div>
@@ -1125,7 +1124,7 @@ export function CostView({
         <div className="flex flex-col gap-4">
           <ErrorBox message={error} />
           <div className="grid gap-2">
-            <Label htmlFor="actual-description">Descrição *</Label>
+            <Label htmlFor="actual-description">DescriÃ§Ã£o *</Label>
             <Input
               id="actual-description"
               value={actualForm.description}
@@ -1158,7 +1157,7 @@ export function CostView({
               Cancelar
             </Button>
             <Button onClick={() => void submitActual()} disabled={busy || !actualForm.description}>
-              {busy ? "Salvando…" : "Registrar"}
+              {busy ? "Salvandoâ€¦" : "Registrar"}
             </Button>
           </div>
         </div>
@@ -1177,8 +1176,8 @@ export function CostView({
           <ErrorBox message={error} />
           <p className="text-sm text-muted-foreground">
             Envie o JSON exportado de <strong>/orcamento</strong> (arquivo{" "}
-            <code>.json</code>) ou cole o conteúdo abaixo. Os itens vivos do projeto
-            serão substituídos.
+            <code>.json</code>) ou cole o conteÃºdo abaixo. Os itens vivos do projeto
+            serÃ£o substituÃ­dos.
           </p>
 
           {/* Zona de upload (arquivo .json) */}
@@ -1214,11 +1213,11 @@ export function CostView({
               )}
             </span>
             <span className="text-xs text-muted-foreground">
-              Exporte em /orcamento → “Exportar JSON”
+              Exporte em /orcamento â†’ â€œExportar JSONâ€
             </span>
           </label>
 
-          {/* Fallback: colar o conteúdo */}
+          {/* Fallback: colar o conteÃºdo */}
           <div className="grid gap-2">
             <Label htmlFor="import-json">Ou cole o JSON</Label>
             <textarea
@@ -1226,18 +1225,18 @@ export function CostView({
               value={importText}
               onChange={(event) => parseImport(event.target.value)}
               rows={8}
-              placeholder='{"quantitativos":[…]}'
+              placeholder='{"quantitativos":[â€¦]}'
               className="rounded-md border border-border bg-surface px-3 py-2 font-mono text-xs"
             />
           </div>
 
           {importError && <ErrorBox message={importError} />}
 
-          {/* Preview do que foi extraído */}
+          {/* Preview do que foi extraÃ­do */}
           {importPreview && (
             <div className="rounded-md border border-border bg-surface p-3">
               <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="font-medium">Prévia da importação</span>
+                <span className="font-medium">PrÃ©via da importaÃ§Ã£o</span>
                 <span className="text-muted-foreground">
                   {importPreview.lineCount} linha{importPreview.lineCount === 1 ? "" : "s"}
                 </span>
@@ -1250,7 +1249,7 @@ export function CostView({
                 <div className="mb-2 flex flex-wrap gap-1">
                   {importPreview.groups.map((group) => (
                     <Badge key={group.grupo} variant="secondary" className="text-[11px]">
-                      {group.grupo} · {group.grupoNome}: {brl(group.total)}
+                      {group.grupo} Â· {group.grupoNome}: {brl(group.total)}
                     </Badge>
                   ))}
                 </div>
@@ -1258,7 +1257,7 @@ export function CostView({
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground">
-                    <th className="py-1 pr-2">Descrição</th>
+                    <th className="py-1 pr-2">DescriÃ§Ã£o</th>
                     <th className="py-1 pr-2 text-right">Qtd</th>
                     <th className="py-1 pr-2 text-right">PU</th>
                     <th className="py-1 text-right">Total</th>
@@ -1277,7 +1276,7 @@ export function CostView({
               </table>
               {importPreview.lineCount > importPreview.firstLines.length && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  … e mais {importPreview.lineCount - importPreview.firstLines.length} linha(s).
+                  â€¦ e mais {importPreview.lineCount - importPreview.firstLines.length} linha(s).
                 </p>
               )}
             </div>
@@ -1297,11 +1296,27 @@ export function CostView({
               onClick={() => void importEstimate()}
               disabled={busy || !importPreview}
             >
-              {busy ? "Importando…" : "Importar"}
+              {busy ? "Importandoâ€¦" : "Importar"}
             </Button>
           </div>
         </div>
       </Dialog>
+      {approvalLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
+            <h3 className="text-lg font-semibold">Solicitação enviada</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Objeto: {approvalDesc}</p>
+            <p className="mt-1 text-sm text-muted-foreground">Válido até: {approvalExpires}</p>
+            <div className="mt-3 flex items-center gap-2">
+              <input className="flex-1 rounded-md border px-2 py-1 text-xs" readOnly value={approvalLink} />
+              <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(approvalLink ?? "")}>Copiar link</Button>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={() => setApprovalLink(null)}>Fechar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
