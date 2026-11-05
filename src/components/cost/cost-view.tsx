@@ -37,6 +37,7 @@ export interface CostItemRow {
   commitmentTotal: number;
   actualTotal: number;
   version: number;
+  approvalStatus?: string | null;
 }
 
 export interface CommitmentRow {
@@ -106,6 +107,7 @@ interface Props {
   canEdit: boolean;
   canDelete: boolean;
   canApprove: boolean;
+  projectApprovalStatus?: string | null;
 }
 
 function brl(value: number): string {
@@ -257,6 +259,7 @@ export function CostView({
   canEdit,
   canDelete,
   canApprove,
+  projectApprovalStatus,
 }: Props) {
   const router = useRouter();
   const base = `/api/v1/projects/${projectId}/cost`;
@@ -636,8 +639,13 @@ export function CostView({
                 </Button>
                 <Button variant="outline" onClick={() => void requestApprovalTotal()}>
                   <Mail className="h-4 w-4" />
-                  Solicitar aprovação (custo total)
+                  Solicitar aprovaï¿½ï¿½o (custo total)
                 </Button>
+             {projectApprovalStatus && (
+               <span className="rounded-full bg-muted px-2 py-1 text-xs">
+                 Status: {projectApprovalStatus}
+               </span>
+             )}
                 <Button onClick={openCreateItem}>
                   <Plus className="h-4 w-4" />
                   Novo item
@@ -657,6 +665,7 @@ export function CostView({
                 <th className="px-4 py-2.5 text-right">PU</th>
                 <th className="px-4 py-2.5 text-right">Total</th>
                 <th className="px-4 py-2.5">WBS</th>
+                <th className="px-4 py-2.5">AprovaÃ§Ã£o</th>
                 {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">AÃ§Ãµes</th>}
               </tr>
             </thead>
@@ -671,6 +680,11 @@ export function CostView({
                   <td className="px-4 py-2.5 text-right font-medium">{brl(item.amount)}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">
                     {item.wbsNodeCode ?? "â€”"}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                      {item.approvalStatus ?? "â€”"}
+                    </span>
                   </td>
                   {(canEdit || canDelete) && (
                     <td className="px-4 py-2.5">
@@ -1304,9 +1318,9 @@ export function CostView({
       {approvalLink && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
-            <h3 className="text-lg font-semibold">Solicitação enviada</h3>
+            <h3 className="text-lg font-semibold">Solicitaï¿½ï¿½o enviada</h3>
             <p className="mt-2 text-sm text-muted-foreground">Objeto: {approvalDesc}</p>
-            <p className="mt-1 text-sm text-muted-foreground">Válido até: {approvalExpires}</p>
+            <p className="mt-1 text-sm text-muted-foreground">Vï¿½lido atï¿½: {approvalExpires}</p>
             <div className="mt-3 flex items-center gap-2">
               <input className="flex-1 rounded-md border px-2 py-1 text-xs" readOnly value={approvalLink} />
               <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(approvalLink ?? "")}>Copiar link</Button>
