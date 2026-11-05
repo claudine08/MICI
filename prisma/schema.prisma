@@ -457,6 +457,8 @@ model ApprovalRequest {
   token         String    @unique @db.VarChar(128)
   status        String    @default("PENDING") @db.VarChar(32)
   decisionComment String? @map("decision_comment")
+  decidedByName  String?  @map("decided_by_name")
+  decidedByEmail String?  @map("decided_by_email")
   decidedAt     DateTime? @map("decided_at")
   expiresAt     DateTime  @map("expires_at")
   createdAt     DateTime  @default(now()) @map("created_at")

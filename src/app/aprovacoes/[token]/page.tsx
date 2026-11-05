@@ -22,6 +22,8 @@ export default async function AprovacaoPage({ params }: { params: Promise<{ toke
         approverEmail: approval.approverEmail,
         status: approval.status,
         decisionComment: approval.decisionComment,
+        decidedByName: approval.decidedByName,
+        decidedByEmail: approval.decidedByEmail,
         decidedAt: approval.decidedAt ? approval.decidedAt.toISOString() : null,
         expiresAt: approval.expiresAt.toISOString(),
       }}

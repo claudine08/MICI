@@ -1,0 +1,1 @@
+ALTER TABLE "approval_requests" ADD COLUMN "decided_by_name" VARCHAR(200), ADD COLUMN "decided_by_email" VARCHAR(320);

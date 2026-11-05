@@ -56,6 +56,8 @@ export async function decideApprovalRequest(input: {
   token: string;
   decision: "APPROVED" | "REJECTED";
   comment?: string | null;
+  decidedByName?: string | null;
+  decidedByEmail?: string | null;
 }) {
   const req = await getApprovalRequest(input.token);
   if (req.status !== "PENDING") {
@@ -66,6 +68,8 @@ export async function decideApprovalRequest(input: {
     data: {
       status: input.decision,
       decisionComment: input.comment ?? null,
+      decidedByName: input.decidedByName ?? null,
+      decidedByEmail: input.decidedByEmail ?? null,
       decidedAt: new Date(),
     },
   });

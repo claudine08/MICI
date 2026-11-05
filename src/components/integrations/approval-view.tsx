@@ -12,12 +12,16 @@ type Approval = {
   approverEmail: string;
   status: string;
   decisionComment: string | null;
+  decidedByName: string | null;
+  decidedByEmail: string | null;
   decidedAt: string | null;
   expiresAt: string;
 };
 
 export function ApprovalView({ approval, token }: { approval: Approval; token: string }) {
   const [comment, setComment] = useState("");
+  const [deciderName, setDeciderName] = useState("");
+  const [deciderEmail, setDeciderEmail] = useState(approval.approverEmail);
   const [status, setStatus] = useState(approval.status);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +33,7 @@ export function ApprovalView({ approval, token }: { approval: Approval; token: s
       const res = await fetch(`/api/v1/approvals/${token}/decide`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision, comment }),
+        body: JSON.stringify({ decision, comment, decidedByName: deciderName || null, decidedByEmail: deciderEmail || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error?.message ?? "Falha ao decidir.");
@@ -57,8 +61,26 @@ export function ApprovalView({ approval, token }: { approval: Approval; token: s
           <p className="text-sm">
             Status atual: <strong>{status}</strong>
           </p>
+          {approval.decidedByName || approval.decidedByEmail || approval.decidedAt ? (
+            <p className="text-sm text-muted-foreground">
+              Aprovado por: {approval.decidedByName ?? "-"} ({approval.decidedByEmail ?? "-"}) em{" "}
+              {approval.decidedAt ? new Date(approval.decidedAt).toLocaleString() : "-"}
+            </p>
+          ) : null}
           {status === "PENDING" ? (
             <>
+              <input
+                className="w-full rounded-md border p-2 text-sm"
+                placeholder="Seu nome (quem aprova)"
+                value={deciderName}
+                onChange={(e) => setDeciderName(e.target.value)}
+              />
+              <input
+                className="w-full rounded-md border p-2 text-sm"
+                placeholder="Seu e-mail"
+                value={deciderEmail}
+                onChange={(e) => setDeciderEmail(e.target.value)}
+              />
               <textarea
                 className="w-full rounded-md border p-2 text-sm"
                 placeholder="Comentário (opcional)"
