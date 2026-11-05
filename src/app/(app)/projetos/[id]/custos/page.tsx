@@ -4,7 +4,6 @@ import { getProjectDetail } from "@/modules/portfolio/selectors";
 import { getWbsTree } from "@/modules/wbs/selectors";
 import { flattenWbsTree } from "@/modules/wbs/engine";
 import { listCostItems, listCommitments, listActuals } from "@/modules/cost/selectors";
-import { prisma } from "@/lib/prisma";
 import { listCostBaselines } from "@/modules/cost/baselines";
 import { calculateProjectEvm } from "@/modules/cost/evm";
 import { CostView } from "@/components/cost/cost-view";
@@ -33,24 +32,13 @@ export default async function ProjetoCustosPage({
     name: node.name,
   }));
 
-  const [items, commitments, actuals, baselines, evm, approvals] = await Promise.all([
+  const [items, commitments, actuals, baselines, evm] = await Promise.all([
     listCostItems(context.organizationId, id),
     listCommitments(context.organizationId, id),
     listActuals(context.organizationId, id),
     listCostBaselines(context.organizationId, id),
     calculateProjectEvm(context.organizationId, id),
-    prisma.approvalRequest.findMany({
-      where: { organizationId: context.organizationId, projectId: id, objectType: { in: ["COST_ITEM", "PROJECT_COST_TOTAL"] } },
-      orderBy: { createdAt: "desc" },
-    }),
   ]);
-
-  const approvalMap = new Map<string, string>();
-  for (const a of approvals) {
-    if (!approvalMap.has(a.objectId)) approvalMap.set(a.objectId, a.status);
-  }
-  const itemsWithApproval = items.map((it) => ({ ...it, approvalStatus: approvalMap.get(it.id) ?? null }));
-  const projectApprovalStatus = approvalMap.get(id) ?? null;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
@@ -66,12 +54,11 @@ export default async function ProjetoCustosPage({
       <CostView
         projectId={id}
         wbsNodes={wbsNodes}
-        initialData={{ items: itemsWithApproval, commitments, actuals, baselines, evm }}
+        initialData={{ items, commitments, actuals, baselines, evm }}
         canCreate={can(permissions, "COST", "CREATE")}
         canEdit={can(permissions, "COST", "EDIT")}
         canDelete={can(permissions, "COST", "DELETE")}
         canApprove={can(permissions, "COST", "APPROVE")}
-        projectApprovalStatus={projectApprovalStatus}
       />
     </div>
   );
