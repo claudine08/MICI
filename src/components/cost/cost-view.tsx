@@ -955,7 +955,7 @@ export function CostView({
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
-                      <Button variant="outline" size="sm" onClick={() => void requestBaselineApproval(baseline)}>
+                      <Button type="button" variant="outline" size="sm" onClick={() => void requestBaselineApproval(baseline)}>
                         <Mail className="h-3.5 w-3.5" />
                         Solicitar aprovação
                       </Button>
@@ -1335,10 +1335,10 @@ export function CostView({
             <p className="mt-1 text-sm text-muted-foreground">Válido até: {approvalExpires}</p>
             <div className="mt-3 flex items-center gap-2">
               <input className="flex-1 rounded-md border px-2 py-1 text-xs" readOnly value={approvalLink} />
-              <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(approvalLink ?? "")}>Copiar link</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(approvalLink ?? "")}>Copiar link</Button>
             </div>
             <div className="mt-4 flex justify-end">
-              <Button onClick={() => setApprovalLink(null)}>Fechar</Button>
+              <Button type="button" onClick={() => setApprovalLink(null)}>Fechar</Button>
             </div>
           </div>
         </div>
