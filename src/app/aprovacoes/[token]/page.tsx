@@ -19,6 +19,7 @@ export default async function AprovacaoPage({ params }: { params: Promise<{ toke
         id: approval.id,
         objectType: approval.objectType,
         objectId: approval.objectId,
+        projectId: approval.projectId,
         approverEmail: approval.approverEmail,
         status: approval.status,
         decisionComment: approval.decisionComment,

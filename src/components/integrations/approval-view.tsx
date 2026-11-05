@@ -9,6 +9,7 @@ type Approval = {
   id: string;
   objectType: string;
   objectId: string;
+  projectId: string | null;
   approverEmail: string;
   status: string;
   decisionComment: string | null;
@@ -63,8 +64,15 @@ export function ApprovalView({ approval, token }: { approval: Approval; token: s
           </p>
           {approval.decidedByName || approval.decidedByEmail || approval.decidedAt ? (
             <p className="text-sm text-muted-foreground">
-              Aprovado por: {approval.decidedByName ?? "-"} ({approval.decidedByEmail ?? "-"}) em{" "}
+              Decidido por: {approval.decidedByName ?? "-"} ({approval.decidedByEmail ?? "-"}) em{" "}
               {approval.decidedAt ? new Date(approval.decidedAt).toLocaleString() : "-"}
+            </p>
+          ) : null}
+          {approval.projectId ? (
+            <p className="text-sm">
+              <a className="text-primary underline" href={`/projetos/${approval.projectId}/custos`}>
+                Voltar para Custos do projeto
+              </a>
             </p>
           ) : null}
           {status === "PENDING" ? (
