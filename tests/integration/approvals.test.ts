@@ -94,6 +94,28 @@ describe("Aprovações por e-mail (integrações)", () => {
     );
   });
 
+  it("aprova custo total do projeto (PROJECT_COST_TOTAL)", async () => {
+    const approval = await createApprovalRequest({
+      ...actorA(),
+      projectId,
+      objectType: "PROJECT_COST_TOTAL",
+      objectId: projectId,
+      approverEmail: `aprovador4-${suffix}@test.local`,
+      baseUrl: "http://localhost:3000",
+    });
+    expect(approval.status).toBe("PENDING");
+
+    const decided = await decideApprovalRequest({
+      token: approval.token,
+      decision: "APPROVED",
+      comment: "ok total",
+      decidedByName: "Admin",
+      decidedByEmail: `aprovador4-${suffix}@test.local`,
+    });
+    expect(decided.status).toBe("APPROVED");
+    expect(decided.decidedByName).toBe("Admin");
+  });
+
   it("expira solicitação vencida", async () => {
     const approval = await createApprovalRequest({
       ...actorA(),

@@ -324,3 +324,23 @@ G6 Pronto para comissionamento Â· G7 Aceite operacional Â· G8 Encerramento
 | B05 | Creditos OpenAI / OpenCode Go | ✅ Concluido (status endpoint + UI) |
 | B06 | Ollama local (dev) | ✅ Concluido (OLLAMA.md) |
 | B07 | Melhorias de UI | ✅ Concluido (filtros + export CSV) |
+
+## E20 - Modulo de Integracoes (Onda 1+): webhooks, aprovacoes por e-mail, observabilidade, backup, Playwright. Ver INTEGRATIONS_MODULE.md.
+
+## Fase 1 - Estender Aprovacoes por E-mail (Onda 1+)
+
+Tarefas:
+- F1.1: Adicionar objectType PROJECT_COST_TOTAL (custo total do projeto) com propagacao para custos.
+- F1.2: Adicionar objectType BUDGET (baseline de orcamento) com propagacao para orcamento.
+- F1.3: Adicionar objectType GATE (gates G7/G8) com propagacao para gates.
+- F1.4: UI: botao Solicitar aprovacao nos modulos de Custos (total) e Orcamento.
+- F1.5: Testes de integracao para cada objectType.
+- F1.6: Smoke autenticado em producao.
+
+### Status Fase 1 (atualizado 05/11/2026)
+- F1.1 PROJECT_COST_TOTAL: concluido + teste.
+- F1.2 COST_BASELINE: concluido + teste.
+- F1.3 GATE: nao aplicavel (exige criterios/evidencias).
+- F1.4 UI botao + popup: concluido.
+- F1.5 Testes de integracao: 4/4 passando.
+- F1.6 Smoke autenticado: concluido em producao.
