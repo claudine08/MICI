@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
 import type { ActorContext } from "@/modules/field/common";
 import { sendEmail } from "@/modules/integrations/email";
+import { transitionCostBaseline } from "@/modules/cost/baselines";
 
 export interface CreateApprovalInput extends ActorContext {
   projectId?: string | null;
@@ -73,5 +74,27 @@ export async function decideApprovalRequest(input: {
       decidedAt: new Date(),
     },
   });
+
+  // Propaga a decisão para o baseline de custo (se aplicável).
+  if (req.objectType === "COST_BASELINE") {
+    const actorId = req.createdBy ?? "system";
+    const actorLabel = input.decidedByName ?? input.decidedByEmail ?? "Aprovador externo";
+    const ctx = { organizationId: req.organizationId, actorId, actorLabel };
+    try {
+      if (input.decision === "APPROVED") {
+        try {
+          await transitionCostBaseline({ ...ctx, baselineId: req.objectId, action: "SUBMIT" });
+        } catch {
+          // ignora se já submetido
+        }
+        await transitionCostBaseline({ ...ctx, baselineId: req.objectId, action: "APPROVE" });
+      } else if (input.decision === "REJECTED") {
+        await transitionCostBaseline({ ...ctx, baselineId: req.objectId, action: "REJECT" });
+      }
+    } catch {
+      // não bloqueia o registro da decisão
+    }
+  }
+
   return updated;
 }
