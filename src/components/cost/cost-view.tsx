@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Upload, CheckCircle2, FileJson } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, CheckCircle2, FileJson, Mail } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -371,6 +371,22 @@ export function CostView({
     }
   };
 
+  const requestApproval = async (item: CostItemRow) => {
+    const email = window.prompt("E-mail do aprovador:", "");
+    if (!email) return;
+    setError(null);
+    try {
+      const res = await apiRequest<{ approval: { token: string } }>(
+        `/api/v1/projects/${projectId}/approvals`,
+        { method: "POST", body: JSON.stringify({ objectType: "COST_ITEM", objectId: item.id, approverEmail: email, expiresInDays: 7 }) }
+      );
+      const link = `${window.location.origin}/aprovacoes/${res.approval.token}`;
+      window.alert(`Solicitação enviada. Link: ${link}`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao solicitar aprovação.");
+    }
+  };
+
   const openCreateCommitment = () => {
     setEditingCommitmentId(null);
     setCommitmentForm(emptyCommitmentForm);
@@ -650,6 +666,16 @@ export function CostView({
                   {(canEdit || canDelete) && (
                     <td className="px-4 py-2.5">
                       <div className="flex justify-end gap-1">
+                        {canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Solicitar aprovação por e-mail"
+                            onClick={() => void requestApproval(item)}
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                         {canEdit && (
                           <Button
                             variant="ghost"
