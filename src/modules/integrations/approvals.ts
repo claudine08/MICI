@@ -15,6 +15,13 @@ export interface CreateApprovalInput extends ActorContext {
 }
 
 export async function createApprovalRequest(input: CreateApprovalInput) {
+  if (input.objectType === "COST_BASELINE") {
+    const baseline = await prisma.baseline.findUnique({ where: { id: input.objectId } });
+    if (!baseline) throw new AppError("NOT_FOUND", "Baseline de custo não encontrado.");
+    if (baseline.status === "APPROVED" || baseline.status === "SUPERSEDED") {
+      throw new AppError("VALIDATION_ERROR", "Baseline já aprovado/substituído não pode ser reenviado para aprovação.");
+    }
+  }
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + (input.expiresInDays ?? 7) * 24 * 60 * 60 * 1000);
   const req = await prisma.approvalRequest.create({
