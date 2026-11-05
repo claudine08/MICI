@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 04/11/2026 (encerramento). E01-E19 + E08+ (Cost Tracking & Cash Flow) completos e em producao. Todas as frentes do roadmap (E01-E19) implementadas e em producao, agora com **E02 Super Usuário (SUPER_USER)** — papel configurador 19x25x8 + navegacao por perfil + script `scripts/ensure-system-roles.ts` rodado no Neon + **`super@mici.demo` criado no Neon (`create-demo-super.ts`) e smoke real OK** + **config do sistema exclusiva de SUPER_USER + ADMIN** (PMO revogado: 28 grants, 922→894) + **UI de edição de permissões de papéis** (sistema + custom) com botão "Editar" em `/administracao/papeis`, PATCH `/api/v1/roles/[id]`, smoke funcional OK. Smoke autenticado OK (corrigir sempre: csrf com `-SessionVariable`). Working tree limpa. Proxima frente: usar `scripts/set-super-user.ts <email>` quando houver usuario real; depois melhorias de `improvement.md` (Onda 1: webhooks sobre domain_events, backup Neon, Ollama VPS). Possiveis melhorias: Ollama local, creditos OpenAI.
+**Ultima atualizacao:** 05/11/2026. Onda 1 concluida: webhooks outbound (phase21) + aprovacao por e-mail (phase22) + UI /aprovacoes/[token] + testes + 1.4 limpeza + 1.6 observabilidade + 1.7 backup Neon + 1.3 Playwright. Smoke OK. Proxima frente: Onda 2 (IA/RAG).
 
 ---
 
