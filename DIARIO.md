@@ -1668,3 +1668,81 @@ Estado final da sessão:
 - Deployment atual: `mici-mtk7lkiml-homeland1` (alias mici-theta.vercel.app).
 - Proxima frente real: `set-super-user.ts` com o e-mail de quem configurará o
   sistema no ambiente do cliente, quando houver organização real.
+
+---
+
+## 06/11/2026 - Retomada do modulo de Integracoes (Fase I3) - estado salvo
+
+Sessao de 05/11 deixou trabalho **nao commitado** (working tree suja) sobre
+isolamento de falhas das integracoes. Estado verificado hoje:
+
+- **Feito:** `isolation.ts` (kill switch por env + circuit breaker + `safeCall`
+  com timeout), `jobs.ts` (fila `job_queue`, enqueue idempotente, reivindicacao
+  atomica, backoff, handlers `email.send`/`whatsapp.send`/`whatsapp.notify`),
+  `notifications.ts` + `whatsapp.ts` (fan-out para membros com `User.phone`),
+  dispatcher unico do outbox `dispatchPendingEvents` (fan-out webhook + job;
+  **corrige vazamento de eventos sem organizationId para endpoints de outro
+  tenant**), aprovacao por e-mail agora enfileira `email.send`,
+  cron `/api/v1/cron/notifications`, migration `phase24_user_phone` e 3 arquivos
+  de teste novos (unit + 2 de integracao).
+- **Gate (06/11) completo e verde:** lint 0 erros · typecheck OK · 285 unit /
+  20 arquivos · 348 integração / 23 arquivos (`MICI_TEST_NO_RESET=1
+  --maxWorkers 1`) · `next build` EXIT=0. Build quebrou 1x com `TS6053`
+  (`scripts/tmp-debug.ts` sumiu do disco mas estava no cache incremental —
+  corrigido apagando `tsconfig.tsbuildinfo`).
+  Integracao: 1a tentativa caiu com `P1001` (Postgres subiu junto com o teste);
+  subir `mici-postgres` e confirmar `pg_isready` antes.
+- **Lacunas registradas em `devcurrent.md` sec. 10:** (1) nao existe UI de
+  integracoes — webhook so tem API, nenhuma pagina; (2) `User.phone` nao tem
+  API/UI de cadastro (notify WhatsApp hoje e no-op); (3) agendar
+  `/api/v1/cron/notifications` no Vercel (nao ha `vercel.json`); (4) gate
+  completo + migrate deploy da phase24 + docs + commit.
+- Pacote `mici/Integrations/*.md` (Central de Comunicacao, arquitetura
+  Django/DRF + Celery/n8n) e especificacao de **referencia**, nao plano de
+  migracao do stack Next.js.
+
+Proxima frente: UI `/administracao/integracoes` + cadastro de telefone.
+
+---
+
+## 07/11/2026 - Fase I3: UI de integracoes, telefone, crons no Vercel
+
+Sessao deu continuidade as 4 lacunas do `devcurrent.md` sec. 10 (escopos
+respondidos pelo usuario: telefone = admin + autoatualizacao; crons = os 3;
+CRON_SECRET = gerar e setar agora). Entregue:
+
+- **UI** `/administracao/integracoes` (guard `INTEGRATION:VIEW`; item "Integracoes"
+  no grupo Administracao da nav): cards dos provedores (e-mail/WhatsApp/webhooks
+  com kill switch `isProviderEnabled` + presenca de credenciais), painel de
+  webhooks (`src/components/integrations/webhooks-panel.tsx`: CRUD via APIs
+  `/api/v1/organizations/[orgId]/webhooks*`, botao de teste, ultimas entregas e
+  circuit breaker por endpoint), fila `job_queue` + outbox `domain_events` e
+  tabela dos agendamentos. O `secret` do endpoint nunca vai ao client.
+- **Telefone E.164**: `updateMemberSchema` ganhou `phone` (grava `User.phone`,
+  audit com old/new); `MemberRow`/`listMembers` expoem `phone`; coluna + campo em
+  `/administracao/usuarios` (validacao E.164 no client e no schema); novo
+  **`PATCH /api/v1/me`** (`updateMyPhoneSchema`) para o proprio usuario atualizar
+  apenas o telefone, SEM exigir `USER:EDIT` (UI de self-service fica para depois).
+- **Crons Vercel**: criado `vercel.json` (webhooks 03h UTC, backup 04h UTC,
+  notificacoes 15h UTC — 1x/dia cada, limite do Hobby; `vercel crons list` estava
+  vazio: NENHUM cron rodava em producao). As 3 rotas `api/v1/cron/*` agora aceitam
+  **GET** (Vercel envia GET + `Authorization: Bearer $CRON_SECRET`), mantendo POST
+  manual. `CRON_SECRET` gerado (48 bytes base64url) e adicionado como Secret de
+  Production via `npx vercel env add CRON_SECRET production --scope homeland1`.
+  **Pendencia descoberta:** `NEON_API_KEY` nao existe no Vercel → o cron de
+  backup responde "Config ausente" ate a chave ser criada no console Neon
+  (`NEON_PROJECT_ID` ja existe).
+- **Migration** `phase24_user_phone` aplicada no Neon (26a de 26) via
+  `dotenv -e .env.vercel.tmp -- prisma migrate deploy` (status confirmado antes).
+- **Gate verde:** lint 0 erros · typecheck · **291 unit / 21 arquivos** ·
+  **354 integracao / 25 arquivos** (`MICI_TEST_NO_RESET=1 --maxWorkers 1`) · build.
+  Testes novos: `tests/unit/identity-schemas.test.ts` (E.164/schema),
+  `tests/integration/member-phone.test.ts` (grava/limpa/expoem phone),
+  `tests/integration/cron-routes.test.ts` (GET + guard do CRON_SECRET).
+- Docs: `devcurrent.md` sec. 10 reescrita (lacunas fechadas),
+  `INTEGRATIONS_MODULE.md` e este DIARIO; `npm run rag:index`.
+
+Estado: working tree ainda suja (Fase I3 completa, **nao commitada** — commits
+so a pedido). Proximos passos: commit `feat:` + push → `npx vercel --prod
+--scope homeland1` → smoke (incl. `/administracao/integracoes` 200) →
+commit `docs:`.

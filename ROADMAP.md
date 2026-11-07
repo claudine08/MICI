@@ -327,6 +327,14 @@ G6 Pronto para comissionamento Â· G7 Aceite operacional Â· G8 Encerramento
 
 ## E20 - Modulo de Integracoes (Onda 1+): webhooks, aprovacoes por e-mail, observabilidade, backup, Playwright. Ver INTEGRATIONS_MODULE.md.
 
+### Status Fase I3 (atualizado 07/11/2026)
+- Isolamento de falhas (kill switch + circuit breaker), fila `job_queue`,
+  WhatsApp outbound, outbox com consumidor unico: concluidos (05–06/11).
+- UI `/administracao/integracoes`, telefone E.164 (admin + `PATCH /api/v1/me`),
+  `vercel.json` com 3 crons diarios (GET + `CRON_SECRET` setado): concluidos.
+- Gate verde 07/11 (291 unit / 354 integracao / build) + `phase24_user_phone`
+  aplicada no Neon. **Nao commitado** (commits so a pedido).
+
 ## Fase 1 - Estender Aprovacoes por E-mail (Onda 1+)
 
 Tarefas:

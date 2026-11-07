@@ -11,7 +11,17 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 05/11/2026. Onda 1 concluida: webhooks outbound (phase21) + aprovacao por e-mail (phase22) + UI /aprovacoes/[token] + testes + 1.4 limpeza + 1.6 observabilidade + 1.7 backup Neon + 1.3 Playwright. Smoke OK. Proxima frente: Onda 2 (IA/RAG).
+**Ultima atualizacao:** 07/11/2026. Frente **Fase I3 (Integrações)** — lacunas do
+§10 entregues: UI `/administracao/integracoes`, telefone (`User.phone` gravado pelo
+admin em `/administracao/usuarios` + autoatualização via `PATCH /api/v1/me`),
+`vercel.json` com os 3 crons diários (GET+POST nas rotas), `CRON_SECRET` setado no
+Vercel (Production), migration `phase24_user_phone` **aplicada no Neon** e gate
+verde (lint · typecheck · 291 unit · 354 integração · build) — **NÃO commitado**
+(commits só quando o usuário pedir). Detalhes na **seção 10**. Antes: 06/11 —
+isolamento de falhas + fila `job_queue` + WhatsApp outbound + outbox com
+consumidor único prontos (gate verde); 05/11 — Onda 1 concluída (webhooks
+outbound phase21 + aprovação por e-mail phase22 + UI /aprovacoes/[token] + testes
++ 1.4 limpeza + 1.6 observabilidade + 1.7 backup Neon + 1.3 Playwright. Smoke OK).
 
 ---
 
@@ -26,7 +36,7 @@
 | Repo | `https://github.com/claudine08/MICI.git`, branch `main` |
 | ProduÃ§Ã£o | Vercel `mici-theta.vercel.app` (projeto `mici`, team `team_wbWA52Y5iAGD3NRZNIrNEMAe`, CLI logada como `ccpjr8-1922`) |
 | Banco prod | Neon `ep-lively-firefly-b7d3dgk3-poolerâ€¦/neondb` â€” URL em `.env.local` (puxada do Vercel; **nunca commitar**) |
-| Migrations | 19 aplicadas no Neon (`init_foundation_identity` â†’ `phase17_cost_tracking`) |
+| Migrations | 26 aplicadas no Neon (`init_foundation_identity` â†’ `phase24_user_phone`, 07/11) |
 | Banco local | PostgreSQL 17 portÃ¡til em `%LOCALAPPDATA%\PostgreSQL17-data`; **sobe via tarefa agendada `mici-postgres`** (settings corrigidas 29/10: `AllowStartIfOnBatteries=True`; start via shell direto morre com `0xC0000142`) |
 | Dev local | `npm run dev` â†’ `http://localhost:3000`; seed demo: 5 usuÃ¡rios, login `admin@mici.demo` / `Demo@1234` |
 | `.env*` | `DATABASE_URL` local usa `127.0.0.1` (Prisma nÃ£o conecta em `localhost`/IPv6 nesta mÃ¡quina). `prisma7.config.ts` carrega `.env` via dotenv (nÃ£o `.env.local`) |
@@ -142,3 +152,91 @@ Schedule (E07):
 - `Get-ChildItem` trata `[id]` como curinga â€” usar `-LiteralPath`.
 - `q.sql` untracked na raiz â€” verificar se deve ser commitado ou removido.
 - PO/recebimento (Fatia 2) agora cobertos por `tests/integration/procurement-orders.test.ts` (17 casos: criaÃ§Ã£o, idempotÃªncia, validaÃ§Ãµes de estado, ediÃ§Ã£o, transiÃ§Ãµes, exclusÃ£o, recebimento parcial/total, isolamento). Testes unitÃ¡rios do engine de PO/recebimento ainda nÃ£o existem (lacuna opcional).
+
+## 10. Módulo de Integrações — estado de retomada (07/11)
+
+> Ponto de retomada da frente **Fase I3** (`INTEGRATIONS_MODULE.md` na raiz do
+> projeto). Lacunas 1–4 abaixo **entregues em 07/11** e gate verde; trabalho
+> **não commitado** — limpar a working tree é a meta (commits só quando o
+> usuário pedir).
+
+**Feito (05–06/11):**
+
+- **Isolamento de falhas** `src/modules/integrations/isolation.ts`: kill switch
+  por env (`INTEGRATIONS_ENABLED` + `EMAIL_ENABLED`/`WHATSAPP_ENABLED`/`WEBHOOKS_ENABLED`),
+  circuit breaker em memória por chave, `safeCall` com timeout + race (nunca lança).
+- **Fila de jobs** `src/modules/integrations/jobs.ts` sobre `job_queue` (ADR-015):
+  `enqueueJob` idempotente (dedupeKey), reivindicação atômica, backoff exponencial,
+  `skipped` (circuito/desligado) NÃO conta tentativa, `runJobNow` inline best-effort.
+  Handlers: `email.send`, `whatsapp.send`, `whatsapp.notify`.
+- **Notificação WhatsApp** `notifications.ts` (fan-out de `domain_events` para
+  membros ACTIVE com `User.phone`) + `whatsapp.ts` (Meta Cloud API, template).
+- **Dispatcher virou consumidor único do outbox**: `dispatchPendingEvents`
+  (renomeado de `dispatchPendingWebhooks`) reivindica o evento (PENDING→PROCESSED)
+  e faz fan-out webhook + job `whatsapp.notify`; **correção de segurança**: antes,
+  eventos sem `organizationId` vazavam para endpoints de qualquer tenant.
+- **Aprovação por e-mail desacoplada**: `createApprovalRequest` enfileira
+  `email.send` (dedupe `email.approval:<id>`) em vez de chamar o provedor síncrono.
+- **Crons**: `/api/v1/cron/webhooks` agora processa outbox + fila; nova rota
+  `/api/v1/cron/notifications` (mesmo `CRON_SECRET`).
+- **Migration** `20261105020000_phase24_user_phone` (`users.phone`).
+- **Testes novos**: `tests/unit/integration-isolation.test.ts`,
+  `tests/integration/integration-isolation.test.ts`,
+  `tests/integration/webhooks.test.ts`.
+
+**Gate (07/11):** lint 0 erros (warnings preexistentes) · typecheck OK ·
+**291 unit / 21 arquivos** · **354 integração / 25 arquivos** (`MICI_TEST_NO_RESET=1 --maxWorkers 1`)
+· **build OK**. (Gate anterior 06/11: 285 unit / 348 integração.)
+
+**Pegadinha do build:** `scripts/tmp-debug.ts` (arquivo temporário do git
+status) sumiu do disco, mas ficava referenciado no cache incremental —
+`error TS6053 ... not found` derrubava o `next build`. Correção: apagar
+`tsconfig.tsbuildinfo` e rebuildar (gerado de novo).
+
+**Nota:** a 1ª tentativa de integração falhou com `P1001` (Postgres subiu junto
+com o teste). Subir com `schtasks /run /tn mici-postgres` e confirmar
+`%LOCALAPPDATA%\Programs\PostgreSQL17\bin\pg_isready.exe -h 127.0.0.1`
+**antes** de rodar a suíte, e sempre `--maxWorkers 1`.
+
+**Entregue em 07/11 (lacunas 1–4 fechadas):**
+
+1. **UI de Integrações** — nova página `/administracao/integracoes`
+   (guard `INTEGRATION:VIEW`, item de nav "Integrações"): cards dos provedores
+   (kill switches via `isProviderEnabled` + presença de credenciais), painel de
+   webhooks (`src/components/integrations/webhooks-panel.tsx` — CRUD + teste +
+   últimas entregas + estado do circuit breaker por endpoint), fila `job_queue`
+   + outbox `domain_events` e tabela dos agendamentos. Endpoint secret nunca
+   vai ao client.
+2. **Cadastro de telefone (E.164)** — admin: coluna/campo em
+   `/administracao/usuarios` (estende `updateMemberSchema` com `phone`, grava
+   `User.phone`, expõe em `MemberRow`). Autoatualização: **`PATCH /api/v1/me`**
+   (`updateMyPhoneSchema`) sem exigir `USER:EDIT` — o próprio usuário grava só
+   o telefone (UI de self-service fica para depois).
+3. **Crons no Vercel** — criado `vercel.json` (3 crons diários: webhooks 03h
+   UTC, backup 04h UTC, notificações 15h UTC; Hobby = 1x/dia por cron). As 3
+   rotas `api/v1/cron/*` agora aceitam **GET** (o Vercel envia GET com
+   `Authorization: Bearer $CRON_SECRET`) mantendo POST manual. **`CRON_SECRET`
+   gerado e setado** como Secret de Production via
+   `npx vercel env add CRON_SECRET production --scope homeland1` (antes as rotas
+   pulavam autenticação). **`NEON_API_KEY` continua ausente** no Vercel: o cron
+   de backup responde "Config ausente" até a chave ser criada no console Neon.
+4. **Gate + migration + docs** — gate verde (291 unit / 354 integração; testes
+   novos: `tests/unit/identity-schemas.test.ts`,
+   `tests/integration/member-phone.test.ts`, `tests/integration/cron-routes.test.ts`);
+   `phase24_user_phone` **aplicada no Neon** (26ª de 26) com
+   `dotenv -e .env.vercel.tmp -- prisma migrate deploy`.
+
+**Próximos passos:** 1) commit `feat:` + push → 2) `npx vercel --prod --scope
+homeland1` (working tree limpa) → 3) smoke autenticado (incl. `/administracao/integracoes`
+200) → 4) commit `docs:` (DIARIO + ROADMAP + `INTEGRATIONS_MODULE.md`) + push.
+Opcional: criar `NEON_API_KEY` no Neon e adicionar ao Vercel para o backup
+rodar; UI de self-service de telefone (perfil).
+
+**Ponteiros:** `src/modules/integrations/{isolation,jobs,notifications,whatsapp,webhooks,approvals,email}.ts`
+· rotas `api/v1/cron/{webhooks,notifications,backup}` (GET+POST) · `vercel.json`
+· `api/v1/organizations/[orgId]/webhooks*` · `PATCH /api/v1/me` (telefone) ·
+UI: `src/app/(app)/administracao/integracoes/page.tsx` +
+`src/components/integrations/webhooks-panel.tsx` +
+`src/components/integrations/approval-view.tsx`
+· especificação de referência (arquitetura Django/n8n, **não** copiar):
+`mici/Integrations/*.md`.

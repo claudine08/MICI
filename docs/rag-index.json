@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T02:30:35.111Z",
+  "generatedAt": "2026-11-07T03:26:05.092Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -12,15 +12,15 @@
     "sustentabilidade.md",
     "AI.md"
   ],
-  "chunkCount": 241,
+  "chunkCount": 250,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
       "title": "1. Estado atual (resumo de 1 linha)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 18,
-      "endLine": 21,
+      "startLine": 28,
+      "endLine": 31,
       "summary": "| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2+3...",
       "tags": [
         "devcurrent"
@@ -31,8 +31,8 @@
       "title": "2. Ambiente e comandos (nÃ£o precisa rediscover)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 22,
-      "endLine": 40,
+      "startLine": 32,
+      "endLine": 50,
       "summary": "| Item | Valor | |---|---| | Repo | `https://github.com/claudine08/MICI.git`, branch `main` | | ProduÃ§Ã£o | Vercel `mici-theta.vercel.app` (projeto `mici`,...",
       "tags": [
         "devcurrent"
@@ -43,8 +43,8 @@
       "title": "3. ConvenÃ§Ãµes do repo (seguir Ã  risca)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 41,
-      "endLine": 50,
+      "startLine": 51,
+      "endLine": 60,
       "summary": "- **Commits**: sÃ³ quando o usuÃ¡rio pedir. PadrÃ£o: `feat: <Ã¡rea> - <resumo> - E<NN> US<NN>` (ASCII, sem acento) e depois `docs: registra â€¦`. `main` dire...",
       "tags": [
         "devcurrent"
@@ -55,8 +55,8 @@
       "title": "4. Backlog E12: PWA/fila offline completa â€” âœ… FECHADO (29/10)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 51,
-      "endLine": 58,
+      "startLine": 61,
+      "endLine": 68,
       "summary": "Contexto e implementaÃ§Ã£o detalhada em `docs/rag-index.md` (chunks `diario-*` e `devcurrent-*`) e no DIARIO 29/10. Resumo: PWA (manifest + SW) + fila offlin...",
       "tags": [
         "devcurrent"
@@ -67,8 +67,8 @@
       "title": "5. E08+ Cost Tracking & Cash Flow â€” âœ… IMPLEMENTADO (01/11)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 59,
-      "endLine": 77,
+      "startLine": 69,
+      "endLine": 87,
       "summary": "ExtensÃ£o do mÃ³dulo de Custos (E08) + integraÃ§Ã£o com Procurement (E14) + Schedule (E07): - **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e...",
       "tags": [
         "devcurrent"
@@ -79,8 +79,8 @@
       "title": "6. E14 Procurement â€” âœ… COMPLETO (Fatia 1 + Fatia 2)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 78,
-      "endLine": 87,
+      "startLine": 88,
+      "endLine": 97,
       "summary": "- **Fatia 1** (produÃ§Ã£o 30/10): fornecedores (SP), requisiÃ§Ãµes (PR), cotaÃ§Ãµes (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procur...",
       "tags": [
         "devcurrent"
@@ -91,8 +91,8 @@
       "title": "6. Restante do roadmap (apÃ³s E14)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 88,
-      "endLine": 103,
+      "startLine": 98,
+      "endLine": 113,
       "summary": "| Ã‰pico | Escopo curto | |---|---| | E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat...",
       "tags": [
         "devcurrent"
@@ -103,8 +103,8 @@
       "title": "7. Ponteiros rÃ¡pidos de cÃ³digo",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 104,
-      "endLine": 116,
+      "startLine": 114,
+      "endLine": 126,
       "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf...",
       "tags": [
         "devcurrent"
@@ -115,8 +115,8 @@
       "title": "8. RAG â€” Ã­ndice de chunks (auto-gerado)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 117,
-      "endLine": 126,
+      "startLine": 127,
+      "endLine": 136,
       "summary": "- Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind...",
       "tags": [
         "devcurrent"
@@ -127,9 +127,21 @@
       "title": "9. Riscos conhecidos",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 127,
-      "endLine": 145,
+      "startLine": 137,
+      "endLine": 155,
       "summary": "- **Pós-03/11: testes de integração nesta máquina exigem `--maxWorkers 1`** — com 20 arquivos/332 testes paralelos o Postgres local (disco lento + OneDrive/A...",
+      "tags": [
+        "devcurrent"
+      ]
+    },
+    {
+      "id": "devcurrent-10-modulo-de-integracoes-estado-de-retomada-07-1",
+      "title": "10. Módulo de Integrações — estado de retomada (07/11)",
+      "level": 2,
+      "file": "devcurrent.md",
+      "startLine": 156,
+      "endLine": 243,
+      "summary": "> Ponto de retomada da frente **Fase I3** (`INTEGRATIONS_MODULE.md` na raiz do > projeto). Lacunas 1–4 abaixo **entregues em 07/11** e gate verde; trabalho >...",
       "tags": [
         "devcurrent"
       ]
@@ -1743,6 +1755,66 @@
       ]
     },
     {
+      "id": "diario-04-11-2026-ui-de-edicao-de-permissoes-de-papeis-",
+      "title": "04/11/2026 — UI de edição de permissões de papéis (E02)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1627,
+      "endLine": 1642,
+      "summary": "- `src/components/admin/roles-view.tsx`: botão \"Editar\" em cada papel (system + custom) quando o usuário tem `ROLE:EDIT`; dialog com `PermissionMatrix` editá...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-03-11-2026-c-config-do-sistema-exclusiva-de-supe",
+      "title": "03/11/2026 (c) - config do sistema exclusiva de SUPER_USER + ADMIN",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1643,
+      "endLine": 1654,
+      "summary": "- Matriz RBAC (`src/core/rbac.ts`): PMO perdeu `USER/ROLE/ORGANIZATION/SETTING/INTEGRATION/ NOTIFICATION` (config do sistema); mantém `AUDIT` VIEW/EXPORT (ov...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-03-11-2026-b-super-mici-demo-criado-no-neon-scri",
+      "title": "03/11/2026 (b) — super@mici.demo criado no Neon + scripts de atribuição",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1655,
+      "endLine": 1673,
+      "summary": "- `scripts/create-demo-super.ts`: garante `super@mici.demo` (SUPER_USER) na org informada (default `demo`), idempotente. Rodado no Neon: ACTIVE + SUPER_USER....",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-06-11-2026-retomada-do-modulo-de-integracoes-fas",
+      "title": "06/11/2026 - Retomada do modulo de Integracoes (Fase I3) - estado salvo",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1674,
+      "endLine": 1707,
+      "summary": "Sessao de 05/11 deixou trabalho **nao commitado** (working tree suja) sobre isolamento de falhas das integracoes. Estado verificado hoje: - **Feito:** `isola...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-07-11-2026-fase-i3-ui-de-integracoes-telefone-cr",
+      "title": "07/11/2026 - Fase I3: UI de integracoes, telefone, crons no Vercel",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1708,
+      "endLine": 1749,
+      "summary": "Sessao deu continuidade as 4 lacunas do `devcurrent.md` sec. 10 (escopos respondidos pelo usuario: telefone = admin + autoatualizacao; crons = os 3; CRON_SEC...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
       "id": "roadmap-gate-de-verificaa-a-o-entre-fases",
       "title": "Gate de verificaÃ§Ã£o entre fases",
       "level": 2,
@@ -1942,6 +2014,42 @@
       "startLine": 316,
       "endLine": 327,
       "summary": "| # | Item | Escopo | |---|---|---| | B01 | Testes de integracao E15 | ✅ Concluido (commissioning.test.ts) | | B02 | Testes de integracao E16 | ✅ Concluido (...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-e20-modulo-de-integracoes-onda-1-webhooks-aprova",
+      "title": "E20 - Modulo de Integracoes (Onda 1+): webhooks, aprovacoes por e-mail, observabilidade, backup, Playwright. Ver INTEGRATIONS_MODULE.md.",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 328,
+      "endLine": 329,
+      "summary": "(secao sem corpo)",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-fase-1-estender-aprovacoes-por-e-mail-onda-1",
+      "title": "Fase 1 - Estender Aprovacoes por E-mail (Onda 1+)",
+      "level": 2,
+      "file": "ROADMAP.md",
+      "startLine": 330,
+      "endLine": 339,
+      "summary": "Tarefas: - F1.1: Adicionar objectType PROJECT_COST_TOTAL (custo total do projeto) com propagacao para custos. - F1.2: Adicionar objectType BUDGET (baseline d...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
+      "id": "roadmap-status-fase-1-atualizado-05-11-2026",
+      "title": "Status Fase 1 (atualizado 05/11/2026)",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 340,
+      "endLine": 347,
+      "summary": "- F1.1 PROJECT_COST_TOTAL: concluido + teste. - F1.2 COST_BASELINE: concluido + teste. - F1.3 GATE: nao aplicavel (exige criterios/evidencias). - F1.4 UI bot...",
       "tags": [
         "roadmap"
       ]
