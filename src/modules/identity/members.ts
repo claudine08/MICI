@@ -61,6 +61,9 @@ export async function inviteMember(input: InviteMemberInput) {
   const existingUser = await prisma.user.findUnique({ where: { email } });
 
   let userId: string;
+  // Membresia soft-deleteada do mesmo (org,user): a unique impede novo create,
+  // então o reconvite reativa a linha existente em vez de inserir.
+  let reinviteMembershipId: string | null = null;
   if (existingUser) {
     if (existingUser.deletedAt) {
       throw new AppError("CONFLICT", "Usuário desativado. Reative o usuário antes de convidar.");
@@ -72,6 +75,7 @@ export async function inviteMember(input: InviteMemberInput) {
       throw new AppError("CONFLICT", "Este e-mail já é membro da organização.");
     }
     userId = existingUser.id;
+    reinviteMembershipId = existingMembership?.id ?? null;
   } else {
     generatedPassword = input.temporaryPassword ?? generateTemporaryPassword();
     const created = await prisma.user.create({
@@ -85,16 +89,34 @@ export async function inviteMember(input: InviteMemberInput) {
     userId = created.id;
   }
 
-  const membership = await prisma.organizationMembership.create({
-    data: {
-      organizationId: input.organizationId,
-      userId,
-      status: "ACTIVE",
-      invitedAt: new Date(),
-      invitedBy: input.actorId,
-      roles: { create: roles.map((role) => ({ roleId: role.id })) },
-    },
-  });
+  const membership = reinviteMembershipId
+    ? await prisma.organizationMembership.update({
+        where: { id: reinviteMembershipId },
+        data: {
+          status: "ACTIVE",
+          invitedAt: new Date(),
+          invitedBy: input.actorId,
+          deletedAt: null,
+          deletedBy: null,
+          updatedBy: input.actorId,
+        },
+      })
+    : await prisma.organizationMembership.create({
+        data: {
+          organizationId: input.organizationId,
+          userId,
+          status: "ACTIVE",
+          invitedAt: new Date(),
+          invitedBy: input.actorId,
+          roles: { create: roles.map((role) => ({ roleId: role.id })) },
+        },
+      });
+  if (reinviteMembershipId) {
+    await prisma.membershipRole.deleteMany({ where: { membershipId: membership.id } });
+    await prisma.membershipRole.createMany({
+      data: roles.map((role) => ({ membershipId: membership.id, roleId: role.id })),
+    });
+  }
 
   await prisma.auditEvent.create({
     data: {
@@ -104,7 +126,7 @@ export async function inviteMember(input: InviteMemberInput) {
       objectType: "Membership",
       objectId: membership.id,
       action: "INVITE",
-      newValue: { email, roleCodes: input.roleCodes },
+      newValue: { email, roleCodes: input.roleCodes, reinvite: reinviteMembershipId !== null },
       correlationId: input.correlationId ?? null,
       ipAddress: input.ipAddress ?? null,
     },
