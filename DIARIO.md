@@ -1746,3 +1746,26 @@ Estado: working tree ainda suja (Fase I3 completa, **nao commitada** — commits
 so a pedido). Proximos passos: commit `feat:` + push → `npx vercel --prod
 --scope homeland1` → smoke (incl. `/administracao/integracoes` 200) →
 commit `docs:`.
+
+---
+
+## 07/11/2026 (b) - Fix: 500 ao reconvitar membro removido (producao)
+
+Teste em producao do usuario encontrou **500 em `POST /api/v1/members`**
+(logs Vercel: `Unique constraint failed on
+organization_memberships_organization_id_user_id_key`).
+
+- **Causa** (bug pre-existente, nao da Fase I3): `inviteMember` ignorava a
+  membresa **soft-deleteada** (`removeMember` seta `deletedAt`, mas a unique
+  `(organization_id, user_id)` permanece) e tentava `create` → P2002 500.
+  Cenario: remover um membro e convidar o mesmo e-mail de novo.
+- **Fix** (`src/modules/identity/members.ts`): se a membresa existe apagada,
+  **reativa** (status ACTIVE, `deletedAt`/`deletedBy` limpos, novo
+  `invitedAt/By`) e substitui os papéis; convite duplicado de membro ATIVO
+  continua 409. Audit `INVITE` agora registra `reinvite: true/false`.
+- **Teste de regressao**: `tests/integration/member-reinvite.test.ts`
+  (convida → remove → reconvite reativa a MESMA membresia + 409 no duplicado).
+- **Gate:** typecheck · lint · 291 unit · **356 integração / 26 arquivos** ·
+  build EXIT=0.
+- Deploy feito em seguida (`npx vercel --prod --scope homeland1`) e reconvite
+  re-testado em producao.

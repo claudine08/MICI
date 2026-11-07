@@ -147,6 +147,9 @@ Schedule (E07):
   usar `npx vercel --prod --team homeland1`.
 
 - Upload de arquivo OneDrive online-only falha no browser (copiar local antes; mensagem do MICI jÃ¡ orienta).
+- **Reconvite apÃ³s remoÃ§Ã£o (07/11):** `inviteMember` reativa membresa soft-deleteada
+  (unique `org+user` impedia novo `create` e dava **500**); regressão em
+  `tests/integration/member-reinvite.test.ts`.
 - `vercel --prod` deploya o diretÃ³rio local (nÃ£o sÃ³ o push) â€” working tree limpa antes.
 - PS 5.1 nÃ£o tem `-SkipHttpErrorCheck` (usar try/catch em smoke scripts).
 - `Get-ChildItem` trata `[id]` como curinga â€” usar `-LiteralPath`.
