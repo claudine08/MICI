@@ -7,6 +7,7 @@ export interface MemberRow {
   userId: string;
   name: string;
   email: string;
+  phone: string | null;
   membershipStatus: string;
   userStatus: string;
   roleCodes: string[];
@@ -31,6 +32,7 @@ export async function listMembers(organizationId: string): Promise<MemberRow[]> 
       userId: m.userId,
       name: m.user.name,
       email: m.user.email,
+      phone: m.user.phone,
       membershipStatus: m.status,
       userStatus: m.user.status,
       roleCodes: m.roles.filter((r) => !r.role.deletedAt).map((r) => r.role.code),

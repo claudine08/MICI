@@ -1,8 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
+import { logger } from "@/lib/logger";
 import type { ActorContext } from "@/modules/field/common";
-import { sendEmail } from "@/modules/integrations/email";
+import { enqueueJob, runJobNow } from "@/modules/integrations/jobs";
+import { isProviderEnabled } from "@/modules/integrations/isolation";
 import { transitionCostBaseline } from "@/modules/cost/baselines";
 
 export interface CreateApprovalInput extends ActorContext {
@@ -38,16 +40,33 @@ export async function createApprovalRequest(input: CreateApprovalInput) {
   });
 
   const link = `${input.baseUrl}/aprovacoes/${token}`;
-  await sendEmail({
-    to: input.approverEmail,
-    subject: `Aprovação solicitada — ${input.objectType}`,
-    html: `<p>Você foi solicitado a aprovar um registro (${input.objectType}).</p>
-<p><a href="${link}">Abrir aprovação</a></p>
-<p>Este link expira em ${input.expiresInDays ?? 7} dias.</p>`,
-    text: `Aprovação solicitada: ${link}`,
-  });
+  await queueApprovalEmail(req.id, link, input);
 
   return req;
+}
+
+// Envio desacoplado (isolamento de falhas): o e-mail vira um job idempotente
+// na fila e é entregue best-effort agora (caminho inline). Se o provedor
+// estiver lento/fora, o job permanece PENDING e o cron retoma com retry —
+// a criação da aprovação nunca depende do provedor de e-mail.
+async function queueApprovalEmail(approvalId: string, link: string, input: CreateApprovalInput) {
+  if (!isProviderEnabled("email")) {
+    logger.warn("approval_email_disabled", { approvalId, correlationId: input.correlationId });
+    return;
+  }
+  const jobId = await enqueueJob({
+    type: "email.send",
+    dedupeKey: `email.approval:${approvalId}`,
+    payload: {
+      to: input.approverEmail,
+      subject: `Aprovação solicitada — ${input.objectType}`,
+      html: `<p>Você foi solicitado a aprovar um registro (${input.objectType}).</p>
+<p><a href="${link}">Abrir aprovação</a></p>
+<p>Este link expira em ${input.expiresInDays ?? 7} dias.</p>`,
+      text: `Aprovação solicitada: ${link}`,
+    },
+  });
+  if (jobId) await runJobNow(jobId); // best-effort: falha fica para o cron
 }
 
 export async function getApprovalRequest(token: string) {

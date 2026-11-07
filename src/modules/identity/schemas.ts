@@ -35,14 +35,32 @@ export const inviteMemberSchema = z.object({
   roleCodes: z.array(z.string().min(1)).min(1, "Selecione ao menos um papel."),
 });
 
+// Telefone em formato E.164 (ex.: +5511999999999) — o WhatsApp notify só
+// envia para números neste formato. `null` limpa o telefone.
+export const phoneValueSchema = z
+  .string()
+  .trim()
+  .regex(/^\+[1-9]\d{6,14}$/, "Use o formato internacional E.164 (ex.: +5511999999999).");
+
 export const updateMemberSchema = z
   .object({
     roleCodes: z.array(z.string().min(1)).optional(),
     status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
+    phone: phoneValueSchema.nullable().optional(),
   })
-  .refine((value) => value.roleCodes !== undefined || value.status !== undefined, {
-    message: "Informe roleCodes e/ou status.",
-  });
+  .refine(
+    (value) =>
+      value.roleCodes !== undefined || value.status !== undefined || value.phone !== undefined,
+    {
+      message: "Informe roleCodes, status e/ou phone.",
+    }
+  );
+
+// Autoatualização do próprio telefone (não exige USER:EDIT — não é privilégio;
+// cada usuário cuida do próprio canal de notificação).
+export const updateMyPhoneSchema = z.object({
+  phone: phoneValueSchema.nullable(),
+});
 
 export const updateRoleSchema = z.object({
   permissionCodes: z.array(z.string().min(1)).min(1, "Selecione ao menos uma permissão."),

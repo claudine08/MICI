@@ -19,6 +19,7 @@ import {
   HardHat,
   ClipboardCheck,
   ShoppingCart,
+  Webhook,
   type LucideIcon,
 } from "lucide-react";
 import type { Action, Module } from "@/core/rbac";
@@ -77,6 +78,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Papéis e permissões", href: "/administracao/papeis", icon: KeyRound, permission: { module: "ROLE", action: "VIEW" } },
       { label: "Gates e critérios", href: "/administracao/gates", icon: Milestone, permission: { module: "GATE", action: "VIEW" } },
       { label: "Auditoria", href: "/administracao/auditoria", icon: ScrollText, permission: { module: "AUDIT", action: "VIEW" } },
+      { label: "Integrações", href: "/administracao/integracoes", icon: Webhook, permission: { module: "INTEGRATION", action: "VIEW" } },
       { label: "Configurações", icon: Settings, soon: true, permission: { module: "SETTING", action: "VIEW" } },
     ],
   },

@@ -133,12 +133,14 @@ export interface UpdateMemberInput extends ActorContext {
   membershipId: string;
   roleCodes?: string[];
   status?: "ACTIVE" | "SUSPENDED";
+  /** Telefone E.164 do usuário (null limpa). Gravado em User.phone. */
+  phone?: string | null;
 }
 
 export async function updateMember(input: UpdateMemberInput) {
   const membership = await prisma.organizationMembership.findFirst({
     where: { id: input.membershipId, organizationId: input.organizationId, deletedAt: null },
-    include: { roles: { include: { role: true } } },
+    include: { roles: { include: { role: true } }, user: { select: { phone: true } } },
   });
   if (!membership) {
     throw new AppError("NOT_FOUND", "Membresia não encontrada nesta organização.");
@@ -179,6 +181,14 @@ export async function updateMember(input: UpdateMemberInput) {
     });
   }
 
+  const currentPhone = membership.user.phone;
+  if (input.phone !== undefined && input.phone !== currentPhone) {
+    await prisma.user.update({
+      where: { id: membership.userId },
+      data: { phone: input.phone },
+    });
+  }
+
   await prisma.auditEvent.create({
     data: {
       organizationId: input.organizationId,
@@ -187,8 +197,12 @@ export async function updateMember(input: UpdateMemberInput) {
       objectType: "Membership",
       objectId: membership.id,
       action: "UPDATE",
-      oldValue: { roleCodes: currentRoleCodes, status: membership.status },
-      newValue: { roleCodes: nextRoleCodes, status: nextStatus },
+      oldValue: { roleCodes: currentRoleCodes, status: membership.status, phone: currentPhone },
+      newValue: {
+        roleCodes: nextRoleCodes,
+        status: nextStatus,
+        phone: input.phone !== undefined ? input.phone : currentPhone,
+      },
       correlationId: input.correlationId ?? null,
       ipAddress: input.ipAddress ?? null,
     },
@@ -201,7 +215,11 @@ export async function updateMember(input: UpdateMemberInput) {
       eventType: "Member.Updated",
       aggregateType: "Membership",
       aggregateId: membership.id,
-      payload: { roleCodes: nextRoleCodes, status: nextStatus },
+      payload: {
+        roleCodes: nextRoleCodes,
+        status: nextStatus,
+        phoneUpdated: input.phone !== undefined && input.phone !== currentPhone,
+      },
     },
   });
 

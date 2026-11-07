@@ -1,0 +1,7 @@
+{
+  "crons": [
+    { "path": "/api/v1/cron/webhooks", "schedule": "0 3 * * *" },
+    { "path": "/api/v1/cron/notifications", "schedule": "0 15 * * *" },
+    { "path": "/api/v1/cron/backup", "schedule": "0 4 * * *" }
+  ]
+}

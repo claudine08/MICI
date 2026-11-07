@@ -83,6 +83,7 @@ export function MembersView({
   const [editing, setEditing] = useState<MemberRow | null>(null);
   const [editRoles, setEditRoles] = useState<Set<string>>(new Set());
   const [editStatus, setEditStatus] = useState<"ACTIVE" | "SUSPENDED">("ACTIVE");
+  const [editPhone, setEditPhone] = useState("");
 
   const resetInvite = () => {
     setInviteEmail("");
@@ -126,7 +127,11 @@ export function MembersView({
     try {
       await apiRequest(`/api/v1/members/${editing.membershipId}`, {
         method: "PATCH",
-        body: JSON.stringify({ roleCodes: [...editRoles], status: editStatus }),
+        body: JSON.stringify({
+          roleCodes: [...editRoles],
+          status: editStatus,
+          phone: editPhone.trim() || null,
+        }),
       });
       setEditing(null);
       router.refresh();
@@ -152,6 +157,7 @@ export function MembersView({
     setEditing(member);
     setEditRoles(new Set(member.roleCodes));
     setEditStatus(member.membershipStatus === "ACTIVE" ? "ACTIVE" : "SUSPENDED");
+    setEditPhone(member.phone ?? "");
     setError(null);
   };
 
@@ -183,6 +189,7 @@ export function MembersView({
             <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
               <th className="px-4 py-2.5">Nome</th>
               <th className="px-4 py-2.5">E-mail</th>
+              <th className="px-4 py-2.5">Telefone</th>
               <th className="px-4 py-2.5">Papéis</th>
               <th className="px-4 py-2.5">Status</th>
               <th className="px-4 py-2.5">Último acesso</th>
@@ -194,6 +201,7 @@ export function MembersView({
               <tr key={member.membershipId} className="border-b border-border last:border-0">
                 <td className="px-4 py-2.5 font-medium">{member.name}</td>
                 <td className="px-4 py-2.5 text-muted-foreground">{member.email}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{member.phone ?? "—"}</td>
                 <td className="px-4 py-2.5">
                   <div className="flex flex-wrap gap-1">
                     {member.roleCodes.map((code) => (
@@ -239,7 +247,7 @@ export function MembersView({
             ))}
             {members.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   Nenhum membro encontrado.
                 </td>
               </tr>
@@ -350,11 +358,31 @@ export function MembersView({
               <option value="SUSPENDED">Suspenso</option>
             </select>
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="edit-phone">Telefone (WhatsApp)</Label>
+            <Input
+              id="edit-phone"
+              value={editPhone}
+              onChange={(event) => setEditPhone(event.target.value)}
+              placeholder="+5511999999999"
+            />
+            <p className="text-xs text-muted-foreground">
+              Formato internacional E.164 — usado para notificações do WhatsApp. Vazio = sem
+              telefone.
+            </p>
+          </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setEditing(null)}>
               Cancelar
             </Button>
-            <Button onClick={() => void submitEdit()} disabled={busy || editRoles.size === 0}>
+            <Button
+              onClick={() => void submitEdit()}
+              disabled={
+                busy ||
+                editRoles.size === 0 ||
+                (editPhone.trim() !== "" && !/^\+[1-9]\d{6,14}$/.test(editPhone.trim()))
+              }
+            >
               {busy ? "Salvando…" : "Salvar"}
             </Button>
           </div>

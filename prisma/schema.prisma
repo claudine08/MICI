@@ -226,6 +226,7 @@ model User {
   id           String     @id @default(uuid()) @db.Uuid
   email        String     @unique @db.VarChar(320)
   name         String     @db.VarChar(200)
+  phone        String?    @db.VarChar(40)
   passwordHash String?    @map("password_hash") @db.VarChar(512)
   status       UserStatus @default(ACTIVE)
   locale       String     @default("pt-BR") @db.VarChar(10)
