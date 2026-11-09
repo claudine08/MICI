@@ -11,13 +11,17 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 07/11/2026. Frente **Fase I3 (Integrações)** — lacunas do
-§10 entregues: UI `/administracao/integracoes`, telefone (`User.phone` gravado pelo
-admin em `/administracao/usuarios` + autoatualização via `PATCH /api/v1/me`),
-`vercel.json` com os 3 crons diários (GET+POST nas rotas), `CRON_SECRET` setado no
-Vercel (Production), migration `phase24_user_phone` **aplicada no Neon** e gate
-verde (lint · typecheck · 291 unit · 354 integração · build) — **NÃO commitado**
-(commits só quando o usuário pedir). Detalhes na **seção 10**. Antes: 06/11 —
+**Ultima atualizacao:** 07/11/2026 (b). Frente **Fase I3 (Integrações)** — lacunas
+do §10 entregues, **commitadas, com push e EM PRODUÇÃO** (deploy smoke OK): UI
+`/administracao/integracoes`, telefone (`User.phone` gravado pelo admin em
+`/administracao/usuarios` + autoatualização via `PATCH /api/v1/me`), `vercel.json`
+com os 3 crons diários (GET+POST nas rotas), `CRON_SECRET` setado no Vercel
+(Production), migration `phase24_user_phone` **aplicada no Neon**. Gate final:
+lint · typecheck · 291 unit · **356 integração / 26 arquivos** · build. Depois do
+smoke em produção veio o **fix do reconvite** (500 em `POST /api/v1/members` ao
+reconvidar membro removido — `inviteMember` reativa a membresia soft-deleteada;
+commits `7ecf0e4` + `253e5b2`, deploy `EmAeUDUKzjv3TexrbJVxowsgxMjg`, re-testado
+201/409). Detalhes na **seção 10**. Antes: 06/11 —
 isolamento de falhas + fila `job_queue` + WhatsApp outbound + outbox com
 consumidor único prontos (gate verde); 05/11 — Onda 1 concluída (webhooks
 outbound phase21 + aprovação por e-mail phase22 + UI /aprovacoes/[token] + testes
@@ -40,7 +44,7 @@ outbound phase21 + aprovação por e-mail phase22 + UI /aprovacoes/[token] + tes
 | Banco local | PostgreSQL 17 portÃ¡til em `%LOCALAPPDATA%\PostgreSQL17-data`; **sobe via tarefa agendada `mici-postgres`** (settings corrigidas 29/10: `AllowStartIfOnBatteries=True`; start via shell direto morre com `0xC0000142`) |
 | Dev local | `npm run dev` â†’ `http://localhost:3000`; seed demo: 5 usuÃ¡rios, login `admin@mici.demo` / `Demo@1234` |
 | `.env*` | `DATABASE_URL` local usa `127.0.0.1` (Prisma nÃ£o conecta em `localhost`/IPv6 nesta mÃ¡quina). `prisma7.config.ts` carrega `.env` via dotenv (nÃ£o `.env.local`) |
-| Testes | `npm test` (unit/Vitest 5) Â· `MICI_TEST_NO_RESET=1 npm run test:integration` (global-setup pula `--force-reset`; banco `mici_test` jÃ¡ sincronizado via `prisma db push`) â€” Ãºltima execuÃ§Ã£o conhecida: 251 unit / 17 arquivos + 267 integraÃ§Ã£o / 14 arquivos (antes da Fatia 2 de procurement) |
+| Testes | `npm test` (unit/Vitest 5) Â· `MICI_TEST_NO_RESET=1 npm run test:integration` (global-setup pula `--force-reset`; banco `mici_test` jÃ¡ sincronizado via `prisma db push`) â€” Ãºltima execuÃ§Ã£o conhecida: **291 unit / 21 arquivos + 356 integraÃ§Ã£o / 26 arquivos** (07/11, `--maxWorkers 1`) |
 | Gate padrÃ£o entre fases | `npm run lint` Â· `npm run typecheck` Â· `npm test` Â· `MICI_TEST_NO_RESET=1 npm run test:integration` Â· `npm run build` â€” tudo verde antes de commitar |
 | Deploy (fluxo fixo) | 1) commit `feat:` + push â†’ 2) `prisma migrate deploy` com `DATABASE_URL` do `.env.local` (setar env antes; dotenv nÃ£o sobrescreve) â†’ 3) `npx vercel --prod` â†’ 4) smoke autenticado â†’ 5) commit `docs:` (DIARIO+ROADMAP+md do mÃ³dulo) + push |
 | Smoke autenticado | POST `/api/auth/csrf` â†’ POST `/api/auth/callback/credentials` (email/password/csrfToken, `json=true`, seguir 302) â†’ bater nas rotas com a WebSession; sem sessÃ£o deve dar 401 |
@@ -159,9 +163,9 @@ Schedule (E07):
 ## 10. Módulo de Integrações — estado de retomada (07/11)
 
 > Ponto de retomada da frente **Fase I3** (`INTEGRATIONS_MODULE.md` na raiz do
-> projeto). Lacunas 1–4 abaixo **entregues em 07/11** e gate verde; trabalho
-> **não commitado** — limpar a working tree é a meta (commits só quando o
-> usuário pedir).
+> projeto). Lacunas 1–4 abaixo **entregues, commitadas (`149f2c9` feat +
+> `24c4b5c` docs), com push e em produção** (smoke OK 07/11); fix de reconvite
+> (`7ecf0e4` + `253e5b2`) publicado em seguida. Próximos passos ao final.
 
 **Feito (05–06/11):**
 
@@ -223,17 +227,36 @@ com o teste). Subir com `schtasks /run /tn mici-postgres` e confirmar
    `npx vercel env add CRON_SECRET production --scope homeland1` (antes as rotas
    pulavam autenticação). **`NEON_API_KEY` continua ausente** no Vercel: o cron
    de backup responde "Config ausente" até a chave ser criada no console Neon.
-4. **Gate + migration + docs** — gate verde (291 unit / 354 integração; testes
-   novos: `tests/unit/identity-schemas.test.ts`,
-   `tests/integration/member-phone.test.ts`, `tests/integration/cron-routes.test.ts`);
+4. **Gate + migration + docs** — gate final verde (291 unit / 21 arquivos +
+   **356 integração / 26 arquivos**; testes novos:
+   `tests/unit/identity-schemas.test.ts`,
+   `tests/integration/member-phone.test.ts`, `tests/integration/cron-routes.test.ts`,
+   `tests/integration/member-reinvite.test.ts`);
    `phase24_user_phone` **aplicada no Neon** (26ª de 26) com
    `dotenv -e .env.vercel.tmp -- prisma migrate deploy`.
 
-**Próximos passos:** 1) commit `feat:` + push → 2) `npx vercel --prod --scope
-homeland1` (working tree limpa) → 3) smoke autenticado (incl. `/administracao/integracoes`
-200) → 4) commit `docs:` (DIARIO + ROADMAP + `INTEGRATIONS_MODULE.md`) + push.
-Opcional: criar `NEON_API_KEY` no Neon e adicionar ao Vercel para o backup
-rodar; UI de self-service de telefone (perfil).
+**Publicado em 07/11 (produção OK):**
+
+- Commits `149f2c9` feat + `24c4b5c` docs → push → deploy `mici-jtr7kalvj` →
+  smoke: `/administracao/integracoes` 200, `/administracao/usuarios` 200,
+  `PATCH /api/v1/me` 200/200/422, webhooks 200/201/200, cron sem Bearer 403,
+  `vercel crons list` com os 3 crons (03h/04h/15h UTC).
+- **Fix pós-smoke:** usuário reportou 500 em `POST /api/v1/members` —
+  reconvite de membro removido batia na unique `(org,user)`. `inviteMember`
+  agora **reativa** a membresia soft-deleteada (`src/modules/identity/members.ts`),
+  duplicado de ativo continua 409; regressão em
+  `tests/integration/member-reinvite.test.ts`. Commits `7ecf0e4` + `253e5b2`,
+  deploy `EmAeUDUKzjv3TexrbJVxowsgxMjg`, re-testado em produção
+  (criar 201 → remover 200 → reconvite 201 → duplicado 409 → limpeza 200).
+
+**Próximos passos (retomada 08/11):** 1) criar **`NEON_API_KEY`** no console
+Neon e adicionar ao Vercel (hoje o cron de backup 04h UTC responde "Config
+ausente"; `NEON_PROJECT_ID` já existe) → 2) conferir a 1ª execução dos crons:
+`npx vercel logs mici-theta.vercel.app --scope homeland1` (03h webhooks, 04h
+backup, 15h notificações UTC) → 3) decidir destino de `Integrations/` +
+`README_MICI_Comunicacao.md` (untracked, spec de referência, fora do commit) →
+4) UI de self-service de telefone — entregue: página `/perfil` + `src/components/profile/profile-view.tsx` (E.164, salva via `PATCH /api/v1/me`), nav "Meu perfil". Backlog restante Fase I3: inbound WhatsApp e adapters ERP.
+Backlog restante da Fase I3: inbound WhatsApp e adapters ERP.
 
 **Ponteiros:** `src/modules/integrations/{isolation,jobs,notifications,whatsapp,webhooks,approvals,email}.ts`
 · rotas `api/v1/cron/{webhooks,notifications,backup}` (GET+POST) · `vercel.json`
