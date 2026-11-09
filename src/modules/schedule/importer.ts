@@ -162,8 +162,38 @@ async function validateGraph(input: ImportScheduleInput) {
 }
 
 export async function importSchedule(input: ImportScheduleInput) {
-  const { schedule } = input;
+  let schedule = input.schedule;
   const { warnings, dependencies, project } = await validateGraph(input);
+
+  // Quando o projeto tem data de início planejada, desloca todo o cronograma
+  // importado (template ou arquivo) para essa data, em vez de manter as datas
+  // absolutas do snapshot. Preserva durações e dependências.
+  if (project.startDate) {
+    const baseStartStr =
+      schedule.projectStart ??
+      schedule.tasks.map((task) => task.start).filter((value): value is string => Boolean(value)).sort()[0];
+    const baseStart = parseDay(baseStartStr ?? null);
+    if (baseStart) {
+      const offset = project.startDate.getTime() - baseStart.getTime();
+      schedule = {
+        ...schedule,
+        projectStart: project.startDate.toISOString().slice(0, 10),
+        tasks: schedule.tasks.map((task) => ({
+          ...task,
+          start: task.start
+            ? new Date(new Date(`${task.start}T00:00:00.000Z`).getTime() + offset)
+                .toISOString()
+                .slice(0, 10)
+            : task.start,
+          finish: task.finish
+            ? new Date(new Date(`${task.finish}T00:00:00.000Z`).getTime() + offset)
+                .toISOString()
+                .slice(0, 10)
+            : task.finish,
+        })),
+      };
+    }
+  }
 
   const calendarId = input.calendarId ?? null;
   if (calendarId) await assertCalendarScope(input.organizationId, calendarId);
