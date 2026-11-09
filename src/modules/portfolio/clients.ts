@@ -45,8 +45,26 @@ async function assertCodeAvailable(
   }
 }
 
+// Gera c��digo sequencial por organiza��ǜo (CLI001, CLI002, ...) quando o
+// usuǭrio nǜo informa um c��digo manual, mantendo o padrǜo dos demais m��dulos.
+export async function nextClientCode(organizationId: string): Promise<string> {
+  const rows = await prisma.client.findMany({
+    where: { organizationId },
+    select: { code: true },
+  });
+  let max = 0;
+  for (const { code } of rows) {
+    const match = /^CLI(\d+)$/.exec(code ?? "");
+    if (match) max = Math.max(max, Number(match[1]));
+  }
+  return `CLI${String(max + 1).padStart(3, "0")}`;
+}
+
 export async function createClient(input: ActorContext & ClientInput) {
-  const code = input.code?.trim() ? input.code.trim().toUpperCase() : null;
+  let code = input.code?.trim() ? input.code.trim().toUpperCase() : null;
+  if (!code) {
+    code = await nextClientCode(input.organizationId);
+  }
   await assertCodeAvailable(input.organizationId, code);
 
   const client = await prisma.client.create({
