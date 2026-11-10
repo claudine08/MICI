@@ -622,6 +622,27 @@ export function ScheduleView({
             >
               Copiar JSON
             </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={async () => {
+                setError(null);
+                setNotice(null);
+                try {
+                  await apiRequest(`/api/v1/projects/${projectId}/wbs/import`, {
+                    method: "POST",
+                    body: JSON.stringify({ nodes: extractedWbs, note: "Extraída do cronograma" }),
+                  });
+                  setNotice(`WBS extraída importada (${extractedWbs.length} nós).`);
+                  setExtractedWbs([]);
+                  router.refresh();
+                } catch (caught) {
+                  setError(caught instanceof Error ? caught.message : "Falha ao importar WBS extraída.");
+                }
+              }}
+            >
+              Importar WBS extraída
+            </Button>
           </div>
           <textarea
             readOnly
