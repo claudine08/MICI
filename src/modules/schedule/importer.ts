@@ -350,13 +350,21 @@ export async function importSchedule(input: ImportScheduleInput) {
 
   // Extração de WBS: códigos distintos referenciados pelas atividades, no formato
   // compatível com "Importar JSON" da página de WBS (revisão manual).
+  // Agrupa as atividades por código de WBS para extrair o nome da tarefa
+  // (a primeira atividade que referencia o nó) em vez de um rótulo genérico.
+  const wbsTaskName = new Map<string, string>();
+  for (const task of schedule.tasks) {
+    if (!task.wbs) continue;
+    if (!wbsTaskName.has(task.wbs)) wbsTaskName.set(task.wbs, task.name);
+  }
   const wbsCodes = [...new Set(schedule.tasks.map((task) => task.wbs).filter((value): value is string => Boolean(value)))];
   const wbsExtract = wbsCodes
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
     .map((code, index) => {
       const lastDot = code.lastIndexOf(".");
       const parentCode = lastDot > 0 ? code.slice(0, lastDot) : null;
-      return { code, name: `Nó ${code}`, parentCode, orderIndex: index };
+      const name = wbsTaskName.get(code) ?? `Nó ${code}`;
+      return { code, name: name.slice(0, 200), parentCode, orderIndex: index };
     });
 
   return {
