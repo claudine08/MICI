@@ -617,7 +617,7 @@ export function ScheduleView({
               size="sm"
               variant="outline"
               onClick={() => {
-                navigator.clipboard?.writeText(JSON.stringify(extractedWbs, null, 2));
+                navigator.clipboard?.writeText(JSON.stringify({ nodes: extractedWbs }, null, 2));
               }}
             >
               Copiar JSON
@@ -626,7 +626,7 @@ export function ScheduleView({
           <textarea
             readOnly
             className="h-40 w-full rounded-md border border-border bg-background p-2 font-mono text-xs"
-            value={JSON.stringify(extractedWbs, null, 2)}
+            value={JSON.stringify({ nodes: extractedWbs }, null, 2)}
           />
         </div>
       )}
