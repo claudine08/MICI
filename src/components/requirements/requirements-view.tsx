@@ -87,7 +87,7 @@ export function RequirementsView({
 }: {
   projectId: string;
   requirements: RequirementRow[];
-  wbsOptions: { id: string; code: string; name: string }[];
+  wbsOptions: { id: string; code: string; name: string; activities?: string[] }[];
   members: { id: string; name: string }[];
   canCreate: boolean;
   canEdit: boolean;
@@ -509,11 +509,17 @@ export function RequirementsView({
                     Nenhum nó WBS cadastrado — crie na página de WBS
                   </option>
                 ) : (
-                  wbsOptions.map((node) => (
-                    <option key={node.id} value={node.id}>
-                      {node.code} — {node.name}
-                    </option>
-                  ))
+                  wbsOptions.map((node) => {
+                    const activityLabel =
+                      node.activities && node.activities.length > 0
+                        ? ` · ${node.activities.join(", ")}`
+                        : "";
+                    return (
+                      <option key={node.id} value={node.id}>
+                        {node.code} — {node.name}{activityLabel}
+                      </option>
+                    );
+                  })
                 )}
               </select>
               {wbsOptions.length === 0 && (

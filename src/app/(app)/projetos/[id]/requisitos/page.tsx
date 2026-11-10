@@ -4,6 +4,7 @@ import { getProjectDetail } from "@/modules/portfolio/selectors";
 import { listRequirements } from "@/modules/requirements/selectors";
 import { getWbsTree } from "@/modules/wbs/selectors";
 import { listMembers } from "@/modules/identity/selectors";
+import { listActivities } from "@/modules/schedule/selectors";
 import { flattenWbsTree } from "@/modules/wbs/engine";
 import { RequirementsView } from "@/components/requirements/requirements-view";
 import { NoPermission } from "@/components/shell/no-permission";
@@ -24,11 +25,20 @@ export default async function ProjetoRequisitosPage({
   }
 
   const project = await getProjectDetail(context.organizationId, id);
-  const [requirements, wbsTree, members] = await Promise.all([
+  const [requirements, wbsTree, members, activities] = await Promise.all([
     listRequirements(context.organizationId, { projectId: id }),
     getWbsTree(context.organizationId, id),
     listMembers(context.organizationId),
+    listActivities(context.organizationId, id).catch(() => []),
   ]);
+
+  const activitiesByWbs = new Map<string, string[]>();
+  for (const activity of activities) {
+    if (!activity.wbsNodeId) continue;
+    const list = activitiesByWbs.get(activity.wbsNodeId) ?? [];
+    list.push(`${activity.code} — ${activity.name}`);
+    activitiesByWbs.set(activity.wbsNodeId, list);
+  }
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
@@ -48,6 +58,7 @@ export default async function ProjetoRequisitosPage({
           id: node.id,
           code: node.code,
           name: node.name,
+          activities: activitiesByWbs.get(node.id) ?? [],
         }))}
         members={members.map((member) => ({ id: member.userId, name: member.name }))}
         canCreate={can(permissions, "REQUIREMENT", "CREATE")}
