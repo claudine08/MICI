@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, CheckCircle2 } from "lucide-react";
+import { Plus, CheckCircle2, Upload, Download, Trash2 } from "lucide-react";
 import type { MeetingRow } from "@/modules/meetings/selectors";
 import { apiRequest } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,42 @@ export function MeetingsView({
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachmentsByMeeting, setAttachmentsByMeeting] = useState<Record<string, { id: string; filename: string; mimeType: string; size: number }[]>>({});
+
+  const loadAttachments = async (meetingId: string) => {
+    try {
+      const res = await apiRequest<{ attachments: { id: string; filename: string; mimeType: string; size: number }[] }>(`/api/v1/meetings/${meetingId}/attachments`);
+      setAttachmentsByMeeting((prev) => ({ ...prev, [meetingId]: res.attachments }));
+    } catch {
+      // ignore
+    }
+  };
+
+  const uploadAttachment = async (meetingId: string, file: File) => {
+    setBusy(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      await fetch(`/api/v1/meetings/${meetingId}/attachments`, { method: "POST", body: form, credentials: "include" });
+      await loadAttachments(meetingId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro no upload.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteAttachment = async (meetingId: string, attachmentId: string) => {
+    setBusy(true);
+    try {
+      await apiRequest(`/api/v1/meetings/${meetingId}/attachments/${attachmentId}`, { method: "DELETE" });
+      await loadAttachments(meetingId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao excluir.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const toggleParticipant = (id: string) => {
     setParticipantIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -152,6 +188,7 @@ export function MeetingsView({
               <th className="px-4 py-2.5">Responsável</th>
               <th className="px-4 py-2.5">Status</th>
               <th className="px-4 py-2.5">Participantes / Assinaturas</th>
+              <th className="px-4 py-2.5">Anexos</th>
               <th className="px-4 py-2.5">Transição</th>
             </tr>
           </thead>
@@ -172,6 +209,36 @@ export function MeetingsView({
                   ))}
                 </td>
                 <td className="px-4 py-2.5">
+                  <div className="flex flex-col gap-1">
+                    <label className="inline-flex cursor-pointer items-center gap-1 text-xs text-primary">
+                      <Upload className="h-3 w-3" />
+                      Anexar
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadAttachment(m.id, f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <button className="text-xs text-muted-foreground underline" onClick={() => loadAttachments(m.id)}>Listar anexos</button>
+                    {(attachmentsByMeeting[m.id] ?? []).map((a) => (
+                      <div key={a.id} className="flex items-center gap-1 text-xs">
+                        <a href={`/api/v1/meetings/${m.id}/attachments/${a.id}`} target="_blank" rel="noreferrer" className="underline">
+                          <Download className="mr-1 inline h-3 w-3" />{a.filename}
+                        </a>
+                        {canEdit && (
+                          <button className="text-destructive" onClick={() => deleteAttachment(m.id, a.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </td>
+                <td className="px-4 py-2.5">
                   <div className="flex flex-wrap gap-1">
                     {m.participants.some((p) => p.userId === currentUserId && p.status === "PENDING") && (
                       <Button size="sm" onClick={() => sign(m.id)}>Assinar</Button>
@@ -185,7 +252,7 @@ export function MeetingsView({
               </tr>
             ))}
             {meetings.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhuma reunião cadastrada.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Nenhuma reunião cadastrada.</td></tr>
             )}
           </tbody>
         </table>

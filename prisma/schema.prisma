@@ -221,6 +221,7 @@ model Organization {
   meetings    Meeting[]
   meetingActions MeetingAction[]
   meetingParticipants MeetingParticipant[]
+  attachments MeetingAttachment[]
   @@index([status])
   @@map("organizations")
 }
@@ -3120,6 +3121,7 @@ model Meeting {
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   actions      MeetingAction[]
   participants MeetingParticipant[]
+  attachments  MeetingAttachment[]
 
   @@unique([projectId, code])
   @@index([organizationId, projectId])
@@ -3175,5 +3177,27 @@ model MeetingParticipant {
   @@index([organizationId, meetingId])
   @@index([organizationId, userId])
   @@map("meeting_participants")
+}
+
+model MeetingAttachment {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  meetingId      String    @map("meeting_id") @db.Uuid
+  filename       String    @db.VarChar(255)
+  mimeType       String    @map("mime_type") @db.VarChar(120)
+  size           Int
+  content        Bytes
+  sha256         String    @db.VarChar(64)
+  uploadedBy     String?   @map("uploaded_by") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  meeting      Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, meetingId])
+  @@map("meeting_attachments")
 }
 
