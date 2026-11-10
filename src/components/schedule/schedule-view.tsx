@@ -182,6 +182,9 @@ export function ScheduleView({
   const [cpm, setCpm] = useState<CpmSummary | null>(null);
   const [cpmBusy, setCpmBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [extractedWbs, setExtractedWbs] = useState<
+    { code: string; name: string; parentCode: string | null; orderIndex: number }[]
+  >([]);
   const [importMode, setImportMode] = useState<"file" | "template">("file");
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importTemplateId, setImportTemplateId] = useState("");
@@ -475,12 +478,14 @@ export function ScheduleView({
           replacedActivities: number;
           warnings: string[];
           cpm: CpmSummary;
+          wbsExtract?: { code: string; name: string; parentCode: string | null; orderIndex: number }[];
         };
       }>(`/api/v1/projects/${projectId}/schedule/import`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
       const summary = result.import;
+      setExtractedWbs(summary.wbsExtract ?? []);
       setNotice(
         `${summary.activityCount} atividades e ${summary.dependencyCount} dependências importadas` +
           (summary.replacedActivities > 0
@@ -497,6 +502,7 @@ export function ScheduleView({
       setDialog(null);
       router.refresh();
     } catch (caught) {
+      setExtractedWbs([]);
       setError(caught instanceof Error ? caught.message : "Falha ao importar o cronograma.");
     } finally {
       setImportBusy(false);
@@ -598,6 +604,31 @@ export function ScheduleView({
         <p className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-muted-foreground">
           {notice}
         </p>
+      )}
+
+      {extractedWbs.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-md border border-border bg-surface p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium">
+              WBS extraída ({extractedWbs.length} nós) — copie e use em "Importar JSON" na WBS
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard?.writeText(JSON.stringify(extractedWbs, null, 2));
+              }}
+            >
+              Copiar JSON
+            </Button>
+          </div>
+          <textarea
+            readOnly
+            className="h-40 w-full rounded-md border border-border bg-background p-2 font-mono text-xs"
+            value={JSON.stringify(extractedWbs, null, 2)}
+          />
+        </div>
       )}
 
       <div className="overflow-x-auto rounded-lg border border-border bg-surface">
