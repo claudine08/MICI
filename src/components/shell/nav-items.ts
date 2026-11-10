@@ -20,6 +20,7 @@ import {
   ClipboardCheck,
   ShoppingCart,
   Webhook,
+  UserCircle,
   type LucideIcon,
 } from "lucide-react";
 import type { Action, Module } from "@/core/rbac";
@@ -50,6 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Painel", href: "/painel", icon: LayoutDashboard, permission: { module: "DASHBOARD", action: "VIEW" } },
       { label: "Executivo", href: "/executivo", icon: LayoutDashboard, permission: { module: "DASHBOARD", action: "VIEW" } },
       { label: "IA", href: "/ai", icon: LayoutDashboard, permission: { module: "AI", action: "VIEW" } },
+      { label: "Meu perfil", href: "/perfil", icon: UserCircle },
     ],
   },
   {

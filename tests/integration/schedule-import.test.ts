@@ -502,3 +502,83 @@ describe("templates de cronograma reutilizáveis (E07 import)", () => {
     );
   });
 });
+
+describe("deslocamento de datas por startDate do projeto (E07 import)", () => {
+  it("desloca todas as datas do cronograma para o startDate planejado do projeto", async () => {
+    const client = await createClient({
+      ...actorA(),
+      code: `CLI3-${suffix.toUpperCase()}`,
+      name: "Cliente Deslocamento",
+    });
+    const project = await createProject({
+      ...actorA(),
+      code: `PRJ3-${suffix.toUpperCase()}`,
+      name: "Projeto com startDate",
+      clientId: client.id,
+      status: "ACTIVE",
+      startDate: "2026-12-01",
+    });
+
+    const schedule: ParsedSchedule = {
+      sourceName: "grafo deslocamento",
+      sourceFormat: "CSV",
+      projectStart: "2026-11-02",
+      calendar: null,
+      tasks: [
+        {
+          sourceId: "T1",
+          wbs: null,
+          outlineLevel: 1,
+          name: "Atividade 1",
+          type: "TASK",
+          durationDays: 2,
+          start: "2026-11-02",
+          finish: "2026-11-03",
+          notes: null,
+          percentComplete: 0,
+          resources: null,
+          workHours: null,
+          cost: null,
+        },
+        {
+          sourceId: "T2",
+          wbs: null,
+          outlineLevel: 1,
+          name: "Atividade 2",
+          type: "TASK",
+          durationDays: 1,
+          start: "2026-11-04",
+          finish: "2026-11-04",
+          notes: null,
+          percentComplete: 0,
+          resources: null,
+          workHours: null,
+          cost: null,
+        },
+      ],
+      dependencies: [{ predecessorSourceId: "T1", successorSourceId: "T2", type: "FS", lagDays: 0 }],
+      warnings: [],
+    };
+
+    const summary = await importSchedule({ ...actorA(), projectId: project.id, schedule });
+    expect(summary.activityCount).toBe(2);
+
+    const activities = await listActivities(orgA.id, project.id);
+    expect(activities).toHaveLength(2);
+
+    // Duração preservada: 2 dias → deslocado 29 dias (02/11 → 01/12)
+    const a1 = activities.find((a) => a.name === "Atividade 1")!;
+    const a2 = activities.find((a) => a.name === "Atividade 2")!;
+    expect(a1.plannedStart).toBe("2026-12-01");
+    expect(a1.plannedFinish).toBe("2026-12-02");
+    expect(a2.plannedStart).toBe("2026-12-03");
+    expect(a2.plannedFinish).toBe("2026-12-03");
+
+    // startDate do projeto não foi sobrescrito (já existia)
+    const updated = await prisma.project.findFirst({
+      where: { id: project.id },
+      select: { startDate: true },
+    });
+    expect(updated?.startDate?.toISOString().slice(0, 10)).toBe("2026-12-01");
+  });
+});

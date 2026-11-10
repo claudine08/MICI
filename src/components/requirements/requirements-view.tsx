@@ -501,14 +501,33 @@ export function RequirementsView({
                 value={form.wbsNodeId}
                 onChange={(event) => set("wbsNodeId", event.target.value)}
                 className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                disabled={wbsOptions.length === 0}
               >
                 <option value="">Sem vínculo</option>
-                {wbsOptions.map((node) => (
-                  <option key={node.id} value={node.id}>
-                    {node.code} — {node.name}
+                {wbsOptions.length === 0 ? (
+                  <option value="" disabled>
+                    Nenhum nó WBS cadastrado — crie na página de WBS
                   </option>
-                ))}
+                ) : (
+                  wbsOptions.map((node) => (
+                    <option key={node.id} value={node.id}>
+                      {node.code} — {node.name}
+                    </option>
+                  ))
+                )}
               </select>
+              {wbsOptions.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Este projeto ainda não possui nós WBS. Crie a estrutura na aba{" "}
+                  <a
+                    href={`/projetos/${projectId}/wbs`}
+                    className="underline-offset-2 hover:underline"
+                  >
+                    WBS
+                  </a>{" "}
+                  para vincular requisitos a atividades.
+                </p>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="req-source">Fonte (BR-015)</Label>

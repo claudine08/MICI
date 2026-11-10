@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07T03:26:05.092Z",
+  "generatedAt": "2026-11-07T03:59:50.953Z",
   "sources": [
     "devcurrent.md",
     "docs/fluxo-e01-e14.md",
@@ -12,15 +12,15 @@
     "sustentabilidade.md",
     "AI.md"
   ],
-  "chunkCount": 250,
+  "chunkCount": 252,
   "chunks": [
     {
       "id": "devcurrent-1-estado-atual-resumo-de-1-linha",
       "title": "1. Estado atual (resumo de 1 linha)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 28,
-      "endLine": 31,
+      "startLine": 32,
+      "endLine": 35,
       "summary": "| E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat map de riscos, alertas (Fatia 1+2+3...",
       "tags": [
         "devcurrent"
@@ -31,8 +31,8 @@
       "title": "2. Ambiente e comandos (nÃ£o precisa rediscover)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 32,
-      "endLine": 50,
+      "startLine": 36,
+      "endLine": 54,
       "summary": "| Item | Valor | |---|---| | Repo | `https://github.com/claudine08/MICI.git`, branch `main` | | ProduÃ§Ã£o | Vercel `mici-theta.vercel.app` (projeto `mici`,...",
       "tags": [
         "devcurrent"
@@ -43,8 +43,8 @@
       "title": "3. ConvenÃ§Ãµes do repo (seguir Ã  risca)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 51,
-      "endLine": 60,
+      "startLine": 55,
+      "endLine": 64,
       "summary": "- **Commits**: sÃ³ quando o usuÃ¡rio pedir. PadrÃ£o: `feat: <Ã¡rea> - <resumo> - E<NN> US<NN>` (ASCII, sem acento) e depois `docs: registra â€¦`. `main` dire...",
       "tags": [
         "devcurrent"
@@ -55,8 +55,8 @@
       "title": "4. Backlog E12: PWA/fila offline completa â€” âœ… FECHADO (29/10)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 61,
-      "endLine": 68,
+      "startLine": 65,
+      "endLine": 72,
       "summary": "Contexto e implementaÃ§Ã£o detalhada em `docs/rag-index.md` (chunks `diario-*` e `devcurrent-*`) e no DIARIO 29/10. Resumo: PWA (manifest + SW) + fila offlin...",
       "tags": [
         "devcurrent"
@@ -67,8 +67,8 @@
       "title": "5. E08+ Cost Tracking & Cash Flow â€” âœ… IMPLEMENTADO (01/11)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 69,
-      "endLine": 87,
+      "startLine": 73,
+      "endLine": 91,
       "summary": "ExtensÃ£o do mÃ³dulo de Custos (E08) + integraÃ§Ã£o com Procurement (E14) + Schedule (E07): - **Rastreio por WBS/atividade**: `CostItem`, `CostCommitment` e...",
       "tags": [
         "devcurrent"
@@ -79,8 +79,8 @@
       "title": "6. E14 Procurement â€” âœ… COMPLETO (Fatia 1 + Fatia 2)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 88,
-      "endLine": 97,
+      "startLine": 92,
+      "endLine": 101,
       "summary": "- **Fatia 1** (produÃ§Ã£o 30/10): fornecedores (SP), requisiÃ§Ãµes (PR), cotaÃ§Ãµes (QT) e mapa comparativo (BC). Commit `2ea90bb`, migration `phase15_procur...",
       "tags": [
         "devcurrent"
@@ -91,8 +91,8 @@
       "title": "6. Restante do roadmap (apÃ³s E14)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 98,
-      "endLine": 113,
+      "startLine": 102,
+      "endLine": 117,
       "summary": "| Ã‰pico | Escopo curto | |---|---| | E19 Project Dashboard | Portfolio + drill-down: datas, custos, percentuais as-of, KPIs, curva S, Gantt, burndown, heat...",
       "tags": [
         "devcurrent"
@@ -103,8 +103,8 @@
       "title": "7. Ponteiros rÃ¡pidos de cÃ³digo",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 114,
-      "endLine": 126,
+      "startLine": 118,
+      "endLine": 130,
       "summary": "- Procurement (E14): `src/modules/procurement/*` - Cost tracking & cash flow (E08+): `src/modules/cost/cashflow.ts` Â· rotas `api/v1/projects/[id]/cost/cashf...",
       "tags": [
         "devcurrent"
@@ -115,8 +115,8 @@
       "title": "8. RAG â€” Ã­ndice de chunks (auto-gerado)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 127,
-      "endLine": 136,
+      "startLine": 131,
+      "endLine": 140,
       "summary": "- Ãndice completo: `docs/rag-index.md` (178 chunks em 6 arquivos) e `docs/rag-index.json` (com line ranges). - Regenerar apÃ³s editar docs: `npm run rag:ind...",
       "tags": [
         "devcurrent"
@@ -127,8 +127,8 @@
       "title": "9. Riscos conhecidos",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 137,
-      "endLine": 155,
+      "startLine": 141,
+      "endLine": 162,
       "summary": "- **Pós-03/11: testes de integração nesta máquina exigem `--maxWorkers 1`** — com 20 arquivos/332 testes paralelos o Postgres local (disco lento + OneDrive/A...",
       "tags": [
         "devcurrent"
@@ -139,9 +139,9 @@
       "title": "10. Módulo de Integrações — estado de retomada (07/11)",
       "level": 2,
       "file": "devcurrent.md",
-      "startLine": 156,
-      "endLine": 243,
-      "summary": "> Ponto de retomada da frente **Fase I3** (`INTEGRATIONS_MODULE.md` na raiz do > projeto). Lacunas 1–4 abaixo **entregues em 07/11** e gate verde; trabalho >...",
+      "startLine": 163,
+      "endLine": 269,
+      "summary": "> Ponto de retomada da frente **Fase I3** (`INTEGRATIONS_MODULE.md` na raiz do > projeto). Lacunas 1–4 abaixo **entregues, commitadas (`149f2c9` feat + > `24...",
       "tags": [
         "devcurrent"
       ]
@@ -1808,8 +1808,20 @@
       "level": 2,
       "file": "DIARIO.md",
       "startLine": 1708,
-      "endLine": 1749,
+      "endLine": 1751,
       "summary": "Sessao deu continuidade as 4 lacunas do `devcurrent.md` sec. 10 (escopos respondidos pelo usuario: telefone = admin + autoatualizacao; crons = os 3; CRON_SEC...",
+      "tags": [
+        "diario"
+      ]
+    },
+    {
+      "id": "diario-07-11-2026-b-fix-500-ao-reconvitar-membro-removi",
+      "title": "07/11/2026 (b) - Fix: 500 ao reconvitar membro removido (producao)",
+      "level": 2,
+      "file": "DIARIO.md",
+      "startLine": 1752,
+      "endLine": 1772,
+      "summary": "Teste em producao do usuario encontrou **500 em `POST /api/v1/members`** (logs Vercel: `Unique constraint failed on organization_memberships_organization_id_...",
       "tags": [
         "diario"
       ]
@@ -2031,12 +2043,24 @@
       ]
     },
     {
+      "id": "roadmap-status-fase-i3-atualizado-07-11-2026",
+      "title": "Status Fase I3 (atualizado 07/11/2026)",
+      "level": 3,
+      "file": "ROADMAP.md",
+      "startLine": 330,
+      "endLine": 337,
+      "summary": "- Isolamento de falhas (kill switch + circuit breaker), fila `job_queue`, WhatsApp outbound, outbox com consumidor unico: concluidos (05–06/11). - UI `/admin...",
+      "tags": [
+        "roadmap"
+      ]
+    },
+    {
       "id": "roadmap-fase-1-estender-aprovacoes-por-e-mail-onda-1",
       "title": "Fase 1 - Estender Aprovacoes por E-mail (Onda 1+)",
       "level": 2,
       "file": "ROADMAP.md",
-      "startLine": 330,
-      "endLine": 339,
+      "startLine": 338,
+      "endLine": 347,
       "summary": "Tarefas: - F1.1: Adicionar objectType PROJECT_COST_TOTAL (custo total do projeto) com propagacao para custos. - F1.2: Adicionar objectType BUDGET (baseline d...",
       "tags": [
         "roadmap"
@@ -2047,8 +2071,8 @@
       "title": "Status Fase 1 (atualizado 05/11/2026)",
       "level": 3,
       "file": "ROADMAP.md",
-      "startLine": 340,
-      "endLine": 347,
+      "startLine": 348,
+      "endLine": 355,
       "summary": "- F1.1 PROJECT_COST_TOTAL: concluido + teste. - F1.2 COST_BASELINE: concluido + teste. - F1.3 GATE: nao aplicavel (exige criterios/evidencias). - F1.4 UI bot...",
       "tags": [
         "roadmap"
