@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronDown,
@@ -82,6 +82,18 @@ export function WbsView({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<NodeForm>(emptyForm);
   const [importPayload, setImportPayload] = useState("");
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(`wbsExtract:${projectId}`);
+      if (raw) {
+        setImportPayload(raw);
+        sessionStorage.removeItem(`wbsExtract:${projectId}`);
+      }
+    } catch {
+      // ignore
+    }
+  }, [projectId]);
   const [versionNote, setVersionNote] = useState("");
 
   const set = (key: keyof NodeForm, value: string) =>

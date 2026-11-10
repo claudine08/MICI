@@ -485,7 +485,13 @@ export function ScheduleView({
         body: JSON.stringify(payload),
       });
       const summary = result.import;
-      setExtractedWbs(summary.wbsExtract ?? []);
+      const extracted = summary.wbsExtract ?? [];
+      setExtractedWbs(extracted);
+      try {
+        sessionStorage.setItem(`wbsExtract:${projectId}`, JSON.stringify({ nodes: extracted }));
+      } catch {
+        // ignore
+      }
       setNotice(
         `${summary.activityCount} atividades e ${summary.dependencyCount} dependências importadas` +
           (summary.replacedActivities > 0
