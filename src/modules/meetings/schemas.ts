@@ -6,14 +6,17 @@ export const createMeetingSchema = z.object({
   projectId: z.string().uuid().optional().nullable(),
   title: z.string().min(1).max(200),
   meetingDate: z.string().min(1),
+  ownerId: z.string().uuid().optional().nullable(),
   location: z.string().max(200).optional().nullable(),
   attendees: z.array(z.string()).optional(),
   minutes: z.string().optional().nullable(),
+  participantIds: z.array(z.string().uuid()).optional(),
 });
 
 export const updateMeetingSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   meetingDate: z.string().optional(),
+  ownerId: z.string().uuid().optional().nullable(),
   location: z.string().max(200).optional().nullable(),
   attendees: z.array(z.string()).optional(),
   minutes: z.string().optional().nullable(),

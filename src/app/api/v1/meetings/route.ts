@@ -27,9 +27,11 @@ export const { GET, POST } = apiHandler({
       projectId: parsed.data.projectId ?? null,
       title: parsed.data.title,
       meetingDate: parsed.data.meetingDate,
+      ownerId: parsed.data.ownerId,
       location: parsed.data.location,
       attendees: parsed.data.attendees,
       minutes: parsed.data.minutes,
+      participantIds: parsed.data.participantIds,
     });
     return Response.json({ meeting }, { status: 201 });
   },

@@ -28,6 +28,7 @@ export default async function ProjetoReunioesPage({ params }: { params: Promise<
         projectId={id}
         meetings={meetings}
         members={members.map((m) => ({ id: m.userId, name: m.name }))}
+        currentUserId={context.userId}
         canCreate={can(permissions, "PROJECT", "CREATE")}
         canEdit={can(permissions, "PROJECT", "EDIT")}
         canDelete={can(permissions, "PROJECT", "DELETE")}

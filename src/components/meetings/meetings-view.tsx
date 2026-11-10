@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
 import type { MeetingRow } from "@/modules/meetings/selectors";
 import { apiRequest } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export function MeetingsView({
   projectId,
   meetings,
   members,
+  currentUserId,
   canCreate,
   canEdit,
   canDelete,
@@ -23,6 +24,7 @@ export function MeetingsView({
   projectId: string;
   meetings: MeetingRow[];
   members: Member[];
+  currentUserId: string;
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -31,10 +33,16 @@ export function MeetingsView({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [meetingDate, setMeetingDate] = useState("");
+  const [ownerId, setOwnerId] = useState("");
   const [location, setLocation] = useState("");
   const [minutes, setMinutes] = useState("");
+  const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const toggleParticipant = (id: string) => {
+    setParticipantIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const create = async () => {
     setBusy(true);
@@ -42,10 +50,18 @@ export function MeetingsView({
     try {
       await apiRequest("/api/v1/meetings", {
         method: "POST",
-        body: JSON.stringify({ projectId, title, meetingDate, location: location || null, minutes: minutes || null }),
+        body: JSON.stringify({
+          projectId,
+          title,
+          meetingDate,
+          ownerId: ownerId || null,
+          location: location || null,
+          minutes: minutes || null,
+          participantIds,
+        }),
       });
       setDialogOpen(false);
-      setTitle(""); setMeetingDate(""); setLocation(""); setMinutes("");
+      setTitle(""); setMeetingDate(""); setOwnerId(""); setLocation(""); setMinutes(""); setParticipantIds([]);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao criar reunião.");
@@ -61,6 +77,18 @@ export function MeetingsView({
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sign = async (id: string) => {
+    setBusy(true);
+    try {
+      await apiRequest(`/api/v1/meetings/${id}/sign`, { method: "POST", body: JSON.stringify({}) });
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao assinar.");
     } finally {
       setBusy(false);
     }
@@ -86,12 +114,30 @@ export function MeetingsView({
             <Input type="date" value={meetingDate} onChange={(e) => setMeetingDate(e.target.value)} />
           </div>
           <div className="grid gap-2">
+            <Label>Responsável</Label>
+            <select className="rounded-md border border-border bg-surface px-3 py-2 text-sm" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
+              <option value="">Sem responsável</option>
+              {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+          </div>
+          <div className="grid gap-2">
             <Label>Local</Label>
             <Input value={location} onChange={(e) => setLocation(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label>Ata</Label>
             <textarea className="rounded-md border border-border bg-surface px-3 py-2 text-sm" rows={4} value={minutes} onChange={(e) => setMinutes(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label>Participantes (assinatura)</Label>
+            <div className="flex flex-wrap gap-2">
+              {members.map((m) => (
+                <label key={m.id} className="flex items-center gap-1 text-sm">
+                  <input type="checkbox" checked={participantIds.includes(m.id)} onChange={() => toggleParticipant(m.id)} />
+                  {m.name}
+                </label>
+              ))}
+            </div>
           </div>
           <Button onClick={create} disabled={busy}>Criar</Button>
         </div>
@@ -103,8 +149,9 @@ export function MeetingsView({
               <th className="px-4 py-2.5">Código</th>
               <th className="px-4 py-2.5">Título</th>
               <th className="px-4 py-2.5">Data</th>
+              <th className="px-4 py-2.5">Responsável</th>
               <th className="px-4 py-2.5">Status</th>
-              <th className="px-4 py-2.5">Ações</th>
+              <th className="px-4 py-2.5">Participantes / Assinaturas</th>
               <th className="px-4 py-2.5">Transição</th>
             </tr>
           </thead>
@@ -114,18 +161,31 @@ export function MeetingsView({
                 <td className="px-4 py-2.5 font-mono text-xs">{m.code}</td>
                 <td className="px-4 py-2.5">{m.title}</td>
                 <td className="px-4 py-2.5">{m.meetingDate}</td>
+                <td className="px-4 py-2.5">{m.ownerName ?? "—"}</td>
                 <td className="px-4 py-2.5">{m.status}</td>
-                <td className="px-4 py-2.5">{m.actionCount}</td>
                 <td className="px-4 py-2.5">
-                  {canEdit && m.status === "DRAFT" && <Button size="sm" onClick={() => transition(m.id, "SUBMIT")}>Submeter</Button>}
-                  {canEdit && m.status === "SUBMITTED" && <Button size="sm" onClick={() => transition(m.id, "APPROVE")}>Aprovar</Button>}
-                  {canEdit && m.status === "CANCELLED" && <Button size="sm" onClick={() => transition(m.id, "REOPEN")}>Reabrir</Button>}
-                  {canEdit && m.status !== "APPROVED" && m.status !== "CANCELLED" && <Button size="sm" variant="destructive" onClick={() => transition(m.id, "CANCEL")}>Cancelar</Button>}
+                  {m.participants.length === 0 ? "—" : m.participants.map((p) => (
+                    <span key={p.id} className="mr-2 inline-flex items-center gap-1">
+                      {p.status === "SIGNED" ? <CheckCircle2 className="h-3 w-3 text-green-600" /> : null}
+                      {p.userName}
+                    </span>
+                  ))}
+                </td>
+                <td className="px-4 py-2.5">
+                  <div className="flex flex-wrap gap-1">
+                    {m.participants.some((p) => p.userId === currentUserId && p.status === "PENDING") && (
+                      <Button size="sm" onClick={() => sign(m.id)}>Assinar</Button>
+                    )}
+                    {canEdit && m.status === "DRAFT" && <Button size="sm" onClick={() => transition(m.id, "SUBMIT")}>Submeter</Button>}
+                    {canEdit && m.status === "SUBMITTED" && <Button size="sm" onClick={() => transition(m.id, "APPROVE")}>Aprovar</Button>}
+                    {canEdit && m.status === "CANCELLED" && <Button size="sm" onClick={() => transition(m.id, "REOPEN")}>Reabrir</Button>}
+                    {canEdit && m.status !== "APPROVED" && m.status !== "CANCELLED" && <Button size="sm" variant="destructive" onClick={() => transition(m.id, "CANCEL")}>Cancelar</Button>}
+                  </div>
                 </td>
               </tr>
             ))}
             {meetings.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma reunião cadastrada.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhuma reunião cadastrada.</td></tr>
             )}
           </tbody>
         </table>
