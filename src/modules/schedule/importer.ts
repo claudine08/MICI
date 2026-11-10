@@ -49,6 +49,9 @@ export interface ScheduleImportSummary {
   calendarId: string | null;
   warnings: string[];
   cpm: CpmSummary;
+  // Extração de WBS do cronograma importado, no formato compatível com
+  // "Importar JSON" da página de WBS (para revisão/importação manual).
+  wbsExtract: Array<{ code: string; name: string; parentCode: string | null; orderIndex: number }>;
 }
 
 export interface ImportScheduleInput extends ActorContext {
@@ -345,6 +348,17 @@ export async function importSchedule(input: ImportScheduleInput) {
 
   const cpm = await recalculateSchedule(input.organizationId, input.projectId);
 
+  // Extração de WBS: códigos distintos referenciados pelas atividades, no formato
+  // compatível com "Importar JSON" da página de WBS (revisão manual).
+  const wbsCodes = [...new Set(schedule.tasks.map((task) => task.wbs).filter((value): value is string => Boolean(value)))];
+  const wbsExtract = wbsCodes
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .map((code, index) => {
+      const lastDot = code.lastIndexOf(".");
+      const parentCode = lastDot > 0 ? code.slice(0, lastDot) : null;
+      return { code, name: `Nó ${code}`, parentCode, orderIndex: index };
+    });
+
   return {
     sourceName: schedule.sourceName,
     sourceFormat: schedule.sourceFormat,
@@ -358,6 +372,7 @@ export async function importSchedule(input: ImportScheduleInput) {
     calendarId,
     warnings,
     cpm,
+    wbsExtract,
   } satisfies ScheduleImportSummary;
 }
 
