@@ -11,15 +11,14 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 07/11/2026 (b). Frente **Fase I3 (Integrações)** — lacunas
-do §10 entregues, **commitadas, com push e EM PRODUÇÃO** (deploy smoke OK): UI
-`/administracao/integracoes`, telefone (`User.phone` gravado pelo admin em
-`/administracao/usuarios` + autoatualização via `PATCH /api/v1/me`), `vercel.json`
-com os 3 crons diários (GET+POST nas rotas), `CRON_SECRET` setado no Vercel
-(Production), migration `phase24_user_phone` **aplicada no Neon**. Gate final:
-lint · typecheck · 291 unit · **356 integração / 26 arquivos** · build. Depois do
-smoke em produção veio o **fix do reconvite** (500 em `POST /api/v1/members` ao
-reconvidar membro removido — `inviteMember` reativa a membresia soft-deleteada;
+**Ultima atualizacao:** 07/11/2026 (c). Frente **Fase I3 (Integrações)** — lacunas
+do §10 entregues, commitadas, com push e EM PRODUÇÃO (deploy smoke OK). Adicional:
+**frente de estabilização** concluída — fix.md itens 1–3 resolvidos e validados
+(testes clients 6 casos, schedule-import deslocamento por startDate 20/20,
+dropdown WBS UX), rastreabilidade endpoint enriquecido + função extraída +
+teste (3 casos), rastreabilidade.md documentado, limpeza q.sql/_check_db
+já inexistente, observabilidade e testes de PO já existentes. Commit
+`c932865` + push + deploy `mici-hwvm1b016` (aliased mici-theta.vercel.app).
 commits `7ecf0e4` + `253e5b2`, deploy `EmAeUDUKzjv3TexrbJVxowsgxMjg`, re-testado
 201/409). Detalhes na **seção 10**. Antes: 06/11 —
 isolamento de falhas + fila `job_queue` + WhatsApp outbound + outbox com
