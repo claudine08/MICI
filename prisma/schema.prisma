@@ -220,8 +220,10 @@ model Organization {
   aiRequests  AiRequest[]
   meetings    Meeting[]
   rfis        Rfi[]
+  supplierRfis SupplierRfi[]
   meetingActions MeetingAction[]
   meetingParticipants MeetingParticipant[]
+  supplierRfiRecipients SupplierRfiRecipient[]
   attachments MeetingAttachment[]
   @@index([status])
   @@map("organizations")
@@ -626,6 +628,7 @@ model Project {
   meetings        Meeting[]
   rfis            Rfi[]
   purchaseRequests PurchaseRequest[]
+  supplierRfis     SupplierRfi[]
   quotations      Quotation[]
   bidComparisons  BidComparison[]
   purchaseOrders  PurchaseOrder[]
@@ -2347,6 +2350,7 @@ model Supplier {
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   quotations     Quotation[]
   purchaseOrders PurchaseOrder[]
+  rfiRecipients  SupplierRfiRecipient[]
 
   @@unique([organizationId, code])
   @@unique([organizationId, clientUuid])
@@ -3246,5 +3250,75 @@ model Rfi {
   @@index([organizationId, status])
   @@index([organizationId, recipientId])
   @@map("rfis")
+}
+
+// ---------------------------------------------------------------------------
+// RFI de Fornecedores / Consulta de Preços (Onda 4, módulo Suprimentos)
+// ---------------------------------------------------------------------------
+
+enum SupplierRfiStatus {
+  DRAFT
+  SENT
+  RESPONDED
+  SELECTED
+  CONVERTED
+  CANCELLED
+}
+
+model SupplierRfi {
+  id             String            @id @default(uuid()) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  projectId      String            @map("project_id") @db.Uuid
+  code           String            @db.VarChar(32)
+  title          String            @db.VarChar(200)
+  description    String?           @db.Text
+  status         SupplierRfiStatus @default(DRAFT)
+  dueDate        DateTime?         @map("due_date") @db.Date
+  selectedSupplierId String?       @map("selected_supplier_id") @db.Uuid
+  convertedQuotationId String?     @map("converted_quotation_id") @db.Uuid
+  wbsNodeId      String?           @map("wbs_node_id") @db.Uuid
+  activityId     String?           @map("activity_id") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  recipients   SupplierRfiRecipient[]
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, status])
+  @@map("supplier_rfis")
+}
+
+model SupplierRfiRecipient {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  rfiId          String    @map("rfi_id") @db.Uuid
+  supplierId     String    @map("supplier_id") @db.Uuid
+  status         String    @default("PENDING") @db.VarChar(16)
+  quotedAmount   Decimal?  @map("quoted_amount") @db.Decimal(14, 2)
+  leadTimeDays   Int?      @map("lead_time_days")
+  notes          String?   @db.Text
+  respondedAt    DateTime? @map("responded_at")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+
+  rfi      SupplierRfi @relation(fields: [rfiId], references: [id], onDelete: Cascade)
+  supplier Supplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([rfiId, supplierId])
+  @@index([organizationId, rfiId])
+  @@index([organizationId, supplierId])
+  @@map("supplier_rfi_recipients")
 }
 
