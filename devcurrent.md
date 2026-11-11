@@ -11,7 +11,11 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 07/11/2026 (c). Frente **Fase I3 (Integrações)** — lacunas
+**Ultima atualizacao:** 07/11/2026 (d). Frente **Onda 4 (módulos faltantes)** iniciada:
+Reuniões/Atas (Fatia 1+2+3) e RFI (interno) + RFI de Fornecedores (Fatia 1)
+implementados e em produção. Commits `16e729f`, `139d527`, `2c3af0e`,
+`e1797cb`, `14625a9` + push + deploys. Migrations 25–29 aplicadas no Neon.
+Frente anterior (Fase I3) concluída e em produção.
 do §10 entregues, commitadas, com push e EM PRODUÇÃO (deploy smoke OK). Adicional:
 **frente de estabilização** concluída — fix.md itens 1–3 resolvidos e validados
 (testes clients 6 casos, schedule-import deslocamento por startDate 20/20,

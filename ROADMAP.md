@@ -335,6 +335,26 @@ G6 Pronto para comissionamento Â· G7 Aceite operacional Â· G8 Encerramento
 - Gate verde 07/11 (291 unit / 354 integracao / build) + `phase24_user_phone`
   aplicada no Neon. **Nao commitado** (commits so a pedido).
 
+## Onda 4 - Modulos faltantes (iniciada 07/11/2026)
+
+### Reunioes / Atas (Fatia 1+2+3) - concluido
+- Schema: Meeting + MeetingAction + MeetingParticipant + MeetingAttachment.
+- Backend: engine, schemas, selectors, writer (CRUD, transicoes, acoes, participantes, assinatura in-app, upload/download).
+- API: /api/v1/meetings/* (CRUD, status, actions, participants, sign, attachments).
+- UI: /projetos/[id]/reunioes (listagem, criacao, transicoes, assinatura, anexos).
+- Migrations: phase25_meetings, phase26_meeting_participants, phase27_meeting_attachments.
+
+### RFI interno - concluido
+- Schema: Rfi (code RFI001, status, resposta, vinculos WBS/atividade/requisito).
+- Backend + API + UI: /projetos/[id]/rfi.
+- Migration: phase28_rfi.
+
+### RFI de Fornecedores (Suprimentos) - Fatia 1 concluida
+- Schema: SupplierRfi (code RFQ001) + SupplierRfiRecipient.
+- Backend + API + UI: /projetos/[id]/supplier-rfi (criacao, envio, selecao de fornecedores).
+- Migration: phase29_supplier_rfi.
+- Pendente: registro de respostas na UI, selecao do melhor fornecedor, conversao em cotacao, envio por email/WhatsApp.
+
 ## Fase 1 - Estender Aprovacoes por E-mail (Onda 1+)
 
 Tarefas:

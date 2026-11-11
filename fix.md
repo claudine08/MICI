@@ -1,5 +1,7 @@
 # FIX.md — ciclo de checagem geral
 
+> **Atualização 07/11/2026:** Itens 1–3 resolvidos e validados (testes clients 6 casos, schedule-import 20/20, dropdown WBS UX). Frente de estabilização concluída. Ver devcurrent.md.
+
 ## 1. Clientes — código não gerado automaticamente
 
 **Problema reportado:** ao criar um novo cliente (ex.: "Lusos Restaurante"), nenhum código de cliente era gerado automaticamente; o campo ficava vazio.
