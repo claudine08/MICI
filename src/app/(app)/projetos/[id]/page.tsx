@@ -76,6 +76,9 @@ export default async function ProjetoDetalhePage({
           <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/reunioes`}>
             Reuniões (Onda 4)
           </a>
+          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/rfi`}>
+            RFI (Onda 4)
+          </a>
         </div>
       </div>
       <ProjectDetailView

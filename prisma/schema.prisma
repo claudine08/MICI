@@ -219,6 +219,7 @@ model Organization {
   aiPrompts   AiPrompt[]
   aiRequests  AiRequest[]
   meetings    Meeting[]
+  rfis        Rfi[]
   meetingActions MeetingAction[]
   meetingParticipants MeetingParticipant[]
   attachments MeetingAttachment[]
@@ -623,6 +624,7 @@ model Project {
   wasteRecords    WasteRecord[]
   aiRequests      AiRequest[]
   meetings        Meeting[]
+  rfis            Rfi[]
   purchaseRequests PurchaseRequest[]
   quotations      Quotation[]
   bidComparisons  BidComparison[]
@@ -3199,5 +3201,50 @@ model MeetingAttachment {
 
   @@index([organizationId, meetingId])
   @@map("meeting_attachments")
+}
+
+// ---------------------------------------------------------------------------
+// RFI — Request for Information (Onda 4, alinhamento metodologia Release 2)
+// ---------------------------------------------------------------------------
+
+enum RfiStatus {
+  OPEN
+  ANSWERED
+  CLOSED
+  CANCELLED
+}
+
+model Rfi {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  projectId      String    @map("project_id") @db.Uuid
+  code           String    @db.VarChar(32)
+  title          String    @db.VarChar(200)
+  question       String    @db.Text
+  recipientId    String?   @map("recipient_id") @db.Uuid
+  dueDate        DateTime? @map("due_date") @db.Date
+  status         RfiStatus @default(OPEN)
+  response       String?   @db.Text
+  respondedBy    String?   @map("responded_by") @db.Uuid
+  respondedAt    DateTime? @map("responded_at")
+  wbsNodeId      String?   @map("wbs_node_id") @db.Uuid
+  activityId     String?   @map("activity_id") @db.Uuid
+  requirementId  String?   @map("requirement_id") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by") @db.Uuid
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by") @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, code])
+  @@index([organizationId, projectId])
+  @@index([organizationId, status])
+  @@index([organizationId, recipientId])
+  @@map("rfis")
 }
 
