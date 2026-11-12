@@ -13,7 +13,7 @@ interface ActorContext {
 }
 
 export interface TemplateInput {
-  code: string;
+  code?: string;
   name: string;
   description?: string;
   isDefault?: boolean;
@@ -45,8 +45,22 @@ async function assertCodeAvailable(
   }
 }
 
+async function nextTemplateCode(organizationId: string): Promise<string> {
+  const rows = await prisma.projectTemplate.findMany({
+    where: { organizationId },
+    select: { code: true },
+  });
+  let max = 0;
+  for (const { code } of rows) {
+    const match = /^PT(\d+)$/.exec(code);
+    if (match) max = Math.max(max, Number(match[1]));
+  }
+  return `PT${String(max + 1).padStart(3, "0")}`;
+}
+
 export async function createTemplate(input: ActorContext & TemplateInput) {
-  const code = input.code.trim().toUpperCase();
+  const rawCode = input.code?.trim();
+  const code = rawCode ? rawCode.toUpperCase() : await nextTemplateCode(input.organizationId);
   await assertCodeAvailable(input.organizationId, code);
 
   if (input.isDefault) {

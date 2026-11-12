@@ -5,6 +5,7 @@ export interface RfiRow {
   id: string;
   code: string;
   title: string;
+  subjectGroup: string | null;
   question: string;
   recipientId: string | null;
   recipientName: string | null;
@@ -33,6 +34,7 @@ export async function listRfis(organizationId: string, projectId?: string): Prom
     id: r.id,
     code: r.code,
     title: r.title,
+    subjectGroup: r.subjectGroup,
     question: r.question,
     recipientId: r.recipientId,
     recipientName: r.recipientId ? userMap.get(r.recipientId) ?? null : null,
@@ -60,6 +62,7 @@ export async function getRfi(organizationId: string, rfiId: string): Promise<Rfi
     id: r.id,
     code: r.code,
     title: r.title,
+    subjectGroup: r.subjectGroup,
     question: r.question,
     recipientId: r.recipientId,
     recipientName: r.recipientId ? userMap.get(r.recipientId) ?? null : null,

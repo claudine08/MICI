@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
-import { nextRfiStatus } from "@/modules/rfi/engine";
+import { nextRfiStatus, type RfiStatus } from "@/modules/rfi/engine";
 
 interface ActorContext {
   organizationId: string;
@@ -24,6 +24,7 @@ export async function createRfi(
   input: ActorContext & {
     projectId: string;
     title: string;
+    subjectGroup?: string | null;
     question: string;
     recipientId?: string | null;
     dueDate?: string | null;
@@ -39,6 +40,7 @@ export async function createRfi(
       projectId: input.projectId,
       code,
       title: input.title.trim(),
+      subjectGroup: input.subjectGroup?.trim() || null,
       question: input.question.trim(),
       recipientId: input.recipientId ?? null,
       dueDate: input.dueDate ? new Date(`${input.dueDate}T00:00:00.000Z`) : null,
@@ -55,6 +57,7 @@ export async function createRfi(
 export async function updateRfi(
   input: ActorContext & { rfiId: string } & {
     title?: string;
+    subjectGroup?: string | null;
     question?: string;
     recipientId?: string | null;
     dueDate?: string | null;
@@ -70,6 +73,7 @@ export async function updateRfi(
     where: { id: rfi.id },
     data: {
       ...(input.title !== undefined ? { title: input.title.trim() } : {}),
+      ...(input.subjectGroup !== undefined ? { subjectGroup: input.subjectGroup?.trim() || null } : {}),
       ...(input.question !== undefined ? { question: input.question.trim() } : {}),
       ...(input.recipientId !== undefined ? { recipientId: input.recipientId } : {}),
       ...(input.dueDate !== undefined ? { dueDate: input.dueDate ? new Date(`${input.dueDate}T00:00:00.000Z`) : null } : {}),
@@ -92,7 +96,7 @@ export async function deleteRfi(input: ActorContext & { rfiId: string }) {
 export async function answerRfi(input: ActorContext & { rfiId: string; response: string }) {
   const rfi = await prisma.rfi.findFirst({ where: { id: input.rfiId, organizationId: input.organizationId, deletedAt: null } });
   if (!rfi) throw new AppError("NOT_FOUND", "RFI não encontrado.");
-  const result = nextRfiStatus({ currentStatus: rfi.status as any, action: "ANSWER", hasResponse: !!input.response.trim() });
+  const result = nextRfiStatus({ currentStatus: rfi.status as RfiStatus, action: "ANSWER", hasResponse: !!input.response.trim() });
   if ("error" in result) throw new AppError("VALIDATION_ERROR", result.error);
   const updated = await prisma.rfi.update({
     where: { id: rfi.id },
@@ -104,7 +108,7 @@ export async function answerRfi(input: ActorContext & { rfiId: string; response:
 export async function transitionRfi(input: ActorContext & { rfiId: string; action: "ANSWER" | "CLOSE" | "CANCEL" | "REOPEN" }) {
   const rfi = await prisma.rfi.findFirst({ where: { id: input.rfiId, organizationId: input.organizationId, deletedAt: null } });
   if (!rfi) throw new AppError("NOT_FOUND", "RFI não encontrado.");
-  const result = nextRfiStatus({ currentStatus: rfi.status as any, action: input.action, hasResponse: !!rfi.response });
+  const result = nextRfiStatus({ currentStatus: rfi.status as RfiStatus, action: input.action, hasResponse: !!rfi.response });
   if ("error" in result) throw new AppError("VALIDATION_ERROR", result.error);
   const updated = await prisma.rfi.update({
     where: { id: rfi.id },

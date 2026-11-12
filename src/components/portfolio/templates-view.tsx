@@ -71,7 +71,7 @@ export function TemplatesView({
     setBusy(true);
     try {
       const payload = {
-        code: form.code,
+        code: form.code.trim() || undefined,
         name: form.name,
         description: form.description,
         isDefault: form.isDefault,
@@ -90,7 +90,16 @@ export function TemplatesView({
       setDialogOpen(false);
       router.refresh();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Falha ao salvar template.");
+      let message = caught instanceof Error ? caught.message : "Falha ao salvar template.";
+      const details = (caught as { details?: unknown })?.details;
+      if (details && typeof details === "object" && "fieldErrors" in (details as Record<string, unknown>)) {
+        const fe = (details as { fieldErrors?: Record<string, string[]> }).fieldErrors;
+        const joined = Object.entries(fe ?? {})
+          .map(([k, v]) => `${k}: ${(v ?? []).join(", ")}`)
+          .join(" | ");
+        if (joined) message = `${message} — ${joined}`;
+      }
+      setError(message);
     } finally {
       setBusy(false);
     }
@@ -204,7 +213,7 @@ export function TemplatesView({
         <div className="flex flex-col gap-4">
           <ErrorBox message={error} />
           <div className="grid gap-2">
-            <Label htmlFor="template-code">Código *</Label>
+            <Label htmlFor="template-code">Código (opcional)</Label>
             <Input
               id="template-code"
               value={form.code}
@@ -244,7 +253,7 @@ export function TemplatesView({
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={() => void submit()} disabled={busy || !form.code || !form.name}>
+            <Button onClick={() => void submit()} disabled={busy || !form.name}>
               {busy ? "Salvando…" : "Salvar"}
             </Button>
           </div>

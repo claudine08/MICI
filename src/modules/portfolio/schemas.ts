@@ -39,7 +39,7 @@ export const updateClientSchema = z.object({
 });
 
 export const createTemplateSchema = z.object({
-  code: codeSchema,
+  code: codeSchema.optional(),
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional(),
   isDefault: z.boolean().optional(),

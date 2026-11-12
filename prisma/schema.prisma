@@ -3224,6 +3224,7 @@ model Rfi {
   projectId      String    @map("project_id") @db.Uuid
   code           String    @db.VarChar(32)
   title          String    @db.VarChar(200)
+  subjectGroup   String?   @map("subject_group") @db.VarChar(64)
   question       String    @db.Text
   recipientId    String?   @map("recipient_id") @db.Uuid
   dueDate        DateTime? @map("due_date") @db.Date

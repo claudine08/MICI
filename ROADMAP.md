@@ -145,7 +145,9 @@ para `http://localhost:3000`. Duas causas independentes:
 | **E16 Sustainability** | PSP, baseline, metas, medicoes, residuo, relatorio ambiental | Implementado e em producao (02/11) |
 | **E17 Dashboard** | Portfólio, executivo, projeto, campo | Implementado e em produção (02/11) |
 | **E18 AI** | AI Gateway, prompts, extração, resumo diário, classificação, busca semântica | Implementado e em produção (02/11) |
-| **E19 Project Dashboard** | Dashboard de projetos no painel (portfÃ³lio + drill-down): datas inÃ­cio/fim (planejado/real), custos (planejado/real), percentuais planejado/real por data de reporte (as-of), KPIs (PV/EV/AC/SPI/CPI), curva S, Gantt resumido, burndown, heat map de riscos, alertas. Visuais com Recharts (curva S, burndown, heat map). Inspirado em Power BI/Jira. | âœ… Completo (Fatia 1+2+3 em produÃ§Ã£o) |
+| **E19 Project Dashboard** | Dashboard de projetos no painel (portfÃ³lio + drill-down): datas inÃ­cio/fim (planejado/real), custos (planejado/real), percentuais planejado/real por data de reporte (as-of), KPIs (PV/EV/AC/SPI/CPI), curva S, Gantt resumido, burndown, heat map de riscos, alertas. Visuais com Recharts (curva S, burndown, heat map). Inspirado em Power BI/Jira. |
+| **E21 Configurações (Settings)** | Personalização do comportamento da plataforma por cliente/organização sem perder a essência do produto. Features a definir. | Backlog (escopo a definir) |
+| **E22 Gestão** | Módulo de gestão com dois submódulos: Gestão de Projetos e Gestão de Portfólio. Features a definir. | Backlog (escopo a definir) | âœ… Completo (Fatia 1+2+3 em produÃ§Ã£o) |
 
 > Desvio registrado (ADR-014): a spec original previa Django + React
 > (E01-US01/US02); a decisÃ£o aprovada de arquitetura Ã© **Next.js full-stack**

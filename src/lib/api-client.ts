@@ -3,12 +3,14 @@
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
+  readonly details?: unknown;
 
-  constructor(status: number, message: string, code?: string) {
+  constructor(status: number, message: string, code?: string, details?: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code ?? "UNKNOWN";
+    this.details = details;
   }
 }
 
@@ -56,14 +58,15 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   }
 
   const data = (await response.json().catch(() => null)) as
-    | { error?: { message?: string; code?: string } }
+    | { error?: { message?: string; code?: string; details?: unknown } }
     | null;
 
   if (!response.ok) {
     throw new ApiError(
       response.status,
       data?.error?.message ?? "Falha na requisição. Tente novamente.",
-      data?.error?.code
+      data?.error?.code,
+      data?.error?.details
     );
   }
 
@@ -91,7 +94,7 @@ export function apiUpload<T>(
       }
     };
     xhr.onload = () => {
-      let data: { error?: { message?: string; code?: string } } | null = null;
+      let data: { error?: { message?: string; code?: string; details?: unknown } } | null = null;
       try {
         data = JSON.parse(xhr.responseText) as { error?: { message?: string; code?: string } };
       } catch {
@@ -105,7 +108,8 @@ export function apiUpload<T>(
         new ApiError(
           xhr.status,
           data?.error?.message ?? "Falha na requisição. Tente novamente.",
-          data?.error?.code
+          data?.error?.code,
+          data?.error?.details
         )
       );
     };

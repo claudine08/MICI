@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
+import { enqueueJob } from "@/modules/integrations/jobs";
 
 interface ActorContext {
   organizationId: string;
@@ -104,12 +105,31 @@ export async function sendRfi(input: ActorContext & { rfiId: string }) {
   const rfi = await prisma.supplierRfi.findFirst({ where: { id: input.rfiId, organizationId: input.organizationId, deletedAt: null } });
   if (!rfi) throw new AppError("NOT_FOUND", "RFI não encontrado.");
   if (rfi.status !== "DRAFT") throw new AppError("VALIDATION_ERROR", "Apenas RFIs em rascunho podem ser enviados.");
-  const count = await prisma.supplierRfiRecipient.count({ where: { rfiId: rfi.id } });
-  if (count === 0) throw new AppError("VALIDATION_ERROR", "Adicione ao menos um fornecedor antes de enviar.");
+  const recipients = await prisma.supplierRfiRecipient.findMany({ where: { rfiId: rfi.id } });
+  if (recipients.length === 0) throw new AppError("VALIDATION_ERROR", "Adicione ao menos um fornecedor antes de enviar.");
   const updated = await prisma.supplierRfi.update({
     where: { id: rfi.id },
     data: { status: "SENT", updatedBy: input.actorId },
   });
+  // Enfileira e-mail para cada fornecedor com e-mail cadastrado (best-effort).
+  const supplierIds = recipients.map((r) => r.supplierId);
+  const suppliers = supplierIds.length
+    ? await prisma.supplier.findMany({ where: { id: { in: supplierIds } }, select: { id: true, name: true, email: true } })
+    : [];
+  const supMap = new Map(suppliers.map((s) => [s.id, s]));
+  for (const rec of recipients) {
+    const sup = supMap.get(rec.supplierId);
+    if (!sup?.email) continue;
+    await enqueueJob({
+      type: "email.send",
+      payload: {
+        to: sup.email,
+        subject: `RFI de Fornecedores ${rfi.code} - ${rfi.title}`,
+        html: `<p>Olá ${sup.name},</p><p>Solicitamos cotação para: <strong>${rfi.title}</strong>.</p>${rfi.description ? `<p>${rfi.description}</p>` : ""}${rfi.dueDate ? `<p>Prazo: ${rfi.dueDate.toISOString().slice(0, 10)}</p>` : ""}`,
+      },
+      dedupeKey: `email.rfi:${rfi.id}:${rec.supplierId}`,
+    });
+  }
   return updated;
 }
 

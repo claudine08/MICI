@@ -1,0 +1,1 @@
+ALTER TABLE "rfis" ADD COLUMN IF NOT EXISTS "subject_group" VARCHAR(64);

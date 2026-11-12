@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createRfiSchema = z.object({
   projectId: z.string().uuid(),
   title: z.string().min(1).max(200),
+  subjectGroup: z.string().max(64).optional().nullable(),
   question: z.string().min(1),
   recipientId: z.string().uuid().optional().nullable(),
   dueDate: z.string().optional().nullable(),
@@ -13,6 +14,7 @@ export const createRfiSchema = z.object({
 
 export const updateRfiSchema = z.object({
   title: z.string().min(1).max(200).optional(),
+  subjectGroup: z.string().max(64).optional().nullable(),
   question: z.string().min(1).optional(),
   recipientId: z.string().uuid().optional().nullable(),
   dueDate: z.string().optional().nullable(),

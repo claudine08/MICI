@@ -32,6 +32,7 @@ export function RfiView({
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [title, setTitle] = useState("");
+  const [subjectGroup, setSubjectGroup] = useState("");
   const [question, setQuestion] = useState("");
   const [recipientId, setRecipientId] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -46,10 +47,10 @@ export function RfiView({
     try {
       await apiRequest("/api/v1/rfis", {
         method: "POST",
-        body: JSON.stringify({ projectId, title, question, recipientId: recipientId || null, dueDate: dueDate || null }),
+        body: JSON.stringify({ projectId, title, subjectGroup: subjectGroup || null, question, recipientId: recipientId || null, dueDate: dueDate || null }),
       });
       setDialogOpen(false);
-      setTitle(""); setQuestion(""); setRecipientId(""); setDueDate("");
+      setTitle(""); setSubjectGroup(""); setQuestion(""); setRecipientId(""); setDueDate("");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao criar RFI.");
@@ -101,15 +102,19 @@ export function RfiView({
       {error && <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
       {canCreate && (
         <div>
-          <Button onClick={() => setDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Novo RFI</Button>
+          <Button onClick={() => setDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Novo Chat</Button>
         </div>
       )}
-      <Dialog open={dialogOpen} title="Novo RFI" onClose={() => setDialogOpen(false)}>
+      <Dialog open={dialogOpen} title="Novo Chat" onClose={() => setDialogOpen(false)}>
         <div className="flex flex-col gap-3 p-4">
-          <h2 className="text-lg font-semibold">Novo RFI</h2>
+          <h2 className="text-lg font-semibold">Novo Chat</h2>
           <div className="grid gap-2">
-            <Label>Título</Label>
+            <Label>Assunto</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label>Grupo</Label>
+            <Input value={subjectGroup} onChange={(e) => setSubjectGroup(e.target.value)} placeholder="prazo, custo, fornecedor, riscos, suprimentos..." />
           </div>
           <div className="grid gap-2">
             <Label>Pergunta</Label>
@@ -134,7 +139,8 @@ export function RfiView({
           <thead>
             <tr className="border-b text-left text-xs uppercase text-muted-foreground">
               <th className="px-4 py-2.5">Código</th>
-              <th className="px-4 py-2.5">Título</th>
+              <th className="px-4 py-2.5">Assunto</th>
+              <th className="px-4 py-2.5">Grupo</th>
               <th className="px-4 py-2.5">Destinatário</th>
               <th className="px-4 py-2.5">Prazo</th>
               <th className="px-4 py-2.5">Status</th>
@@ -147,6 +153,7 @@ export function RfiView({
               <tr key={r.id} className="border-b last:border-0">
                 <td className="px-4 py-2.5 font-mono text-xs">{r.code}</td>
                 <td className="px-4 py-2.5">{r.title}</td>
+                <td className="px-4 py-2.5">{r.subjectGroup ?? "—"}</td>
                 <td className="px-4 py-2.5">{r.recipientName ?? "—"}</td>
                 <td className="px-4 py-2.5">{r.dueDate ?? "—"}</td>
                 <td className="px-4 py-2.5">{r.status}</td>
