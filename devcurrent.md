@@ -11,7 +11,9 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 07/11/2026 (d). Frente **Onda 4 (módulos faltantes)** iniciada:
+**Ultima atualizacao:** 12/11/2026. Commit `6e6cd6b` publicado: RFI renomeado para Chat (subjectGroup), templates com código opcional/auto-gerado (PT001), api-client com `details`, supplier-rfi envia e-mail via fila, migration phase30. Gate verde (291 unit + 366 integração + build). Deploy `mici-7mqaapnn4` (aliased mici-theta). Integração (NEON_API_KEY, crons, inbound WhatsApp/ERP) adiada.
+
+Anterior: 07/11/2026 (d). Frente **Onda 4 (módulos faltantes)** iniciada:
 Reuniões/Atas (Fatia 1+2+3) e RFI (interno) + RFI de Fornecedores (Fatia 1)
 implementados e em produção. Commits `16e729f`, `139d527`, `2c3af0e`,
 `e1797cb`, `14625a9` + push + deploys. Migrations 25–29 aplicadas no Neon.

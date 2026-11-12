@@ -1769,3 +1769,12 @@ organization_memberships_organization_id_user_id_key`).
   build EXIT=0.
 - Deploy feito em seguida (`npx vercel --prod --scope homeland1`) e reconvite
   re-testado em producao.
+
+## 12/11/2026 - RFI -> Chat + templates + supplier-rfi email
+
+- Rota /projetos/[id]/chat criada (reutiliza RfiView); link no detalhe do projeto atualizado.
+- RFI ganhou campo subjectGroup (migration phase30_rfi_subject_group), schemas/selectors/UI (assunto/grupo).
+- Templates: código opcional com auto-geração PT001; api-client expõe details (fieldErrors).
+- Supplier RFI: envio enfileira e-mail (job email.send) por fornecedor.
+- Gate: lint (warnings preexistentes) + typecheck + 291 unit + 366 integração + build OK.
+- Commit 6e6cd6b + push + deploy mici-7mqaapnn4 (aliased mici-theta.vercel.app).
