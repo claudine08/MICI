@@ -20,6 +20,7 @@ export interface ProjectDashboardRow {
   openRfis: number;
   openPunchItems: number;
   delayed: boolean;
+  delayedActivities: string[];
 }
 
 export interface PortfolioDashboard {
@@ -125,6 +126,20 @@ export async function getPortfolioDashboard(
     const delayed =
       !!p.plannedEndDate && p.plannedEndDate.getTime() < asOf.getTime() && p.status !== "COMPLETED" && p.status !== "CANCELLED" && p.status !== "ARCHIVED";
 
+    const delayedActRows = await prisma.scheduleActivity.findMany({
+      where: {
+        projectId: p.id,
+        organizationId,
+        deletedAt: null,
+        status: { notIn: ["COMPLETED", "CANCELLED"] },
+        plannedFinish: { lt: asOf },
+      },
+      select: { code: true, name: true, plannedFinish: true },
+      orderBy: { plannedFinish: "asc" },
+      take: 10,
+    });
+    const delayedActivities = delayedActRows.map((a) => `${a.code} — ${a.name}`);
+
     rows.push({
       id: p.id,
       code: p.code,
@@ -145,6 +160,7 @@ export async function getPortfolioDashboard(
       openRfis,
       openPunchItems,
       delayed,
+      delayedActivities,
     });
 
     totalOpenRfis += openRfis;

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
-interface ProjectRow { id: string; code: string; name: string; status: string; currentPhase: string; plannedStart: string | null; plannedEnd: string | null; bac: number; pv: number; ev: number; ac: number; plannedPct: number; actualPct: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; delayed: boolean; }
+interface ProjectRow { id: string; code: string; name: string; status: string; currentPhase: string; plannedStart: string | null; plannedEnd: string | null; bac: number; pv: number; ev: number; ac: number; plannedPct: number; actualPct: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; delayed: boolean; delayedActivities: string[]; }
 interface Kpis { totalProjects: number; delayedProjects: number; totalBac: number; totalPv: number; totalEv: number; totalAc: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; }
 interface Props { kpis: Kpis; projects: ProjectRow[]; asOf: string; }
 
@@ -77,7 +77,7 @@ export function PainelView({ kpis, projects, asOf }: Props) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {inPhase.map((p) => (
-                      <Link key={p.id} href={`/projetos/${p.id}`} className={`rounded border px-2 py-1 text-xs hover:bg-muted ${p.delayed ? "border-red-300 bg-red-50 text-red-600 font-semibold animate-pulse" : ""}`}>
+                      <Link key={p.id} href={`/projetos/${p.id}`} title={p.delayed && p.delayedActivities.length ? `Atividades em atraso:\n${p.delayedActivities.join("\n")}` : undefined} className={`rounded border px-2 py-1 text-xs hover:bg-muted ${p.delayed ? "border-red-300 bg-red-50 text-red-600 font-semibold animate-pulse" : ""}`}>
                         {p.code} — {p.name}
                       </Link>
                     ))}
