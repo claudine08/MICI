@@ -1778,3 +1778,12 @@ organization_memberships_organization_id_user_id_key`).
 - Supplier RFI: envio enfileira e-mail (job email.send) por fornecedor.
 - Gate: lint (warnings preexistentes) + typecheck + 291 unit + 366 integração + build OK.
 - Commit 6e6cd6b + push + deploy mici-7mqaapnn4 (aliased mici-theta.vercel.app).
+
+## 12/11/2026 (b) - UI: menu, painel e alertas por modulo
+
+- Menu do projeto compactado em grid responsivo (2->6 colunas), removidas tags (E0X)/(Onda4).
+- Painel (/painel): cards operacionais (Projetos, Em atraso, RFI abertos, Punch items, Riscos); removidos BAC/PV/EV/AC/SPI/CPI; cards clicaveis filtram a tabela; botao "Limpar filtros".
+- Projetos em atraso destacados em vermelho + animate-pulse na secao "Projetos por fase"; tooltip lista atividades em atraso (ate 10) e riscos do projeto.
+- Botao Chat pisca se houver RFI abertas para o usuario logado (tooltip lista mensagens); idem Reunioes (participacoes pendentes de assinatura) e RFI Fornecedores (status SENT/RESPONDED).
+- Org switcher redireciona para /painel ao trocar de org; projeto inexistente na org ativa redireciona para /projetos.
+- Commits 52f99fb..99c3450, push e deploys mici-2ujqk0pjz..mici-34ogl6o54 (aliased mici-theta.vercel.app).

@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 12/11/2026. Commit `6e6cd6b` publicado: RFI renomeado para Chat (subjectGroup), templates com código opcional/auto-gerado (PT001), api-client com `details`, supplier-rfi envia e-mail via fila, migration phase30. Gate verde (291 unit + 366 integração + build). Deploy `mici-7mqaapnn4` (aliased mici-theta). Integração (NEON_API_KEY, crons, inbound WhatsApp/ERP) adiada.
+**Ultima atualizacao:** 12/11/2026 (b). Commits `52f99fb`..`99c3450` publicados: menu do projeto compactado (grid responsivo, sem tags E0X/Onda4); painel com KPIs operacionais (projetos, em atraso, RFI abertos, punch items, riscos) e cards clicáveis que filtram a tabela; destaque de projetos em atraso (vermelho + blink) + tooltip de atividades em atraso; tooltip de riscos por projeto; org switcher redireciona para /painel e evita 404; botões Chat/Reuniões/RFI Fornecedores piscam com tooltip de itens abertos para o usuário. Deploys `mici-2ujqk0pjz`..`mici-34ogl6o54` (aliased mici-theta). Gate: typecheck + build OK. Integração adiada.
 
 Anterior: 07/11/2026 (d). Frente **Onda 4 (módulos faltantes)** iniciada:
 Reuniões/Atas (Fatia 1+2+3) e RFI (interno) + RFI de Fornecedores (Fatia 1)
