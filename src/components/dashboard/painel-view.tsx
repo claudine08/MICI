@@ -33,17 +33,11 @@ export function PainelView({ kpis, projects, asOf }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Projetos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.totalProjects}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Em atraso</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{kpis.delayedProjects}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">RFI abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openRfis}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Punch items abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openPunchItems}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">BAC</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(kpis.totalBac)}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">PV</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(kpis.totalPv)}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">EV</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(kpis.totalEv)}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">AC</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(kpis.totalAc)}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">SPI</CardTitle></CardHeader><CardContent><div className={`text-2xl font-bold ${colorForRatio(kpis.spi)}`}>{kpis.spi ?? "—"}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">CPI</CardTitle></CardHeader><CardContent><div className={`text-2xl font-bold ${colorForRatio(kpis.cpi)}`}>{kpis.cpi ?? "—"}</div></CardContent></Card>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
