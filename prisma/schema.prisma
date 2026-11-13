@@ -236,9 +236,10 @@ model User {
   phone        String?    @db.VarChar(40)
   passwordHash String?    @map("password_hash") @db.VarChar(512)
   status       UserStatus @default(ACTIVE)
-  locale       String     @default("pt-BR") @db.VarChar(10)
-  timezone     String     @default("America/Sao_Paulo") @db.VarChar(64)
-  lastLoginAt  DateTime?  @map("last_login_at")
+  locale                     String     @default("pt-BR") @db.VarChar(10)
+  timezone                   String     @default("America/Sao_Paulo") @db.VarChar(64)
+  lastLoginAt                DateTime?  @map("last_login_at")
+  onboardingGuideDismissedAt DateTime?  @map("onboarding_guide_dismissed_at")
 
   createdAt DateTime  @default(now()) @map("created_at")
   createdBy String?   @map("created_by") @db.Uuid
