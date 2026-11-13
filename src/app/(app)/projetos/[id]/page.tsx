@@ -54,6 +54,40 @@ export default async function ProjetoDetalhePage({
       ? `Mensagens abertas para você:\n${openChatRfis.map((r) => `${r.code} — ${r.title}${r.subjectGroup ? ` (${r.subjectGroup})` : ""}`).join("\n")}`
       : undefined;
 
+  const pendingMeetings = await prisma.meeting.findMany({
+    where: {
+      projectId: id,
+      organizationId: context.organizationId,
+      deletedAt: null,
+      participants: { some: { userId: context.userId, status: "PENDING" } },
+    },
+    select: { code: true, title: true },
+    orderBy: { meetingDate: "desc" },
+    take: 10,
+  });
+  const openMeetingsCount = pendingMeetings.length;
+  const openMeetingsTooltip =
+    pendingMeetings.length > 0
+      ? `Reuniões pendentes de sua assinatura:\n${pendingMeetings.map((m) => `${m.code} — ${m.title}`).join("\n")}`
+      : undefined;
+
+  const openSupplierRfis = await prisma.supplierRfi.findMany({
+    where: {
+      projectId: id,
+      organizationId: context.organizationId,
+      deletedAt: null,
+      status: { in: ["SENT", "RESPONDED"] },
+    },
+    select: { code: true, title: true },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+  const openSupplierRfiCount = openSupplierRfis.length;
+  const openSupplierRfiTooltip =
+    openSupplierRfis.length > 0
+      ? `RFIs de fornecedores em aberto:\n${openSupplierRfis.map((r) => `${r.code} — ${r.title}`).join("\n")}`
+      : undefined;
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div>
@@ -98,8 +132,12 @@ export default async function ProjetoDetalhePage({
           <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/sustentabilidade`}>
             Sustentabilidade
           </a>
-          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/reunioes`}>
-            Reuniões
+          <a
+            title={openMeetingsTooltip}
+            className={`rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover ${openMeetingsCount > 0 ? "border-red-300 bg-red-50 text-red-600 animate-pulse" : ""}`}
+            href={`/projetos/${id}/reunioes`}
+          >
+            Reuniões{openMeetingsCount > 0 ? ` (${openMeetingsCount})` : ""}
           </a>
           <a
             title={openChatTooltip}
@@ -108,8 +146,12 @@ export default async function ProjetoDetalhePage({
           >
             Chat{openChatCount > 0 ? ` (${openChatCount})` : ""}
           </a>
-          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/supplier-rfi`}>
-            RFI Fornecedores
+          <a
+            title={openSupplierRfiTooltip}
+            className={`rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover ${openSupplierRfiCount > 0 ? "border-red-300 bg-red-50 text-red-600 animate-pulse" : ""}`}
+            href={`/projetos/${id}/supplier-rfi`}
+          >
+            RFI Fornecedores{openSupplierRfiCount > 0 ? ` (${openSupplierRfiCount})` : ""}
           </a>
         </div>
       </div>
