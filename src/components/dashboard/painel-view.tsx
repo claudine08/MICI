@@ -15,9 +15,13 @@ function colorForRatio(r: number | null): string { if (r === null) return "text-
 export function PainelView({ kpis, projects, asOf }: Props) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [rfiFilter, setRfiFilter] = useState(false);
+  const [punchFilter, setPunchFilter] = useState(false);
 
   const filtered = projects.filter((p) => {
     if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
+    if (rfiFilter && p.openRfis <= 0) return false;
+    if (punchFilter && p.openPunchItems <= 0) return false;
     if (search && !`${p.code} ${p.name}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -36,8 +40,8 @@ export function PainelView({ kpis, projects, asOf }: Props) {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Projetos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.totalProjects}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Em atraso</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{kpis.delayedProjects}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">RFI abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openRfis}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Punch items abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openPunchItems}</div></CardContent></Card>
+        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${rfiFilter ? "border-primary" : ""}`} onClick={() => setRfiFilter((v) => !v)}><CardHeader className="pb-2"><CardTitle className="text-xs">RFI abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openRfis}</div><div className="text-[10px] text-muted-foreground">{rfiFilter ? "filtrando" : "clique para filtrar"}</div></CardContent></Card>
+        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${punchFilter ? "border-primary" : ""}`} onClick={() => setPunchFilter((v) => !v)}><CardHeader className="pb-2"><CardTitle className="text-xs">Punch items abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openPunchItems}</div><div className="text-[10px] text-muted-foreground">{punchFilter ? "filtrando" : "clique para filtrar"}</div></CardContent></Card>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
