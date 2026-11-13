@@ -1787,3 +1787,11 @@ organization_memberships_organization_id_user_id_key`).
 - Botao Chat pisca se houver RFI abertas para o usuario logado (tooltip lista mensagens); idem Reunioes (participacoes pendentes de assinatura) e RFI Fornecedores (status SENT/RESPONDED).
 - Org switcher redireciona para /painel ao trocar de org; projeto inexistente na org ativa redireciona para /projetos.
 - Commits 52f99fb..99c3450, push e deploys mici-2ujqk0pjz..mici-34ogl6o54 (aliased mici-theta.vercel.app).
+
+## 13/11/2026 - WBS/risco/campo + backlog evidencia
+
+- WBS: coluna Nome passa a exibir a atividade vinculada (code + nome) quando houver.
+- Riscos: popup WBS exibe nome da atividade; item de custo filtrado pelo WBS selecionado; tabela ganhou coluna WBS (codigo+nome).
+- Campo: botao "Selecionar arquivo" abre o explorador no upload de foto/evidencia.
+- Backlog: upload de arquivo como evidencia de gate/requisito (hoje rótulo+URL).
+- Commits c14c5c.. 4b74ce, push e deploys mici-5f39un0yd..mici-gbsoamgz7 (aliased mici-theta).

@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 12/11/2026 (b). Commits `52f99fb`..`99c3450` publicados: menu do projeto compactado (grid responsivo, sem tags E0X/Onda4); painel com KPIs operacionais (projetos, em atraso, RFI abertos, punch items, riscos) e cards clicáveis que filtram a tabela; destaque de projetos em atraso (vermelho + blink) + tooltip de atividades em atraso; tooltip de riscos por projeto; org switcher redireciona para /painel e evita 404; botões Chat/Reuniões/RFI Fornecedores piscam com tooltip de itens abertos para o usuário. Deploys `mici-2ujqk0pjz`..`mici-34ogl6o54` (aliased mici-theta). Gate: typecheck + build OK. Integração adiada.
+**Ultima atualizacao:** 13/11/2026. Commits `bc14c5c`..`70f93b2` publicados: WBS mostra nome da atividade vinculada (code+nome) no painel e no popup de riscos; item de custo filtrado por WBS no popup de risco; tabela de riscos com coluna WBS (codigo+nome); botao de upload de foto com seletor de arquivo. Backlog anotado: upload de arquivo como evidência de gate/requisito (hoje é rótulo+URL; feature a implementar). Integração adiada. Retomar amanhã.
 
 Anterior: 07/11/2026 (d). Frente **Onda 4 (módulos faltantes)** iniciada:
 Reuniões/Atas (Fatia 1+2+3) e RFI (interno) + RFI de Fornecedores (Fatia 1)
