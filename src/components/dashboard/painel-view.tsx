@@ -64,7 +64,7 @@ export function PainelView({ kpis, projects, asOf }: Props) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {inPhase.map((p) => (
-                      <Link key={p.id} href={`/projetos/${p.id}`} className="rounded border px-2 py-1 text-xs hover:bg-muted">
+                      <Link key={p.id} href={`/projetos/${p.id}`} className={`rounded border px-2 py-1 text-xs hover:bg-muted ${p.delayed ? "border-red-300 bg-red-50 text-red-600 font-semibold animate-pulse" : ""}`}>
                         {p.code} — {p.name}
                       </Link>
                     ))}
