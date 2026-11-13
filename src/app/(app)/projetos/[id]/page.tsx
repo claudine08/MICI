@@ -36,51 +36,51 @@ export default async function ProjetoDetalhePage({
         <p className="text-sm text-muted-foreground">
           Fase e status são distintos (§14.2); o avanço de fase obedece ao BR-001.
         </p>
-        <div className="mt-2 flex gap-3 text-sm">
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/requisitos`}>
-            Requisitos e DRP (E04)
+        <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/requisitos`}>
+            Requisitos e DRP
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/wbs`}>
-            WBS (E05)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/wbs`}>
+            WBS
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/cronograma`}>
-            Cronograma (E07)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/cronograma`}>
+            Cronograma
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/custos`}>
-            Custos (E08)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/custos`}>
+            Custos
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/dashboard`}>
-            Dashboard (E19)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/dashboard`}>
+            Dashboard
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/documentos`}>
-            Documentos (E09)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/documentos`}>
+            Documentos
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/riscos`}>
-            Riscos (E10)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/riscos`}>
+            Riscos
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/mudancas`}>
-            Mudanças (E11)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/mudancas`}>
+            Mudanças
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/qualidade`}>
-            Qualidade (E13)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/qualidade`}>
+            Qualidade
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/suprimentos`}>
-            Suprimentos (E14)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/suprimentos`}>
+            Suprimentos
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/commissioning`}>
-            Comissionamento (E15)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/commissioning`}>
+            Comissionamento
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/sustentabilidade`}>
-            Sustentabilidade (E16)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/sustentabilidade`}>
+            Sustentabilidade
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/reunioes`}>
-            Reuniões (Onda 4)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/reunioes`}>
+            Reuniões
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/chat`}>
-            Chat (Onda 4)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/chat`}>
+            Chat
           </a>
-          <a className="underline-offset-2 hover:underline" href={`/projetos/${id}/supplier-rfi`}>
-            RFI Fornecedores (Onda 4)
+          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/supplier-rfi`}>
+            RFI Fornecedores
           </a>
         </div>
       </div>
