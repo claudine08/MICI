@@ -51,6 +51,15 @@ export function PainelView({ kpis, projects, asOf }: Props) {
           {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <span className="text-sm text-muted-foreground">{filtered.length} de {projects.length} projetos</span>
+        {(rfiFilter || punchFilter) && (
+          <button
+            type="button"
+            onClick={() => { setRfiFilter(false); setPunchFilter(false); }}
+            className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
+          >
+            Limpar filtros
+          </button>
+        )}
       </div>
 
       {/* Projetos por fase */}
