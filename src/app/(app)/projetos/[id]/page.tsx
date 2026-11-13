@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { getTenantContext } from "@/core/tenant";
 import { can, toPermissionSet } from "@/core/rbac";
 import { getProjectDetail, listClients, listTemplates } from "@/modules/portfolio/selectors";
@@ -34,6 +35,24 @@ export default async function ProjetoDetalhePage({
     listTemplates(context.organizationId),
     listMembers(context.organizationId),
   ]);
+
+  const openChatRfis = await prisma.rfi.findMany({
+    where: {
+      projectId: id,
+      organizationId: context.organizationId,
+      deletedAt: null,
+      recipientId: context.userId,
+      status: { notIn: ["CLOSED", "CANCELLED"] },
+    },
+    select: { code: true, title: true, subjectGroup: true },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+  const openChatCount = openChatRfis.length;
+  const openChatTooltip =
+    openChatRfis.length > 0
+      ? `Mensagens abertas para você:\n${openChatRfis.map((r) => `${r.code} — ${r.title}${r.subjectGroup ? ` (${r.subjectGroup})` : ""}`).join("\n")}`
+      : undefined;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
@@ -82,8 +101,12 @@ export default async function ProjetoDetalhePage({
           <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/reunioes`}>
             Reuniões
           </a>
-          <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/chat`}>
-            Chat
+          <a
+            title={openChatTooltip}
+            className={`rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover ${openChatCount > 0 ? "border-red-300 bg-red-50 text-red-600 animate-pulse" : ""}`}
+            href={`/projetos/${id}/chat`}
+          >
+            Chat{openChatCount > 0 ? ` (${openChatCount})` : ""}
           </a>
           <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/supplier-rfi`}>
             RFI Fornecedores
