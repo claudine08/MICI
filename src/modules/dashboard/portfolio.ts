@@ -19,6 +19,8 @@ export interface ProjectDashboardRow {
   cpi: number | null;
   openRfis: number;
   openPunchItems: number;
+  riskCount: number;
+  riskTitles: string[];
   delayed: boolean;
   delayedActivities: string[];
 }
@@ -36,6 +38,7 @@ export interface PortfolioDashboard {
     cpi: number | null;
     openRfis: number;
     openPunchItems: number;
+    totalRisks: number;
   };
   projects: ProjectDashboardRow[];
 }
@@ -83,6 +86,7 @@ export async function getPortfolioDashboard(
   let totalDelayed = 0;
   let totalOpenRfis = 0;
   let totalOpenPunchItems = 0;
+  let totalRisks = 0;
 
   for (const p of projects) {
     // BAC = soma CostItem.amount
@@ -140,6 +144,15 @@ export async function getPortfolioDashboard(
     });
     const delayedActivities = delayedActRows.map((a) => `${a.code} — ${a.name}`);
 
+    const riskRows = await prisma.risk.findMany({
+      where: { projectId: p.id, organizationId, deletedAt: null, status: { notIn: ["CLOSED", "CANCELLED"] } },
+      select: { code: true, title: true },
+      orderBy: { code: "asc" },
+      take: 10,
+    });
+    const riskCount = riskRows.length;
+    const riskTitles = riskRows.map((r) => `${r.code} — ${r.title}`);
+
     rows.push({
       id: p.id,
       code: p.code,
@@ -159,12 +172,15 @@ export async function getPortfolioDashboard(
       cpi,
       openRfis,
       openPunchItems,
+      riskCount,
+      riskTitles,
       delayed,
       delayedActivities,
     });
 
     totalOpenRfis += openRfis;
     totalOpenPunchItems += openPunchItems;
+    totalRisks += riskCount;
     if (delayed) totalDelayed += 1;
 
     totalBac += bac;
@@ -189,6 +205,7 @@ export async function getPortfolioDashboard(
       cpi: totalCpi,
       openRfis: totalOpenRfis,
       openPunchItems: totalOpenPunchItems,
+      totalRisks,
     },
     projects: rows,
   };

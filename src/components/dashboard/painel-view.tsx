@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
-interface ProjectRow { id: string; code: string; name: string; status: string; currentPhase: string; plannedStart: string | null; plannedEnd: string | null; bac: number; pv: number; ev: number; ac: number; plannedPct: number; actualPct: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; delayed: boolean; delayedActivities: string[]; }
-interface Kpis { totalProjects: number; delayedProjects: number; totalBac: number; totalPv: number; totalEv: number; totalAc: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; }
+interface ProjectRow { id: string; code: string; name: string; status: string; currentPhase: string; plannedStart: string | null; plannedEnd: string | null; bac: number; pv: number; ev: number; ac: number; plannedPct: number; actualPct: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; riskCount: number; riskTitles: string[]; delayed: boolean; delayedActivities: string[]; }
+interface Kpis { totalProjects: number; delayedProjects: number; totalBac: number; totalPv: number; totalEv: number; totalAc: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; totalRisks: number; }
 interface Props { kpis: Kpis; projects: ProjectRow[]; asOf: string; }
 
 function fmt(n: number): string { return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -17,11 +17,13 @@ export function PainelView({ kpis, projects, asOf }: Props) {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [rfiFilter, setRfiFilter] = useState(false);
   const [punchFilter, setPunchFilter] = useState(false);
+  const [riskFilter, setRiskFilter] = useState(false);
 
   const filtered = projects.filter((p) => {
     if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
     if (rfiFilter && p.openRfis <= 0) return false;
     if (punchFilter && p.openPunchItems <= 0) return false;
+    if (riskFilter && p.riskCount <= 0) return false;
     if (search && !`${p.code} ${p.name}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -42,6 +44,7 @@ export function PainelView({ kpis, projects, asOf }: Props) {
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Em atraso</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{kpis.delayedProjects}</div></CardContent></Card>
         <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${rfiFilter ? "border-primary" : ""}`} onClick={() => setRfiFilter((v) => !v)}><CardHeader className="pb-2"><CardTitle className="text-xs">RFI abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openRfis}</div><div className="text-[10px] text-muted-foreground">{rfiFilter ? "filtrando" : "clique para filtrar"}</div></CardContent></Card>
         <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${punchFilter ? "border-primary" : ""}`} onClick={() => setPunchFilter((v) => !v)}><CardHeader className="pb-2"><CardTitle className="text-xs">Punch items abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openPunchItems}</div><div className="text-[10px] text-muted-foreground">{punchFilter ? "filtrando" : "clique para filtrar"}</div></CardContent></Card>
+        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${riskFilter ? "border-primary" : ""}`} onClick={() => setRiskFilter((v) => !v)}><CardHeader className="pb-2"><CardTitle className="text-xs">Riscos abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.totalRisks}</div><div className="text-[10px] text-muted-foreground">{riskFilter ? "filtrando" : "clique para filtrar"}</div></CardContent></Card>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -51,10 +54,10 @@ export function PainelView({ kpis, projects, asOf }: Props) {
           {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <span className="text-sm text-muted-foreground">{filtered.length} de {projects.length} projetos</span>
-        {(rfiFilter || punchFilter) && (
+        {(rfiFilter || punchFilter || riskFilter) && (
           <button
             type="button"
-            onClick={() => { setRfiFilter(false); setPunchFilter(false); }}
+            onClick={() => { setRfiFilter(false); setPunchFilter(false); setRiskFilter(false); }}
             className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
           >
             Limpar filtros
@@ -77,7 +80,7 @@ export function PainelView({ kpis, projects, asOf }: Props) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {inPhase.map((p) => (
-                      <Link key={p.id} href={`/projetos/${p.id}`} title={p.delayed && p.delayedActivities.length ? `Atividades em atraso:\n${p.delayedActivities.join("\n")}` : undefined} className={`rounded border px-2 py-1 text-xs hover:bg-muted ${p.delayed ? "border-red-300 bg-red-50 text-red-600 font-semibold animate-pulse" : ""}`}>
+                      <Link key={p.id} href={`/projetos/${p.id}`} title={[p.delayed && p.delayedActivities.length ? `Atividades em atraso:\n${p.delayedActivities.join("\n")}` : "", p.riskTitles.length ? `Riscos:\n${p.riskTitles.join("\n")}` : ""].filter(Boolean).join("\n\n") || undefined} className={`rounded border px-2 py-1 text-xs hover:bg-muted ${p.delayed ? "border-red-300 bg-red-50 text-red-600 font-semibold animate-pulse" : ""}`}>
                         {p.code} — {p.name}
                       </Link>
                     ))}
