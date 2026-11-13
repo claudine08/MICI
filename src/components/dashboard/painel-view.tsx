@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
-interface ProjectRow { id: string; code: string; name: string; status: string; currentPhase: string; plannedStart: string | null; plannedEnd: string | null; bac: number; pv: number; ev: number; ac: number; plannedPct: number; actualPct: number; spi: number | null; cpi: number | null; }
-interface Kpis { totalProjects: number; totalBac: number; totalPv: number; totalEv: number; totalAc: number; spi: number | null; cpi: number | null; }
+interface ProjectRow { id: string; code: string; name: string; status: string; currentPhase: string; plannedStart: string | null; plannedEnd: string | null; bac: number; pv: number; ev: number; ac: number; plannedPct: number; actualPct: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; delayed: boolean; }
+interface Kpis { totalProjects: number; delayedProjects: number; totalBac: number; totalPv: number; totalEv: number; totalAc: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; }
 interface Props { kpis: Kpis; projects: ProjectRow[]; asOf: string; }
 
 function fmt(n: number): string { return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -33,8 +33,11 @@ export function PainelView({ kpis, projects, asOf }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8">
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Projetos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.totalProjects}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Em atraso</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{kpis.delayedProjects}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">RFI abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openRfis}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Punch items abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openPunchItems}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">BAC</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(kpis.totalBac)}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">PV</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(kpis.totalPv)}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-xs">EV</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{fmt(kpis.totalEv)}</div></CardContent></Card>
@@ -90,7 +93,7 @@ export function PainelView({ kpis, projects, asOf }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="py-2 pr-4">Código</th><th className="py-2 pr-4">Nome</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Fase</th>
+                  <th className="py-2 pr-4">Código</th><th className="py-2 pr-4">Nome</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Fase</th><th className="py-2 pr-4 text-right">Issues</th>
                   <th className="py-2 pr-4">Início (plan.)</th><th className="py-2 pr-4">Fim (plan.)</th>
                   <th className="py-2 pr-4 text-right">BAC</th><th className="py-2 pr-4 text-right">PV</th><th className="py-2 pr-4 text-right">EV</th><th className="py-2 pr-4 text-right">AC</th>
                   <th className="py-2 pr-4 text-right">% Plan.</th><th className="py-2 pr-4 text-right">% Real</th><th className="py-2 pr-4 text-right">SPI</th><th className="py-2 pr-4 text-right">CPI</th>
@@ -106,6 +109,7 @@ export function PainelView({ kpis, projects, asOf }: Props) {
                     <td className="py-2 pr-4">{p.name}</td>
                     <td className="py-2 pr-4"><Badge variant="outline">{p.status}</Badge></td>
                     <td className="py-2 pr-4">{p.currentPhase}</td>
+                     <td className="py-2 pr-4 text-right">{p.openRfis + p.openPunchItems}{p.delayed ? " ⚠" : ""}</td>
                     <td className="py-2 pr-4">{p.plannedStart ?? "—"}</td>
                     <td className="py-2 pr-4">{p.plannedEnd ?? "—"}</td>
                     <td className="py-2 pr-4 text-right">{fmt(p.bac)}</td>
@@ -119,7 +123,7 @@ export function PainelView({ kpis, projects, asOf }: Props) {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={14} className="py-4 text-center text-muted-foreground">Nenhum projeto encontrado.</td></tr>
+                  <tr><td colSpan={15} className="py-4 text-center text-muted-foreground">Nenhum projeto encontrado.</td></tr>
                 )}
               </tbody>
             </table>

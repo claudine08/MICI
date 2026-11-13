@@ -17,18 +17,24 @@ export interface ProjectDashboardRow {
   actualPct: number;
   spi: number | null;
   cpi: number | null;
+  openRfis: number;
+  openPunchItems: number;
+  delayed: boolean;
 }
 
 export interface PortfolioDashboard {
   asOf: string;
   kpis: {
     totalProjects: number;
+    delayedProjects: number;
     totalBac: number;
     totalPv: number;
     totalEv: number;
     totalAc: number;
     spi: number | null;
     cpi: number | null;
+    openRfis: number;
+    openPunchItems: number;
   };
   projects: ProjectDashboardRow[];
 }
@@ -73,6 +79,9 @@ export async function getPortfolioDashboard(
   let totalPv = 0;
   let totalEv = 0;
   let totalAc = 0;
+  let totalDelayed = 0;
+  let totalOpenRfis = 0;
+  let totalOpenPunchItems = 0;
 
   for (const p of projects) {
     // BAC = soma CostItem.amount
@@ -107,6 +116,15 @@ export async function getPortfolioDashboard(
     const spi = pv > 0 ? Math.round((ev / pv) * 100) / 100 : null;
     const cpi = ac > 0 ? Math.round((ev / ac) * 100) / 100 : null;
 
+    const openRfis = await prisma.rfi.count({
+      where: { projectId: p.id, organizationId, deletedAt: null, status: { notIn: ["CLOSED", "CANCELLED"] } },
+    });
+    const openPunchItems = await prisma.punchItem.count({
+      where: { projectId: p.id, organizationId, deletedAt: null, status: { notIn: ["CLOSED", "VERIFIED"] } },
+    });
+    const delayed =
+      !!p.plannedEndDate && p.plannedEndDate.getTime() < asOf.getTime() && p.status !== "COMPLETED" && p.status !== "CANCELLED" && p.status !== "ARCHIVED";
+
     rows.push({
       id: p.id,
       code: p.code,
@@ -124,7 +142,14 @@ export async function getPortfolioDashboard(
       actualPct,
       spi,
       cpi,
+      openRfis,
+      openPunchItems,
+      delayed,
     });
+
+    totalOpenRfis += openRfis;
+    totalOpenPunchItems += openPunchItems;
+    if (delayed) totalDelayed += 1;
 
     totalBac += bac;
     totalPv += pv;
@@ -139,12 +164,15 @@ export async function getPortfolioDashboard(
     asOf: asOfDate,
     kpis: {
       totalProjects: projects.length,
+      delayedProjects: totalDelayed,
       totalBac: Math.round(totalBac * 100) / 100,
       totalPv: Math.round(totalPv * 100) / 100,
       totalEv: Math.round(totalEv * 100) / 100,
       totalAc: Math.round(totalAc * 100) / 100,
       spi: totalSpi,
       cpi: totalCpi,
+      openRfis: totalOpenRfis,
+      openPunchItems: totalOpenPunchItems,
     },
     projects: rows,
   };
