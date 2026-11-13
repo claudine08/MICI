@@ -1,5 +1,6 @@
 import { OrgSwitcher, type OrgOption } from "@/components/shell/org-switcher";
 import { UserMenu } from "@/components/shell/user-menu";
+import { GuideTrigger } from "@/components/shell/guide-trigger";
 import { Badge } from "@/components/ui/badge";
 
 export function Topbar({
@@ -33,6 +34,7 @@ export function Topbar({
           </div>
         )}
       </div>
+      <GuideTrigger />
       <UserMenu userName={userName} userEmail={userEmail} />
     </header>
   );

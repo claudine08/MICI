@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -41,14 +41,26 @@ export function OnboardingGuide({
   userId,
   userName,
   initiallyDismissed,
+  forceOpen,
 }: {
   userId: string;
   userName: string;
   initiallyDismissed: boolean;
+  forceOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(!initiallyDismissed);
+  const [open, setOpen] = useState(forceOpen || !initiallyDismissed);
   const [step, setStep] = useState(0);
   const [showAgain, setShowAgain] = useState(!initiallyDismissed);
+
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("mici:open-guide", handler);
+    return () => window.removeEventListener("mici:open-guide", handler);
+  }, []);
+
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
 
   const close = async () => {
     try {
