@@ -28,7 +28,10 @@ export function OrgSwitcher({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId }),
       });
-      if (response.ok) router.refresh();
+      if (response.ok) {
+        router.push("/painel");
+        router.refresh();
+      }
     } finally {
       setPending(false);
     }

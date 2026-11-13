@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getTenantContext } from "@/core/tenant";
 import { can, toPermissionSet } from "@/core/rbac";
 import { getProjectDetail, listClients, listTemplates } from "@/modules/portfolio/selectors";
@@ -21,7 +22,12 @@ export default async function ProjetoDetalhePage({
     return <NoPermission required="PROJECT:VIEW" />;
   }
 
-  const project = await getProjectDetail(context.organizationId, id);
+  let project;
+  try {
+    project = await getProjectDetail(context.organizationId, id);
+  } catch {
+    redirect("/projetos");
+  }
   const [gates, clients, templates, members] = await Promise.all([
     listProjectGateInstances(context.organizationId, id, context.userId),
     listClients(context.organizationId),
