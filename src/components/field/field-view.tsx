@@ -1957,12 +1957,22 @@ export function FieldView({
                   id="photo-file"
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                  className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                  className="sr-only"
                   onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (file) selectPhotoFile(file);
                   }}
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Selecionar arquivo
+                </Button>
+                {photoFile && (
+                  <span className="text-xs text-muted-foreground">{photoFile.name}</span>
+                )}
               </div>
               {photoPreviewUrl && (
                 <div className="overflow-hidden rounded-md border border-border">
