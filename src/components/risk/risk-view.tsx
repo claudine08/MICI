@@ -74,6 +74,7 @@ export interface RiskRow {
   residualNotes: string | null;
   wbsNodeId: string | null;
   wbsNodeCode: string | null;
+  wbsNodeName: string | null;
   activityId: string | null;
   activityCode: string | null;
   costItemId: string | null;
@@ -454,6 +455,7 @@ export function RiskView({
                 <th className="px-4 py-2.5">Código</th>
                 <th className="px-4 py-2.5">Risco</th>
                 <th className="px-4 py-2.5">Categoria</th>
+                <th className="px-4 py-2.5">WBS</th>
                 <th className="px-4 py-2.5 text-center">P × I</th>
                 <th className="px-4 py-2.5">Nível</th>
                 <th className="px-4 py-2.5">Responsável</th>
@@ -478,7 +480,8 @@ export function RiskView({
                   <td className="px-4 py-2.5">
                     <Badge variant={LEVEL_VARIANT[risk.level]}>{risk.level}</Badge>
                   </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{risk.ownerName ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">{risk.wbsNodeCode ? `${risk.wbsNodeCode}${risk.wbsNodeName ? ` — ${risk.wbsNodeName}` : ""}` : "—"}</td>
+                   <td className="px-4 py-2.5 text-muted-foreground">{risk.ownerName ?? "—"}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">
                     {risk.response
                       ? (RISK_RESPONSE_LABELS_PT[
