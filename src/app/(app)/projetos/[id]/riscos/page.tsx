@@ -29,7 +29,7 @@ export default async function ProjetoRiscosPage({
   const tree = await getWbsTree(context.organizationId, id);
   const wbsNodes = flattenWbsTree(tree).map((node) => ({
     id: node.id,
-    label: `${node.path} — ${node.name}`,
+    label: `${node.path} — ${(node as { linkedActivityLabel?: string | null }).linkedActivityLabel ?? node.name}`,
   }));
 
   const [risks, matrix, members, activities, costItems] = await Promise.all([
@@ -68,6 +68,7 @@ export default async function ProjetoRiscosPage({
         costItems={costItems.map((item) => ({
           id: item.id,
           label: `${item.code} — ${item.description}`,
+          wbsNodeId: item.wbsNodeId,
         }))}
         canCreate={can(permissions, "RISK", "CREATE")}
         canEdit={can(permissions, "RISK", "EDIT")}

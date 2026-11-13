@@ -37,6 +37,7 @@ interface MemberLite {
 interface OptionLite {
   id: string;
   label: string;
+  wbsNodeId?: string | null;
 }
 
 export interface RiskMatrixView {
@@ -758,11 +759,13 @@ export function RiskView({
                 className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
               >
                 <option value="">— sem vínculo —</option>
-                {costItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
+                {costItems
+                  .filter((item) => !riskForm.wbsNodeId || !item.wbsNodeId || item.wbsNodeId === riskForm.wbsNodeId)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
