@@ -6,6 +6,7 @@ import { buildWbsTree, type WbsNodeLite, type WbsTreeNode } from "@/modules/wbs/
 
 export interface WbsNodeRow extends WbsTreeNode {
   requirementsCount: number;
+  linkedActivityLabel: string | null;
 }
 
 export async function assertWbsProject(organizationId: string, projectId: string) {
@@ -46,23 +47,38 @@ export async function getWbsTree(
   projectId: string
 ): Promise<WbsNodeRow[]> {
   await assertWbsProject(organizationId, projectId);
-  const nodes = await prisma.wBSNode.findMany({
-    where: { organizationId, projectId, deletedAt: null },
-    select: {
-      id: true,
-      parentId: true,
-      code: true,
-      name: true,
-      orderIndex: true,
-      description: true,
-      nodeType: true,
-      deletedAt: true,
-      _count: { select: { requirements: true } },
-    },
-    orderBy: { code: "asc" },
-  });
+  const [nodes, activities] = await Promise.all([
+    prisma.wBSNode.findMany({
+      where: { organizationId, projectId, deletedAt: null },
+      select: {
+        id: true,
+        parentId: true,
+        code: true,
+        name: true,
+        orderIndex: true,
+        description: true,
+        nodeType: true,
+        deletedAt: true,
+        _count: { select: { requirements: true } },
+      },
+      orderBy: { code: "asc" },
+    }),
+    prisma.scheduleActivity.findMany({
+      where: { organizationId, projectId, deletedAt: null, wbsNodeId: { not: null } },
+      select: { code: true, name: true, wbsNodeId: true },
+      orderBy: { orderIndex: "asc" },
+    }),
+  ]);
 
-  const lite: (WbsNodeLite & { requirementsCount: number })[] = nodes.map((node) => ({
+  const activityByWbs = new Map<string, string[]>();
+  for (const a of activities) {
+    if (!a.wbsNodeId) continue;
+    const list = activityByWbs.get(a.wbsNodeId) ?? [];
+    list.push(`${a.code} ${a.name}`.trim());
+    activityByWbs.set(a.wbsNodeId, list);
+  }
+
+  const lite: (WbsNodeLite & { requirementsCount: number; linkedActivityLabel: string | null })[] = nodes.map((node) => ({
     id: node.id,
     parentId: node.parentId,
     code: node.code,
@@ -72,6 +88,7 @@ export async function getWbsTree(
     nodeType: node.nodeType,
     deletedAt: node.deletedAt,
     requirementsCount: node._count.requirements,
+    linkedActivityLabel: (activityByWbs.get(node.id) ?? []).join("; ") || null,
   }));
 
   return buildWbsTree(lite) as WbsNodeRow[];

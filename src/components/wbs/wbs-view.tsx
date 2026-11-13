@@ -301,7 +301,7 @@ export function WbsView({
                 <td className="px-4 py-2 font-mono text-xs" style={{ paddingLeft: 16 + row.depth * 20 }}>
                   {row.node.path}
                 </td>
-                <td className="px-4 py-2 font-medium">{row.node.name}</td>
+                <td className="px-4 py-2 font-medium">{row.node.linkedActivityLabel ?? row.node.name}</td>
                 <td className="px-4 py-2 text-muted-foreground">
                   {WBS_NODE_TYPE_LABELS[row.node.nodeType as WbsNodeTypeValue] ??
                     row.node.nodeType}
@@ -428,7 +428,7 @@ export function WbsView({
                 .filter((row) => !subtreeIds.has(row.node.id))
                 .map((row) => (
                   <option key={row.node.id} value={row.node.id}>
-                    {row.node.path} — {row.node.name}
+                    {row.node.path} — {row.node.linkedActivityLabel ?? row.node.name}
                   </option>
                 ))}
             </select>
