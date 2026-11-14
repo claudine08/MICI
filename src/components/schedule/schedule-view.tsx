@@ -234,6 +234,20 @@ export function ScheduleView({
   const [importBusy, setImportBusy] = useState(false);
   const [applyBusyId, setApplyBusyId] = useState<string | null>(null);
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10));
+  const [activitySearch, setActivitySearch] = useState("");
+  const [activityStatusFilter, setActivityStatusFilter] = useState("ALL");
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
+
+  const filteredActivities = activities.filter((activity) => {
+    if (activitySearch && !`${activity.code} ${activity.name}`.toLowerCase().includes(activitySearch.toLowerCase())) {
+      return false;
+    }
+    if (activityStatusFilter !== "ALL" && activity.status !== activityStatusFilter) return false;
+    if (startDateFilter && (!activity.plannedStart || activity.plannedStart < startDateFilter)) return false;
+    if (endDateFilter && (!activity.plannedFinish || activity.plannedFinish > endDateFilter)) return false;
+    return true;
+  });
 
   const set = (key: keyof ActivityForm, value: string) =>
     setForm((previous) => ({ ...previous, [key]: value }));
@@ -705,6 +719,56 @@ export function ScheduleView({
         </div>
       )}
 
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <Input
+          placeholder="Buscar atividade (código/nome)..."
+          value={activitySearch}
+          onChange={(e) => setActivitySearch(e.target.value)}
+          className="max-w-xs"
+        />
+        <select
+          className="rounded border p-2 text-sm"
+          value={activityStatusFilter}
+          onChange={(e) => setActivityStatusFilter(e.target.value)}
+        >
+          <option value="ALL">Todos os status</option>
+          {Object.entries(STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+        <Input
+          type="date"
+          value={startDateFilter}
+          onChange={(e) => setStartDateFilter(e.target.value)}
+          className="w-40"
+          title="Início planejado a partir de"
+        />
+        <Input
+          type="date"
+          value={endDateFilter}
+          onChange={(e) => setEndDateFilter(e.target.value)}
+          className="w-40"
+          title="Fim planejado até"
+        />
+        {(activitySearch || activityStatusFilter !== "ALL" || startDateFilter || endDateFilter) && (
+          <button
+            type="button"
+            onClick={() => {
+              setActivitySearch("");
+              setActivityStatusFilter("ALL");
+              setStartDateFilter("");
+              setEndDateFilter("");
+            }}
+            className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
+          >
+            Limpar filtros
+          </button>
+        )}
+        <span className="text-muted-foreground">
+          {filteredActivities.length} de {activities.length} atividades
+        </span>
+      </div>
+
       <div className="flex items-center gap-2 text-sm">
         <Label htmlFor="asof-date">Data de referência (progresso planejado)</Label>
         <Input
@@ -744,14 +808,14 @@ export function ScheduleView({
             </tr>
           </thead>
           <tbody>
-            {activities.length === 0 && (
+            {filteredActivities.length === 0 && (
               <tr>
                 <td colSpan={17} className="px-4 py-6 text-center text-muted-foreground">
                   Nenhuma atividade ainda. Crie a primeira para começar o cronograma.
                 </td>
               </tr>
             )}
-            {activities.map((activity) => (
+            {filteredActivities.map((activity) => (
               <tr key={activity.id} className="border-b border-border/50 last:border-0">
                 <td className="px-4 py-2.5 font-mono text-xs">{activity.code}</td>
                 <td className="px-4 py-2.5">
