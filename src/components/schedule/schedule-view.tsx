@@ -152,17 +152,38 @@ export interface ScheduleTemplateOption {
 function plannedProgressPct(
   plannedStart: string | null,
   plannedFinish: string | null,
-  asOf: string
+  asOf: string,
+  calendarId: string | null,
+  calendars: CalendarRow[]
 ): number | null {
   if (!plannedStart || !plannedFinish) return null;
-  const start = new Date(`${plannedStart}T00:00:00`).getTime();
-  const finish = new Date(`${plannedFinish}T00:00:00`).getTime();
-  const ref = new Date(`${asOf}T00:00:00`).getTime();
-  if (!Number.isFinite(start) || !Number.isFinite(finish) || !Number.isFinite(ref)) return null;
-  if (finish <= start) return ref >= finish ? 100 : 0;
-  if (ref <= start) return 0;
-  if (ref >= finish) return 100;
-  return ((ref - start) / (finish - start)) * 100;
+  const cal =
+    calendars.find((c) => c.id === calendarId) ??
+    calendars.find((c) => c.isDefault) ??
+    ({ workingWeek: [1, 2, 3, 4, 5], holidays: [] } as Pick<CalendarRow, "workingWeek" | "holidays">);
+  const workingWeek = new Set(cal.workingWeek);
+  const holidays = new Set(cal.holidays);
+  const isWorking = (dateStr: string) => {
+    if (holidays.has(dateStr)) return false;
+    return workingWeek.has(new Date(`${dateStr}T00:00:00`).getDay());
+  };
+  const countWorking = (startStr: string, endStr: string) => {
+    let count = 0;
+    const cur = new Date(`${startStr}T00:00:00`);
+    const end = new Date(`${endStr}T00:00:00`);
+    while (cur <= end) {
+      const s = cur.toISOString().slice(0, 10);
+      if (isWorking(s)) count += 1;
+      cur.setDate(cur.getDate() + 1);
+    }
+    return count;
+  };
+
+  const ref = asOf < plannedStart ? plannedStart : asOf > plannedFinish ? plannedFinish : asOf;
+  const total = countWorking(plannedStart, plannedFinish);
+  if (total <= 0) return ref >= plannedFinish ? 100 : 0;
+  const elapsed = countWorking(plannedStart, ref);
+  return Math.min(100, (elapsed / total) * 100);
 }
 
 export function ScheduleView({
@@ -757,14 +778,14 @@ export function ScheduleView({
                 </td>
                 <td className="px-4 py-2.5">
                   {(() => {
-                    const pp = plannedProgressPct(activity.plannedStart, activity.plannedFinish, asOfDate);
+                    const pp = plannedProgressPct(activity.plannedStart, activity.plannedFinish, asOfDate, activity.calendarId, calendars);
                     return pp === null ? "—" : `${pp.toFixed(1)}%`;
                   })()}
                 </td>
                 <td className="px-4 py-2.5">{activity.physicalProgress}%</td>
                 <td className="px-4 py-2.5">
                   {(() => {
-                    const pp = plannedProgressPct(activity.plannedStart, activity.plannedFinish, asOfDate);
+                    const pp = plannedProgressPct(activity.plannedStart, activity.plannedFinish, asOfDate, activity.calendarId, calendars);
                     if (pp === null) return "—";
                     const diff = activity.physicalProgress - pp;
                     const cls = diff >= 0 ? "text-emerald-600" : "text-red-600";
