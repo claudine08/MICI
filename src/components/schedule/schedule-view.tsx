@@ -179,7 +179,8 @@ function plannedProgressPct(
     return count;
   };
 
-  const ref = asOf < plannedStart ? plannedStart : asOf > plannedFinish ? plannedFinish : asOf;
+  if (asOf < plannedStart) return 0;
+  const ref = asOf > plannedFinish ? plannedFinish : asOf;
   const total = countWorking(plannedStart, plannedFinish);
   if (total <= 0) return ref >= plannedFinish ? 100 : 0;
   const elapsed = countWorking(plannedStart, ref);
