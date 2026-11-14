@@ -54,6 +54,12 @@ export function PainelView({ kpis, projects, asOf }: Props) {
     { name: "AC", value: kpis.totalAc },
   ];
 
+  const progressData = filtered.map((p) => ({
+    name: p.code,
+    plan: p.plannedPct,
+    real: p.actualPct,
+  }));
+
   const spiData = [{ name: "SPI", value: (kpis.spi ?? 0) * 100, fill: (kpis.spi ?? 0) >= 1 ? "#16a34a" : (kpis.spi ?? 0) >= 0.9 ? "#f59e0b" : "#dc2626" }];
   const cpiData = [{ name: "CPI", value: (kpis.cpi ?? 0) * 100, fill: (kpis.cpi ?? 0) >= 1 ? "#16a34a" : (kpis.cpi ?? 0) >= 0.9 ? "#f59e0b" : "#dc2626" }];
 
@@ -204,6 +210,24 @@ export function PainelView({ kpis, projects, asOf }: Props) {
         </Card>
       </div>
 
+      {/* Avanço planejado vs. real */}
+      <Card>
+        <CardHeader><CardTitle>Avanço planejado vs. real por projeto</CardTitle><CardDescription>Projetos com desvio negativo destacados em vermelho.</CardDescription></CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={progressData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" fontSize={11} />
+              <YAxis domain={[0, 100]} />
+              <Tooltip formatter={(v) => `${Number(v).toFixed(1)}%`} />
+              <Legend />
+              <Bar dataKey="plan" name="% Plan." fill="#94a3b8" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="real" name="% Real" fill="#2563eb" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
       {/* Projetos por fase */}
       <Card>
         <CardHeader><CardTitle>Projetos por fase (integrado com gates)</CardTitle><CardDescription>Agrupamento por fase atual do projeto.</CardDescription></CardHeader>
@@ -246,12 +270,12 @@ export function PainelView({ kpis, projects, asOf }: Props) {
                   <th className="py-2 pr-4">Código</th><th className="py-2 pr-4">Nome</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Fase</th><th className="py-2 pr-4 text-right">Issues</th>
                   <th className="py-2 pr-4">Início (plan.)</th><th className="py-2 pr-4">Fim (plan.)</th>
                   <th className="py-2 pr-4 text-right">BAC</th><th className="py-2 pr-4 text-right">PV</th><th className="py-2 pr-4 text-right">EV</th><th className="py-2 pr-4 text-right">AC</th>
-                  <th className="py-2 pr-4 text-right">% Plan.</th><th className="py-2 pr-4 text-right">% Real</th><th className="py-2 pr-4 text-right">SPI</th><th className="py-2 pr-4 text-right">CPI</th>
+                  <th className="py-2 pr-4 text-right">% Plan.</th><th className="py-2 pr-4 text-right">% Real</th><th className="py-2 pr-4 text-right">Desvio</th><th className="py-2 pr-4 text-right">SPI</th><th className="py-2 pr-4 text-right">CPI</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((p) => (
-                  <tr key={p.id} className="border-b">
+                  <tr key={p.id} className={`border-b ${p.actualPct - p.plannedPct < -5 ? "bg-red-50/60" : ""}`}>
                     <td className="py-2 pr-4 font-medium">
                       <Link href={`/projetos/${p.id}`} className="hover:underline">{p.code}</Link>
                       <Link href={`/projetos/${p.id}/dashboard`} className="ml-2 text-xs text-primary hover:underline">📊</Link>
@@ -268,12 +292,15 @@ export function PainelView({ kpis, projects, asOf }: Props) {
                     <td className="py-2 pr-4 text-right">{fmt(p.ac)}</td>
                     <td className="py-2 pr-4 text-right">{p.plannedPct.toFixed(1)}%</td>
                     <td className="py-2 pr-4 text-right">{p.actualPct.toFixed(1)}%</td>
+                    <td className={`py-2 pr-4 text-right font-medium ${p.actualPct - p.plannedPct < -5 ? "text-red-600" : p.actualPct - p.plannedPct > 5 ? "text-emerald-600" : "text-muted-foreground"}`}>
+                      {(p.actualPct - p.plannedPct >= 0 ? "+" : "") + (p.actualPct - p.plannedPct).toFixed(1)}%
+                    </td>
                     <td className={`py-2 pr-4 text-right ${colorForRatio(p.spi)}`}>{p.spi ?? "—"}</td>
                     <td className={`py-2 pr-4 text-right ${colorForRatio(p.cpi)}`}>{p.cpi ?? "—"}</td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={15} className="py-4 text-center text-muted-foreground">Nenhum projeto encontrado.</td></tr>
+                  <tr><td colSpan={16} className="py-4 text-center text-muted-foreground">Nenhum projeto encontrado.</td></tr>
                 )}
               </tbody>
             </table>
