@@ -240,6 +240,7 @@ export function ScheduleView({
   const [activityStatusFilter, setActivityStatusFilter] = useState("ALL");
   const [startDateFilter, setStartDateFilter] = useState("");
   const [endDateFilter, setEndDateFilter] = useState("");
+  const [executionSourceFilter, setExecutionSourceFilter] = useState("ALL");
 
   const filteredActivities = activities.filter((activity) => {
     if (activitySearch && !`${activity.code} ${activity.name}`.toLowerCase().includes(activitySearch.toLowerCase())) {
@@ -248,6 +249,7 @@ export function ScheduleView({
     if (activityStatusFilter !== "ALL" && activity.status !== activityStatusFilter) return false;
     if (startDateFilter && (!activity.plannedStart || activity.plannedStart < startDateFilter)) return false;
     if (endDateFilter && (!activity.plannedFinish || activity.plannedFinish > endDateFilter)) return false;
+    if (executionSourceFilter !== "ALL" && activity.executionSource !== executionSourceFilter) return false;
     return true;
   });
 
@@ -754,7 +756,18 @@ export function ScheduleView({
           className="w-40"
           title="Fim planejado até"
         />
-        {(activitySearch || activityStatusFilter !== "ALL" || startDateFilter || endDateFilter) && (
+        <select
+          className="rounded border p-2 text-sm"
+          value={executionSourceFilter}
+          onChange={(e) => setExecutionSourceFilter(e.target.value)}
+        >
+          <option value="ALL">Todas as origens</option>
+          <option value="CAMPO">Campo</option>
+          <option value="ESCRITORIO">Escritório</option>
+          <option value="SUPRIMENTOS">Suprimentos</option>
+          <option value="OUTRO">Outro</option>
+        </select>
+        {(activitySearch || activityStatusFilter !== "ALL" || startDateFilter || endDateFilter || executionSourceFilter !== "ALL") && (
           <button
             type="button"
             onClick={() => {
@@ -762,6 +775,7 @@ export function ScheduleView({
               setActivityStatusFilter("ALL");
               setStartDateFilter("");
               setEndDateFilter("");
+              setExecutionSourceFilter("ALL");
             }}
             className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
           >
