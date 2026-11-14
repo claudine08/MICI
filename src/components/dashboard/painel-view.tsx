@@ -1,9 +1,14 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, RadialBarChart, RadialBar,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { FolderKanban, AlertTriangle, FileQuestion, ClipboardCheck, ShieldAlert, TrendingUp } from "lucide-react";
 
 interface ProjectRow { id: string; code: string; name: string; status: string; currentPhase: string; plannedStart: string | null; plannedEnd: string | null; bac: number; pv: number; ev: number; ac: number; plannedPct: number; actualPct: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; riskCount: number; riskTitles: string[]; delayed: boolean; delayedActivities: string[]; }
 interface Kpis { totalProjects: number; delayedProjects: number; totalBac: number; totalPv: number; totalEv: number; totalAc: number; spi: number | null; cpi: number | null; openRfis: number; openPunchItems: number; totalRisks: number; }
@@ -11,6 +16,8 @@ interface Props { kpis: Kpis; projects: ProjectRow[]; asOf: string; }
 
 function fmt(n: number): string { return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function colorForRatio(r: number | null): string { if (r === null) return "text-muted-foreground"; if (r >= 1) return "text-emerald-600"; if (r >= 0.9) return "text-amber-600"; return "text-red-600"; }
+
+const CHART_COLORS = ["#2563eb", "#16a34a", "#dc2626", "#7c3aed", "#ea580c", "#0891b2"];
 
 export function PainelView({ kpis, projects, asOf }: Props) {
   const [search, setSearch] = useState("");
@@ -30,6 +37,26 @@ export function PainelView({ kpis, projects, asOf }: Props) {
 
   const statuses = Array.from(new Set(projects.map((p) => p.status)));
 
+  const phaseData = Array.from(new Set(projects.map((p) => p.currentPhase))).sort().map((phase) => ({
+    phase: `Fase ${phase}`,
+    quantidade: projects.filter((p) => p.currentPhase === phase).length,
+  }));
+
+  const statusData = statuses.map((s) => ({
+    name: s,
+    value: projects.filter((p) => p.status === s).length,
+  }));
+
+  const portfolioData = [
+    { name: "BAC", value: kpis.totalBac },
+    { name: "PV", value: kpis.totalPv },
+    { name: "EV", value: kpis.totalEv },
+    { name: "AC", value: kpis.totalAc },
+  ];
+
+  const spiData = [{ name: "SPI", value: (kpis.spi ?? 0) * 100, fill: (kpis.spi ?? 0) >= 1 ? "#16a34a" : (kpis.spi ?? 0) >= 0.9 ? "#f59e0b" : "#dc2626" }];
+  const cpiData = [{ name: "CPI", value: (kpis.cpi ?? 0) * 100, fill: (kpis.cpi ?? 0) >= 1 ? "#16a34a" : (kpis.cpi ?? 0) >= 0.9 ? "#f59e0b" : "#dc2626" }];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -39,14 +66,46 @@ export function PainelView({ kpis, projects, asOf }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Projetos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.totalProjects}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Em atraso</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{kpis.delayedProjects}</div></CardContent></Card>
-        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${rfiFilter ? "border-primary" : ""}`} onClick={() => setRfiFilter((v) => !v)}><CardHeader className="pb-2"><CardTitle className="text-xs">RFI abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openRfis}</div><div className="text-[10px] text-muted-foreground">{rfiFilter ? "filtrando" : "clique para filtrar"}</div></CardContent></Card>
-        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${punchFilter ? "border-primary" : ""}`} onClick={() => setPunchFilter((v) => !v)}><CardHeader className="pb-2"><CardTitle className="text-xs">Punch items abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.openPunchItems}</div><div className="text-[10px] text-muted-foreground">{punchFilter ? "filtrando" : "clique para filtrar"}</div></CardContent></Card>
-        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${riskFilter ? "border-primary" : ""}`} onClick={() => setRiskFilter((v) => !v)}><CardHeader className="pb-2"><CardTitle className="text-xs">Riscos abertos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{kpis.totalRisks}</div><div className="text-[10px] text-muted-foreground">{riskFilter ? "filtrando" : "clique para filtrar"}</div></CardContent></Card>
+      {/* KPIs */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+        <Card>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs">Projetos</CardTitle>
+            <FolderKanban className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><div className="text-2xl font-bold">{kpis.totalProjects}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs">Em atraso</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent><div className="text-2xl font-bold text-red-600">{kpis.delayedProjects}</div></CardContent>
+        </Card>
+        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${rfiFilter ? "border-primary" : ""}`} onClick={() => setRfiFilter((v) => !v)}>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs">RFI abertos</CardTitle>
+            <FileQuestion className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><div className="text-2xl font-bold">{kpis.openRfis}</div><div className="text-[10px] text-muted-foreground">{rfiFilter ? "filtrando" : "clique para filtrar"}</div></CardContent>
+        </Card>
+        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${punchFilter ? "border-primary" : ""}`} onClick={() => setPunchFilter((v) => !v)}>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs">Punch items</CardTitle>
+            <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><div className="text-2xl font-bold">{kpis.openPunchItems}</div><div className="text-[10px] text-muted-foreground">{punchFilter ? "filtrando" : "clique para filtrar"}</div></CardContent>
+        </Card>
+        <Card className={`cursor-pointer transition-colors hover:border-primary/50 ${riskFilter ? "border-primary" : ""}`} onClick={() => setRiskFilter((v) => !v)}>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs">Riscos abertos</CardTitle>
+            <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><div className="text-2xl font-bold">{kpis.totalRisks}</div><div className="text-[10px] text-muted-foreground">{riskFilter ? "filtrando" : "clique para filtrar"}</div></CardContent>
+        </Card>
       </div>
 
+      {/* Filtros */}
       <div className="flex flex-wrap items-center gap-2">
         <Input placeholder="Buscar projeto..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
         <select className="rounded border p-2 text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -55,14 +114,94 @@ export function PainelView({ kpis, projects, asOf }: Props) {
         </select>
         <span className="text-sm text-muted-foreground">{filtered.length} de {projects.length} projetos</span>
         {(rfiFilter || punchFilter || riskFilter) && (
-          <button
-            type="button"
-            onClick={() => { setRfiFilter(false); setPunchFilter(false); setRiskFilter(false); }}
-            className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted"
-          >
+          <button type="button" onClick={() => { setRfiFilter(false); setPunchFilter(false); setRiskFilter(false); }} className="rounded-md border border-border px-2 py-1 text-xs hover:bg-muted">
             Limpar filtros
           </button>
         )}
+      </div>
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Projetos por fase</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={phaseData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="phase" fontSize={11} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="quantidade" fill="#2563eb" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Projetos por status</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label>
+                  {statusData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Portfólio (BAC/PV/EV/AC)</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={portfolioData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(v) => fmt(Number(v))} />
+                <Bar dataKey="value" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Indicadores SPI/CPI */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-sm">SPI (Schedule Performance Index)</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="flex items-center gap-4">
+            <ResponsiveContainer width={120} height={120}>
+              <RadialBarChart innerRadius="70%" outerRadius="100%" data={spiData} startAngle={90} endAngle={-270}>
+                <RadialBar dataKey="value" cornerRadius={8} fill={spiData[0].fill} background />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div>
+              <div className={`text-3xl font-bold ${colorForRatio(kpis.spi)}`}>{kpis.spi ?? "—"}</div>
+              <div className="text-xs text-muted-foreground">≥ 1.0 = no prazo</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-sm">CPI (Cost Performance Index)</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="flex items-center gap-4">
+            <ResponsiveContainer width={120} height={120}>
+              <RadialBarChart innerRadius="70%" outerRadius="100%" data={cpiData} startAngle={90} endAngle={-270}>
+                <RadialBar dataKey="value" cornerRadius={8} fill={cpiData[0].fill} background />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div>
+              <div className={`text-3xl font-bold ${colorForRatio(kpis.cpi)}`}>{kpis.cpi ?? "—"}</div>
+              <div className="text-xs text-muted-foreground">≥ 1.0 = dentro do orçamento</div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Projetos por fase */}
@@ -93,6 +232,7 @@ export function PainelView({ kpis, projects, asOf }: Props) {
         </CardContent>
       </Card>
 
+      {/* Tabela de projetos */}
       <Card>
         <CardHeader>
           <CardTitle>Projetos</CardTitle>
