@@ -112,6 +112,8 @@ export interface CreateActivityInput {
   duration?: number;
   plannedStart?: string | null;
   plannedFinish?: string | null;
+  actualStart?: string | null;
+  actualFinish?: string | null;
   wbsNodeId?: string | null;
   calendarId?: string | null;
   progressMethod?: "PERCENT_COMPLETE" | "PHYSICAL" | "UNITS";
@@ -125,9 +127,12 @@ export async function createActivity(input: ActorContext & CreateActivityInput) 
   const duration = input.duration ?? (activityType === "TASK" ? 1 : 0);
   const plannedStart = parseDay(input.plannedStart);
   const plannedFinish = parseDay(input.plannedFinish);
+  const actualStart = parseDay(input.actualStart);
+  const actualFinish = parseDay(input.actualFinish);
 
   assertDuration(activityType, duration);
   assertDates(plannedStart, plannedFinish);
+  assertDates(actualStart, actualFinish);
   await assertWbsLink(input.organizationId, input.projectId, input.wbsNodeId ?? null);
   await assertCalendar(input.organizationId, input.calendarId ?? null);
 
@@ -161,6 +166,8 @@ export async function createActivity(input: ActorContext & CreateActivityInput) 
       duration,
       plannedStart,
       plannedFinish,
+      actualStart,
+      actualFinish,
       wbsNodeId: input.wbsNodeId ?? null,
       calendarId: input.calendarId ?? null,
       ...(input.progressMethod ? { progressMethod: input.progressMethod } : {}),
@@ -212,6 +219,8 @@ export interface UpdateActivityInput {
   duration?: number;
   plannedStart?: string | null;
   plannedFinish?: string | null;
+  actualStart?: string | null;
+  actualFinish?: string | null;
   wbsNodeId?: string | null;
   calendarId?: string | null;
   progressMethod?: "PERCENT_COMPLETE" | "PHYSICAL" | "UNITS";
@@ -227,9 +236,14 @@ export async function updateActivity(input: ActorContext & UpdateActivityInput) 
     input.plannedStart !== undefined ? parseDay(input.plannedStart) : activity.plannedStart;
   const plannedFinish =
     input.plannedFinish !== undefined ? parseDay(input.plannedFinish) : activity.plannedFinish;
+  const actualStart =
+    input.actualStart !== undefined ? parseDay(input.actualStart) : activity.actualStart;
+  const actualFinish =
+    input.actualFinish !== undefined ? parseDay(input.actualFinish) : activity.actualFinish;
 
   assertDuration(activityType, duration);
   assertDates(plannedStart, plannedFinish);
+  assertDates(actualStart, actualFinish);
   if (input.wbsNodeId !== undefined) {
     await assertWbsLink(input.organizationId, activity.projectId, input.wbsNodeId);
   }
@@ -256,6 +270,8 @@ export async function updateActivity(input: ActorContext & UpdateActivityInput) 
       ...(input.duration !== undefined ? { duration } : {}),
       ...(input.plannedStart !== undefined ? { plannedStart } : {}),
       ...(input.plannedFinish !== undefined ? { plannedFinish } : {}),
+      ...(input.actualStart !== undefined ? { actualStart } : {}),
+      ...(input.actualFinish !== undefined ? { actualFinish } : {}),
       ...(input.wbsNodeId !== undefined ? { wbsNodeId: input.wbsNodeId } : {}),
       ...(input.calendarId !== undefined ? { calendarId: input.calendarId } : {}),
       ...(input.progressMethod !== undefined ? { progressMethod: input.progressMethod } : {}),

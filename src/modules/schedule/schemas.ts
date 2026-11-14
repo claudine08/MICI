@@ -35,6 +35,8 @@ export const createActivitySchema = z.object({
   duration: z.number().int().min(0).max(3650).optional(),
   plannedStart: isoDate.nullable().optional(),
   plannedFinish: isoDate.nullable().optional(),
+  actualStart: isoDate.nullable().optional(),
+  actualFinish: isoDate.nullable().optional(),
   wbsNodeId: z.string().uuid().nullable().optional(),
   calendarId: z.string().uuid().nullable().optional(),
   progressMethod: progressMethodSchema.optional(),

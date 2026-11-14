@@ -1795,3 +1795,5 @@ organization_memberships_organization_id_user_id_key`).
 - Campo: botao "Selecionar arquivo" abre o explorador no upload de foto/evidencia.
 - Backlog: upload de arquivo como evidencia de gate/requisito (hoje rótulo+URL).
 - Commits c14c5c.. 4b74ce, push e deploys mici-5f39un0yd..mici-gbsoamgz7 (aliased mici-theta).
+
+- Cronograma: colunas Inicio real/Fim real na tabela de atividades; barra de rolagem horizontal movida para o topo acima do cabecalho; edicao manual das datas reais no formulario de atividade (schema/API/backend). Commit: (pending)

@@ -80,6 +80,8 @@ interface ActivityForm {
   duration: string;
   plannedStart: string;
   plannedFinish: string;
+  actualStart: string;
+  actualFinish: string;
   wbsNodeId: string;
   calendarId: string;
   status: string;
@@ -93,6 +95,8 @@ const emptyActivityForm: ActivityForm = {
   duration: "1",
   plannedStart: "",
   plannedFinish: "",
+  actualStart: "",
+  actualFinish: "",
   wbsNodeId: "",
   calendarId: "",
   status: "NOT_STARTED",
@@ -224,6 +228,8 @@ export function ScheduleView({
       duration: String(activity.duration),
       plannedStart: activity.plannedStart ?? "",
       plannedFinish: activity.plannedFinish ?? "",
+      actualStart: activity.actualStart ?? "",
+      actualFinish: activity.actualFinish ?? "",
       wbsNodeId: activity.wbsNodeId ?? "",
       calendarId: activity.calendarId ?? "",
       status: activity.status,
@@ -242,6 +248,8 @@ export function ScheduleView({
         duration: Number(form.duration),
         plannedStart: form.plannedStart || null,
         plannedFinish: form.plannedFinish || null,
+        actualStart: form.actualStart || null,
+        actualFinish: form.actualFinish || null,
         wbsNodeId: form.wbsNodeId || null,
         calendarId: form.calendarId || null,
         status: form.status,
@@ -658,7 +666,11 @@ export function ScheduleView({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+      <div
+        className="overflow-x-auto rounded-lg border border-border bg-surface"
+        style={{ transform: "rotateX(180deg)" }}
+      >
+        <div style={{ transform: "rotateX(180deg)" }}>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
@@ -666,8 +678,10 @@ export function ScheduleView({
               <th className="px-4 py-2.5">Nome</th>
               <th className="px-4 py-2.5">Tipo</th>
               <th className="px-4 py-2.5">Duração</th>
-              <th className="px-4 py-2.5">Início</th>
-              <th className="px-4 py-2.5">Fim</th>
+              <th className="px-4 py-2.5">Início plan.</th>
+              <th className="px-4 py-2.5">Fim plan.</th>
+              <th className="px-4 py-2.5">Início real</th>
+              <th className="px-4 py-2.5">Fim real</th>
               <th className="px-4 py-2.5">Prev. início</th>
               <th className="px-4 py-2.5">Prev. fim</th>
               <th className="px-4 py-2.5">Status</th>
@@ -680,7 +694,7 @@ export function ScheduleView({
           <tbody>
             {activities.length === 0 && (
               <tr>
-                <td colSpan={13} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={15} className="px-4 py-6 text-center text-muted-foreground">
                   Nenhuma atividade ainda. Crie a primeira para começar o cronograma.
                 </td>
               </tr>
@@ -702,6 +716,8 @@ export function ScheduleView({
                 </td>
                 <td className="px-4 py-2.5">{activity.plannedStart ?? "—"}</td>
                 <td className="px-4 py-2.5">{activity.plannedFinish ?? "—"}</td>
+                <td className="px-4 py-2.5">{activity.actualStart ?? "—"}</td>
+                <td className="px-4 py-2.5">{activity.actualFinish ?? "—"}</td>
                 <td className="px-4 py-2.5">{activity.forecastStart ?? "—"}</td>
                 <td className="px-4 py-2.5">{activity.forecastFinish ?? "—"}</td>
                 <td className="px-4 py-2.5">
@@ -750,6 +766,7 @@ export function ScheduleView({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {dependencies.length > 0 && (
@@ -1047,6 +1064,26 @@ export function ScheduleView({
                 type="date"
                 value={form.plannedFinish}
                 onChange={(e) => set("plannedFinish", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="act-actual-start">Início real</Label>
+              <Input
+                id="act-actual-start"
+                type="date"
+                value={form.actualStart}
+                onChange={(e) => set("actualStart", e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="act-actual-finish">Fim real</Label>
+              <Input
+                id="act-actual-finish"
+                type="date"
+                value={form.actualFinish}
+                onChange={(e) => set("actualFinish", e.target.value)}
               />
             </div>
           </div>
