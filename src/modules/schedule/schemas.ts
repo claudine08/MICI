@@ -3,6 +3,7 @@ import { z } from "zod";
 // Validações do cronograma (E07, §27).
 
 export const activityTypeSchema = z.enum(["TASK", "MILESTONE", "SUMMARY"]);
+export const executionSourceSchema = z.enum(["CAMPO", "ESCRITORIO", "SUPRIMENTOS", "OUTRO"]);
 
 export const activityStatusSchema = z.enum([
   "NOT_STARTED",
@@ -32,6 +33,7 @@ export const createActivitySchema = z.object({
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().max(2000).optional(),
   activityType: activityTypeSchema.optional(),
+  executionSource: executionSourceSchema.optional(),
   duration: z.number().int().min(0).max(3650).optional(),
   plannedStart: isoDate.nullable().optional(),
   plannedFinish: isoDate.nullable().optional(),

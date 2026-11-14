@@ -109,6 +109,7 @@ export interface CreateActivityInput {
   name: string;
   description?: string;
   activityType?: "TASK" | "MILESTONE" | "SUMMARY";
+  executionSource?: "CAMPO" | "ESCRITORIO" | "SUPRIMENTOS" | "OUTRO";
   duration?: number;
   plannedStart?: string | null;
   plannedFinish?: string | null;
@@ -163,6 +164,7 @@ export async function createActivity(input: ActorContext & CreateActivityInput) 
       name: input.name.trim(),
       description: input.description?.trim() || null,
       activityType,
+      executionSource: input.executionSource ?? "ESCRITORIO",
       duration,
       plannedStart,
       plannedFinish,
@@ -216,6 +218,7 @@ export interface UpdateActivityInput {
   name?: string;
   description?: string | null;
   activityType?: "TASK" | "MILESTONE" | "SUMMARY";
+  executionSource?: "CAMPO" | "ESCRITORIO" | "SUPRIMENTOS" | "OUTRO";
   duration?: number;
   plannedStart?: string | null;
   plannedFinish?: string | null;
@@ -267,6 +270,7 @@ export async function updateActivity(input: ActorContext & UpdateActivityInput) 
       ...(input.name !== undefined ? { name: input.name.trim() } : {}),
       ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
       ...(input.activityType !== undefined ? { activityType } : {}),
+      ...(input.executionSource !== undefined ? { executionSource: input.executionSource } : {}),
       ...(input.duration !== undefined ? { duration } : {}),
       ...(input.plannedStart !== undefined ? { plannedStart } : {}),
       ...(input.plannedFinish !== undefined ? { plannedFinish } : {}),

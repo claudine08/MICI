@@ -77,6 +77,7 @@ interface ActivityForm {
   code: string;
   name: string;
   activityType: string;
+  executionSource: string;
   duration: string;
   plannedStart: string;
   plannedFinish: string;
@@ -92,6 +93,7 @@ const emptyActivityForm: ActivityForm = {
   code: "",
   name: "",
   activityType: "TASK",
+  executionSource: "ESCRITORIO",
   duration: "1",
   plannedStart: "",
   plannedFinish: "",
@@ -278,6 +280,7 @@ export function ScheduleView({
       code: activity.code,
       name: activity.name,
       activityType: activity.activityType,
+      executionSource: activity.executionSource,
       duration: String(activity.duration),
       plannedStart: activity.plannedStart ?? "",
       plannedFinish: activity.plannedFinish ?? "",
@@ -298,6 +301,7 @@ export function ScheduleView({
       const payload: Record<string, unknown> = {
         name: form.name,
         activityType: form.activityType,
+        executionSource: form.executionSource,
         duration: Number(form.duration),
         plannedStart: form.plannedStart || null,
         plannedFinish: form.plannedFinish || null,
@@ -324,7 +328,7 @@ export function ScheduleView({
         activityId = result.activity.id;
       }
 
-      if (editingId) {
+      if (editingId && form.executionSource !== "CAMPO") {
         await apiRequest(`/api/v1/projects/${projectId}/activities/${activityId}/progress`, {
           method: "POST",
           body: JSON.stringify({
@@ -799,6 +803,7 @@ export function ScheduleView({
               <th className="px-4 py-2.5">Prev. início</th>
               <th className="px-4 py-2.5">Prev. fim</th>
               <th className="px-4 py-2.5">Status</th>
+              <th className="px-4 py-2.5">Origem</th>
               <th className="px-4 py-2.5">% Plan.</th>
               <th className="px-4 py-2.5">% Real</th>
               <th className="px-4 py-2.5">Var.</th>
@@ -810,7 +815,7 @@ export function ScheduleView({
           <tbody>
             {filteredActivities.length === 0 && (
               <tr>
-                <td colSpan={17} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={18} className="px-4 py-6 text-center text-muted-foreground">
                   Nenhuma atividade ainda. Crie a primeira para começar o cronograma.
                 </td>
               </tr>
@@ -839,6 +844,11 @@ export function ScheduleView({
                 <td className="px-4 py-2.5">
                   <Badge variant={STATUS_VARIANT[activity.status]}>
                     {STATUS_LABELS[activity.status]}
+                  </Badge>
+                </td>
+                <td className="px-4 py-2.5">
+                  <Badge variant={activity.executionSource === "CAMPO" ? "default" : "secondary"}>
+                    {activity.executionSource}
                   </Badge>
                 </td>
                 <td className="px-4 py-2.5">
@@ -1168,6 +1178,21 @@ export function ScheduleView({
               </select>
             </div>
           </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="act-execution-source">Origem da execução</Label>
+            <select
+              id="act-execution-source"
+              value={form.executionSource}
+              onChange={(e) => set("executionSource", e.target.value)}
+              className={selectClass}
+            >
+              <option value="CAMPO">Campo (medição física)</option>
+              <option value="ESCRITORIO">Escritório</option>
+              <option value="SUPRIMENTOS">Suprimentos</option>
+              <option value="OUTRO">Outro</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="act-duration">Duração (dias)</Label>
@@ -1277,8 +1302,14 @@ export function ScheduleView({
                 min={0}
                 max={100}
                 value={form.physicalProgress}
+                disabled={form.executionSource === "CAMPO"}
                 onChange={(e) => set("physicalProgress", e.target.value)}
               />
+              {form.executionSource === "CAMPO" && (
+                <p className="text-[10px] text-muted-foreground">
+                  Atividade de campo: avanço via módulo Campo.
+                </p>
+              )}
             </div>
           )}
           <div className="flex justify-end gap-2 pt-1">

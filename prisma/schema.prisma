@@ -166,6 +166,15 @@ enum ProgressMethod {
   @@map("progress_method")
 }
 
+enum ExecutionSource {
+  CAMPO
+  ESCRITORIO
+  SUPRIMENTOS
+  OUTRO
+
+  @@map("execution_source")
+}
+
 // Baselines (E07-US04, Â§28).
 enum BaselineType {
   SCOPE
@@ -988,6 +997,7 @@ model ScheduleActivity {
   critical       Boolean        @default(false)
   totalFloat     Int?
   status         ActivityStatus @default(NOT_STARTED)
+  executionSource ExecutionSource @default(ESCRITORIO) @map("execution_source")
   orderIndex     Int            @default(0) @map("order_index")
 
   createdAt DateTime  @default(now()) @map("created_at")

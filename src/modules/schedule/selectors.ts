@@ -10,6 +10,7 @@ export interface ActivityRow {
   name: string;
   description: string | null;
   activityType: "TASK" | "MILESTONE" | "SUMMARY";
+  executionSource: "CAMPO" | "ESCRITORIO" | "SUPRIMENTOS" | "OUTRO";
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED";
   duration: number;
   plannedStart: string | null;
@@ -48,6 +49,7 @@ type ActivityRecord = {
   name: string;
   description: string | null;
   activityType: "TASK" | "MILESTONE" | "SUMMARY";
+  executionSource: "CAMPO" | "ESCRITORIO" | "SUPRIMENTOS" | "OUTRO";
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED";
   duration: number;
   plannedStart: Date | null;
@@ -88,6 +90,7 @@ const activitySelect = {
   name: true,
   description: true,
   activityType: true,
+  executionSource: true,
   status: true,
   duration: true,
   plannedStart: true,
@@ -114,6 +117,7 @@ function toActivityRow(record: ActivityRecord): ActivityRow {
     name: record.name,
     description: record.description,
     activityType: record.activityType,
+    executionSource: record.executionSource,
     status: record.status,
     duration: record.duration,
     plannedStart: isoDate(record.plannedStart),
