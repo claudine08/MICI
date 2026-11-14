@@ -149,6 +149,22 @@ export interface ScheduleTemplateOption {
   dependencyCount: number;
 }
 
+function plannedProgressPct(
+  plannedStart: string | null,
+  plannedFinish: string | null,
+  asOf: string
+): number | null {
+  if (!plannedStart || !plannedFinish) return null;
+  const start = new Date(`${plannedStart}T00:00:00`).getTime();
+  const finish = new Date(`${plannedFinish}T00:00:00`).getTime();
+  const ref = new Date(`${asOf}T00:00:00`).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(finish) || !Number.isFinite(ref)) return null;
+  if (finish <= start) return ref >= finish ? 100 : 0;
+  if (ref <= start) return 0;
+  if (ref >= finish) return 100;
+  return ((ref - start) / (finish - start)) * 100;
+}
+
 export function ScheduleView({
   projectId,
   activities,
@@ -195,6 +211,7 @@ export function ScheduleView({
   const [importCalendarId, setImportCalendarId] = useState("");
   const [importBusy, setImportBusy] = useState(false);
   const [applyBusyId, setApplyBusyId] = useState<string | null>(null);
+  const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10));
 
   const set = (key: keyof ActivityForm, value: string) =>
     setForm((previous) => ({ ...previous, [key]: value }));
@@ -666,6 +683,17 @@ export function ScheduleView({
         </div>
       )}
 
+      <div className="flex items-center gap-2 text-sm">
+        <Label htmlFor="asof-date">Data de referência (progresso planejado)</Label>
+        <Input
+          id="asof-date"
+          type="date"
+          value={asOfDate}
+          onChange={(e) => setAsOfDate(e.target.value)}
+          className="w-44"
+        />
+      </div>
+
       <div
         className="overflow-x-auto rounded-lg border border-border bg-surface"
         style={{ transform: "rotateX(180deg)" }}
@@ -685,7 +713,9 @@ export function ScheduleView({
               <th className="px-4 py-2.5">Prev. início</th>
               <th className="px-4 py-2.5">Prev. fim</th>
               <th className="px-4 py-2.5">Status</th>
-              <th className="px-4 py-2.5">Avanço</th>
+              <th className="px-4 py-2.5">% Plan.</th>
+              <th className="px-4 py-2.5">% Real</th>
+              <th className="px-4 py-2.5">Var.</th>
               <th className="px-4 py-2.5">Float</th>
               <th className="px-4 py-2.5">Caminho</th>
               {(canEdit || canDelete) && <th className="px-4 py-2.5" />}
@@ -694,7 +724,7 @@ export function ScheduleView({
           <tbody>
             {activities.length === 0 && (
               <tr>
-                <td colSpan={15} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={17} className="px-4 py-6 text-center text-muted-foreground">
                   Nenhuma atividade ainda. Crie a primeira para começar o cronograma.
                 </td>
               </tr>
@@ -725,7 +755,22 @@ export function ScheduleView({
                     {STATUS_LABELS[activity.status]}
                   </Badge>
                 </td>
+                <td className="px-4 py-2.5">
+                  {(() => {
+                    const pp = plannedProgressPct(activity.plannedStart, activity.plannedFinish, asOfDate);
+                    return pp === null ? "—" : `${pp.toFixed(1)}%`;
+                  })()}
+                </td>
                 <td className="px-4 py-2.5">{activity.physicalProgress}%</td>
+                <td className="px-4 py-2.5">
+                  {(() => {
+                    const pp = plannedProgressPct(activity.plannedStart, activity.plannedFinish, asOfDate);
+                    if (pp === null) return "—";
+                    const diff = activity.physicalProgress - pp;
+                    const cls = diff >= 0 ? "text-emerald-600" : "text-red-600";
+                    return <span className={cls}>{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</span>;
+                  })()}
+                </td>
                 <td className="px-4 py-2.5">
                   {activity.totalFloat === null ? "—" : `${activity.totalFloat} d`}
                 </td>
