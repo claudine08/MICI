@@ -271,3 +271,9 @@ UI: `src/app/(app)/administracao/integracoes/page.tsx` +
 `src/components/integrations/approval-view.tsx`
 · especificação de referência (arquitetura Django/n8n, **não** copiar):
 `mici/Integrations/*.md`.
+
+## 7. E07 Schedule - melhorias (planejadas)
+- Colunas Inicio real/Fim real + scrollbar no topo (implementado).
+- Edicao manual das datas reais (implementado).
+- Origem da execucao (executionSource): seletor + badge + bloqueio de percentual manual para CAMPO + integracao Suprimentos.
+- Detalhes: docs/cronograma-execucao-origem.md.

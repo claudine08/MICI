@@ -374,3 +374,9 @@ Tarefas:
 - F1.4 UI botao + popup: concluido.
 - F1.5 Testes de integracao: 4/4 passando.
 - F1.6 Smoke autenticado: concluido em producao.
+
+### E07 Schedule - melhorias (planejadas)
+- [x] Colunas Inicio real/Fim real + scrollbar superior.
+- [x] Edicao manual das datas reais.
+- [ ] Origem da execucao (executionSource) + badge + bloqueio + integracao Suprimentos.
+- Detalhes: docs/cronograma-execucao-origem.md.
