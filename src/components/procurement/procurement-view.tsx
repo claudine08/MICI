@@ -184,6 +184,7 @@ export function ProcurementView({
   // Dialogs
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isNewQuotationOpen, setIsNewQuotationOpen] = useState(false);
+  const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null);
   const [isNewSupplierOpen, setIsNewSupplierOpen] = useState(false);
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
   const [isNewReceiptOpen, setIsNewReceiptOpen] = useState(false);
@@ -278,29 +279,67 @@ export function ProcurementView({
     }
   };
 
+  const openEditQuotation = async (q: QuotationRow) => {
+    setError(null);
+    try {
+      const data = await apiRequest<{ quotation: any }>(`/api/v1/projects/${projectId}/procurement/quotations/${q.id}`);
+      const quotation = data.quotation;
+      setQuoteRequestId(quotation.requestId);
+      setQuoteSupplierId(quotation.supplierId);
+      setQuoteLeadTimeDays(quotation.leadTimeDays ?? 0);
+      setQuotePaymentTerms(quotation.paymentTerms ?? "");
+      setQuoteShippingTerms(quotation.shippingTerms ?? "");
+      setQuoteShippingCost(Number(quotation.shippingCost ?? 0));
+      setQuoteDiscount(Number(quotation.discount ?? 0));
+      setQuoteItems(
+        (quotation.items ?? []).map((it: any) => ({
+          description: it.description,
+          quantity: Number(it.quantity),
+          unit: it.unit,
+          unitPrice: Number(it.unitPrice),
+        }))
+      );
+      setEditingQuotationId(q.id);
+      setIsNewQuotationOpen(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Falha ao carregar cotação.");
+    }
+  };
+
   const handleCreateQuotation = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      await apiRequest(`/api/v1/projects/${projectId}/procurement/quotations`, {
-        method: "POST",
-        body: JSON.stringify({
-          requestId: quoteRequestId,
-          supplierId: quoteSupplierId,
-          leadTimeDays: Number(quoteLeadTimeDays),
-          paymentTerms: quotePaymentTerms || undefined,
-          shippingTerms: quoteShippingTerms || undefined,
-          shippingCost: Number(quoteShippingCost),
-          discount: Number(quoteDiscount),
-          items: quoteItems.filter((it) => it.description.trim().length > 0),
-          clientUuid: crypto.randomUUID(),
-        }),
-      });
+      const payload = {
+        leadTimeDays: Number(quoteLeadTimeDays),
+        paymentTerms: quotePaymentTerms || undefined,
+        shippingTerms: quoteShippingTerms || undefined,
+        shippingCost: Number(quoteShippingCost),
+        discount: Number(quoteDiscount),
+        items: quoteItems.filter((it) => it.description.trim().length > 0),
+      };
+      if (editingQuotationId) {
+        await apiRequest(`/api/v1/projects/${projectId}/procurement/quotations/${editingQuotationId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await apiRequest(`/api/v1/projects/${projectId}/procurement/quotations`, {
+          method: "POST",
+          body: JSON.stringify({
+            ...payload,
+            requestId: quoteRequestId,
+            supplierId: quoteSupplierId,
+            clientUuid: crypto.randomUUID(),
+          }),
+        });
+      }
       setIsNewQuotationOpen(false);
+      setEditingQuotationId(null);
       await loadAll();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Falha ao criar cotação.");
+      setError(err instanceof Error ? err.message : "Falha ao salvar cotação.");
     } finally {
       setLoading(false);
     }
@@ -763,14 +802,24 @@ export function ProcurementView({
                     </td>
                     <td className="px-4 py-2.5 text-right space-x-1">
                       {q.status === "DRAFT" && canEdit && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleQuotationTransition(q.id, "SUBMIT")}
-                          disabled={loading}
-                        >
-                          Submeter
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEditQuotation(q)}
+                            disabled={loading}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleQuotationTransition(q.id, "SUBMIT")}
+                            disabled={loading}
+                          >
+                            Submeter
+                          </Button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -1288,7 +1337,7 @@ export function ProcurementView({
       </Dialog>
 
       {/* DIALOG: NOVA COTAÇÃO */}
-      <Dialog open={isNewQuotationOpen} title="Registrar Nova Cotação" onClose={() => setIsNewQuotationOpen(false)}>
+      <Dialog open={isNewQuotationOpen} title={editingQuotationId ? "Editar Cotação" : "Registrar Nova Cotação"} onClose={() => { setIsNewQuotationOpen(false); setEditingQuotationId(null); }}>
         <div className="flex flex-col gap-4 p-4">
           <h2 className="text-base font-semibold">Registrar Nova Cotação</h2>
           <form onSubmit={handleCreateQuotation} className="flex flex-col gap-3">
