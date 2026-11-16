@@ -103,6 +103,7 @@ export function RequirementsView({
   const [evidences, setEvidences] = useState<RequirementEvidenceRow[]>([]);
   const [evidenceLabel, setEvidenceLabel] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
 
   const set = (key: keyof RequirementForm, value: string) =>
     setForm((previous) => ({ ...previous, [key]: value }));
@@ -214,9 +215,19 @@ export function RequirementsView({
     if (!evidenceFor || !evidenceLabel.trim()) return;
     setError(null);
     try {
+      let body: BodyInit;
+      if (evidenceFile) {
+        const formData = new FormData();
+        formData.set("label", evidenceLabel);
+        if (evidenceUrl) formData.set("url", evidenceUrl);
+        formData.set("file", evidenceFile);
+        body = formData;
+      } else {
+        body = JSON.stringify({ label: evidenceLabel, url: evidenceUrl || undefined });
+      }
       await apiRequest(`/api/v1/requirements/${evidenceFor.id}/evidence`, {
         method: "POST",
-        body: JSON.stringify({ label: evidenceLabel, url: evidenceUrl || undefined }),
+        body,
       });
       const data = await apiRequest<{ requirement: { evidences: RequirementEvidenceRow[] } }>(
         `/api/v1/requirements/${evidenceFor.id}`
@@ -224,6 +235,7 @@ export function RequirementsView({
       setEvidences(data.requirement.evidences);
       setEvidenceLabel("");
       setEvidenceUrl("");
+      setEvidenceFile(null);
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Falha ao adicionar evidência.");
@@ -600,7 +612,22 @@ export function RequirementsView({
                 key={evidence.id}
                 className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-sm"
               >
-                <span className="truncate">{evidence.label}</span>
+                <span className="truncate">
+                  {evidence.fileName ? (
+                    <a
+                      href={`/api/v1/requirements/${evidenceFor?.id}/evidence/${evidence.id}/download`}
+                      className="text-primary hover:underline"
+                    >
+                      {evidence.label} ({evidence.fileName})
+                    </a>
+                  ) : evidence.url ? (
+                    <a href={evidence.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                      {evidence.label}
+                    </a>
+                  ) : (
+                    evidence.label
+                  )}
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -632,6 +659,12 @@ export function RequirementsView({
                 value={evidenceUrl}
                 onChange={(event) => setEvidenceUrl(event.target.value)}
                 placeholder="https://…"
+              />
+              <Label htmlFor="evidence-file">Arquivo (opcional)</Label>
+              <Input
+                id="evidence-file"
+                type="file"
+                onChange={(event) => setEvidenceFile(event.target.files?.[0] ?? null)}
               />
               <div className="flex justify-end gap-2 pt-1">
                 <Button onClick={() => void addEvidence()} disabled={!evidenceLabel.trim()}>

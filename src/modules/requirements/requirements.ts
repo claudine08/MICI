@@ -415,8 +415,21 @@ export async function deleteRequirement(input: ActorContext & { requirementId: s
 }
 
 // E04-US04 — vincular evidência ao requisito.
+export interface RequirementEvidenceFile {
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  hash: string;
+  content: Buffer;
+}
+
 export async function addRequirementEvidence(
-  input: ActorContext & { requirementId: string; label: string; url?: string }
+  input: ActorContext & {
+    requirementId: string;
+    label: string;
+    url?: string;
+    file?: RequirementEvidenceFile;
+  }
 ) {
   const requirement = await prisma.requirement.findFirst({
     where: { id: input.requirementId, organizationId: input.organizationId, deletedAt: null },
@@ -432,6 +445,15 @@ export async function addRequirementEvidence(
       requirementId: requirement.id,
       label: input.label.trim(),
       url: input.url?.trim() || null,
+      ...(input.file
+        ? {
+            fileName: input.file.fileName,
+            mimeType: input.file.mimeType,
+            sizeBytes: input.file.sizeBytes,
+            fileHash: input.file.hash,
+            content: new Uint8Array(input.file.content),
+          }
+        : {}),
       createdBy: input.actorId,
     },
   });

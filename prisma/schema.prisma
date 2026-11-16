@@ -757,6 +757,11 @@ model GateEvidence {
   gateInstanceId String   @map("gate_instance_id") @db.Uuid
   label          String   @db.VarChar(200)
   url            String?  @db.VarChar(500)
+  fileName       String?  @map("file_name") @db.VarChar(255)
+  mimeType       String?  @map("mime_type") @db.VarChar(128)
+  sizeBytes      Int?     @map("size_bytes")
+  fileHash       String?  @map("file_hash") @db.VarChar(64)
+  content        Bytes?
   createdBy      String?  @map("created_by") @db.Uuid
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -854,6 +859,11 @@ model RequirementEvidence {
   requirementId  String  @map("requirement_id") @db.Uuid
   label          String  @db.VarChar(200)
   url            String? @db.VarChar(500)
+  fileName       String? @map("file_name") @db.VarChar(255)
+  mimeType       String? @map("mime_type") @db.VarChar(128)
+  sizeBytes      Int?    @map("size_bytes")
+  fileHash       String? @map("file_hash") @db.VarChar(64)
+  content        Bytes?
   createdBy      String? @map("created_by") @db.Uuid
 
   createdAt DateTime @default(now()) @map("created_at")

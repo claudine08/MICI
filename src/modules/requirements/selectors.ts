@@ -146,6 +146,10 @@ export interface RequirementEvidenceRow {
   id: string;
   label: string;
   url: string | null;
+  fileName: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  fileHash: string | null;
   createdAt: Date;
 }
 
@@ -178,7 +182,16 @@ export async function getRequirementDetail(
   return {
     ...toRow(typed, ownerNames),
     version: typed.version,
-    evidences: typed.evidences,
+    evidences: typed.evidences.map((e) => ({
+      id: e.id,
+      label: e.label,
+      url: e.url,
+      fileName: e.fileName,
+      mimeType: e.mimeType,
+      sizeBytes: e.sizeBytes,
+      fileHash: e.fileHash,
+      createdAt: e.createdAt,
+    })),
   };
 }
 

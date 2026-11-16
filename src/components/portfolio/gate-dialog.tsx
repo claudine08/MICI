@@ -43,6 +43,7 @@ export function GateDialog({
   const [reason, setReason] = useState("");
   const [evLabel, setEvLabel] = useState("");
   const [evUrl, setEvUrl] = useState("");
+  const [evFile, setEvFile] = useState<File | null>(null);
 
   const allowed = actionsForStatus(gate.status);
   const decided = gate.status === "APPROVED" || gate.status === "WAIVED";
@@ -95,16 +96,24 @@ export function GateDialog({
     setError(null);
     setBusy(true);
     try {
+      let body: BodyInit;
+      if (evFile) {
+        const formData = new FormData();
+        formData.set("label", evLabel);
+        if (evUrl) formData.set("url", evUrl);
+        formData.set("file", evFile);
+        body = formData;
+      } else {
+        body = JSON.stringify({ label: evLabel, url: evUrl || undefined });
+      }
       const data = await apiRequest<{ gate: GateInstanceRow }>(
         `/api/v1/gates/${gate.id}/evidences`,
-        {
-          method: "POST",
-          body: JSON.stringify({ label: evLabel, url: evUrl || undefined }),
-        }
+        { method: "POST", body }
       );
       setGate(data.gate);
       setEvLabel("");
       setEvUrl("");
+      setEvFile(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Falha ao registrar evidência.");
     } finally {
@@ -297,7 +306,14 @@ export function GateDialog({
             {gate.evidences.map((evidence) => (
               <li key={evidence.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="truncate">
-                  {evidence.url ? (
+                  {evidence.fileName ? (
+                    <a
+                      href={`/api/v1/gates/${gate.id}/evidences/${evidence.id}/download`}
+                      className="text-primary hover:underline"
+                    >
+                      {evidence.label} ({evidence.fileName})
+                    </a>
+                  ) : evidence.url ? (
                     <a
                       href={evidence.url}
                       target="_blank"
@@ -349,6 +365,14 @@ export function GateDialog({
                   value={evUrl}
                   onChange={(event) => setEvUrl(event.target.value)}
                   placeholder="https://…"
+                />
+              </div>
+              <div className="grid flex-1 gap-1">
+                <Label htmlFor="evidence-file">Arquivo (opcional)</Label>
+                <Input
+                  id="evidence-file"
+                  type="file"
+                  onChange={(event) => setEvFile(event.target.files?.[0] ?? null)}
                 />
               </div>
               <Button

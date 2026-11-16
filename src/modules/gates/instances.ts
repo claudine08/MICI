@@ -66,6 +66,10 @@ export interface GateEvidenceRow {
   id: string;
   label: string;
   url: string | null;
+  fileName: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  fileHash: string | null;
   createdBy: string | null;
   createdAt: Date;
 }
@@ -157,7 +161,17 @@ function toRow(instance: InstanceRecord): GateInstanceRow {
     updatedAt: instance.updatedAt,
     criteria: parseSnapshot(instance.criteriaSnapshot),
     results,
-    evidences: instance.evidences,
+    evidences: instance.evidences.map((e) => ({
+      id: e.id,
+      label: e.label,
+      url: e.url,
+      fileName: e.fileName,
+      mimeType: e.mimeType,
+      sizeBytes: e.sizeBytes,
+      fileHash: e.fileHash,
+      createdBy: e.createdBy,
+      createdAt: e.createdAt,
+    })),
     approvals: instance.approvals,
   };
 }
@@ -467,10 +481,19 @@ export async function setGateCriteria(input: SetGateCriteriaInput) {
   return toRow(updated);
 }
 
+export interface GateEvidenceFile {
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  hash: string;
+  content: Buffer;
+}
+
 export interface AddGateEvidenceInput extends ActorContext {
   instanceId: string;
   label: string;
   url?: string;
+  file?: GateEvidenceFile;
 }
 
 export async function addGateEvidence(input: AddGateEvidenceInput) {
@@ -492,6 +515,15 @@ export async function addGateEvidence(input: AddGateEvidenceInput) {
         gateInstanceId: instance.id,
         label: input.label.trim(),
         url: input.url?.trim() || null,
+        ...(input.file
+          ? {
+              fileName: input.file.fileName,
+              mimeType: input.file.mimeType,
+              sizeBytes: input.file.sizeBytes,
+              fileHash: input.file.hash,
+              content: new Uint8Array(input.file.content),
+            }
+          : {}),
         createdBy: input.actorId,
       },
     });
