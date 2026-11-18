@@ -1797,3 +1797,6 @@ organization_memberships_organization_id_user_id_key`).
 - Commits c14c5c.. 4b74ce, push e deploys mici-5f39un0yd..mici-gbsoamgz7 (aliased mici-theta).
 
 - Cronograma: colunas Inicio real/Fim real na tabela de atividades; barra de rolagem horizontal movida para o topo acima do cabecalho; edicao manual das datas reais no formulario de atividade (schema/API/backend). Commit: (pending)
+
+## 18/11/2026 - WBS grafico de arvore publicado
+- Commit 490e6b9: componente WbsGraph com custos, riscos e datas; WbsView e selectors atualizados. Deploy em producao mici-theta.vercel.app.

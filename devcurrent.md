@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 13/11/2026. Commits `bc14c5c`..`70f93b2` publicados: WBS mostra nome da atividade vinculada (code+nome) no painel e no popup de riscos; item de custo filtrado por WBS no popup de risco; tabela de riscos com coluna WBS (codigo+nome); botao de upload de foto com seletor de arquivo. Backlog anotado: upload de arquivo como evidência de gate/requisito (hoje é rótulo+URL; feature a implementar). Integração adiada. Retomar amanhã.
+**Ultima atualizacao:** 18/11/2026. Commits `490e6b9` publicados: WBS grafico de arvore com custos, riscos e datas (WbsGraph), exibindo nome da atividade vinculada, custo total por no, riscos e datas plan/real; deploy em producao mici-theta.vercel.app. Backlog: upload de arquivo como evidencia de gate/requisito (implementado em commit anterior).
 
 Anterior: 07/11/2026 (d). Frente **Onda 4 (módulos faltantes)** iniciada:
 Reuniões/Atas (Fatia 1+2+3) e RFI (interno) + RFI de Fornecedores (Fatia 1)
