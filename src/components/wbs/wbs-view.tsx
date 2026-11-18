@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog } from "@/components/ui/dialog";
+import { WbsGraph } from "@/components/wbs/wbs-graph";
 
 // Árvore de WBS (E05-US01…US05): criar, editar/mover, reordenar, duplicar,
 // excluir, importar/exportar e versionar — com relatório de erros da importação.
@@ -95,6 +96,18 @@ export function WbsView({
     }
   }, [projectId]);
   const [versionNote, setVersionNote] = useState("");
+  const [textVisible, setTextVisible] = useState(true);
+  const [graphHeight, setGraphHeight] = useState(420);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen]);
 
   const set = (key: keyof NodeForm, value: string) =>
     setForm((previous) => ({ ...previous, [key]: value }));
@@ -284,6 +297,43 @@ export function WbsView({
 
       <ErrorBox message={error} />
 
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-medium">WBS gráfico</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            Altura
+            <input
+              type="range"
+              min={240}
+              max={900}
+              value={graphHeight}
+              onChange={(event) => setGraphHeight(Number(event.target.value))}
+              className="w-32"
+            />
+          </label>
+          <Button variant="outline" size="sm" onClick={() => setTextVisible((v) => !v)}>
+            {textVisible ? "Ocultar WBS textual" : "Mostrar WBS textual"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setFullscreen(true)}>
+            Tela cheia
+          </Button>
+        </div>
+      </div>
+      <div
+        className="resize-y overflow-auto rounded-lg border border-border bg-surface"
+        style={{ height: graphHeight, minHeight: 240, maxHeight: 900 }}
+      >
+        <WbsGraph
+          tree={tree}
+          canCreate={canCreate}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          onAdd={openCreate}
+          onEdit={openEdit}
+          onRemove={(node) => void remove(node)}
+        />
+      </div>
+      {textVisible && (
       <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
           <thead>
@@ -383,6 +433,7 @@ export function WbsView({
           </tbody>
         </table>
       </div>
+      )}
 
       <Dialog
         open={dialog === "node"}
@@ -526,6 +577,27 @@ export function WbsView({
           </ul>
         </div>
       </Dialog>
+      {fullscreen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background">
+          <div className="flex items-center justify-between border-b border-border px-4 py-2">
+            <span className="text-sm font-medium">WBS gráfico — tela cheia</span>
+            <Button variant="outline" size="sm" onClick={() => setFullscreen(false)}>
+              Sair da tela cheia (Esc)
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto p-4">
+            <WbsGraph
+              tree={tree}
+              canCreate={canCreate}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              onAdd={openCreate}
+              onEdit={openEdit}
+              onRemove={(node) => void remove(node)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

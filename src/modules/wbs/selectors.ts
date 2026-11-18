@@ -7,6 +7,12 @@ import { buildWbsTree, type WbsNodeLite, type WbsTreeNode } from "@/modules/wbs/
 export interface WbsNodeRow extends WbsTreeNode {
   requirementsCount: number;
   linkedActivityLabel: string | null;
+  costTotal: number;
+  riskTitles: string[];
+  plannedStart: Date | null;
+  plannedFinish: Date | null;
+  actualStart: Date | null;
+  actualFinish: Date | null;
 }
 
 export async function assertWbsProject(organizationId: string, projectId: string) {
@@ -47,7 +53,7 @@ export async function getWbsTree(
   projectId: string
 ): Promise<WbsNodeRow[]> {
   await assertWbsProject(organizationId, projectId);
-  const [nodes, activities] = await Promise.all([
+  const [nodes, activities, costItems, risks] = await Promise.all([
     prisma.wBSNode.findMany({
       where: { organizationId, projectId, deletedAt: null },
       select: {
@@ -65,31 +71,79 @@ export async function getWbsTree(
     }),
     prisma.scheduleActivity.findMany({
       where: { organizationId, projectId, deletedAt: null, wbsNodeId: { not: null } },
-      select: { code: true, name: true, wbsNodeId: true },
+      select: { code: true, name: true, wbsNodeId: true, plannedStart: true, plannedFinish: true, actualStart: true, actualFinish: true },
       orderBy: { orderIndex: "asc" },
+    }),
+    prisma.costItem.findMany({
+      where: { organizationId, projectId, deletedAt: null, wbsNodeId: { not: null } },
+      select: { wbsNodeId: true, amount: true },
+    }),
+    prisma.risk.findMany({
+      where: { organizationId, projectId, deletedAt: null, wbsNodeId: { not: null } },
+      select: { wbsNodeId: true, code: true, title: true },
     }),
   ]);
 
   const activityByWbs = new Map<string, string[]>();
+  const datesByWbs = new Map<string, { ps: Date | null; pf: Date | null; as: Date | null; af: Date | null }>();
   for (const a of activities) {
     if (!a.wbsNodeId) continue;
     const list = activityByWbs.get(a.wbsNodeId) ?? [];
     list.push(`${a.code} ${a.name}`.trim());
     activityByWbs.set(a.wbsNodeId, list);
+
+    const cur = datesByWbs.get(a.wbsNodeId) ?? { ps: null, pf: null, as: null, af: null };
+    if (a.plannedStart && (!cur.ps || a.plannedStart < cur.ps)) cur.ps = a.plannedStart;
+    if (a.plannedFinish && (!cur.pf || a.plannedFinish > cur.pf)) cur.pf = a.plannedFinish;
+    if (a.actualStart && (!cur.as || a.actualStart < cur.as)) cur.as = a.actualStart;
+    if (a.actualFinish && (!cur.af || a.actualFinish > cur.af)) cur.af = a.actualFinish;
+    datesByWbs.set(a.wbsNodeId, cur);
   }
 
-  const lite: (WbsNodeLite & { requirementsCount: number; linkedActivityLabel: string | null })[] = nodes.map((node) => ({
-    id: node.id,
-    parentId: node.parentId,
-    code: node.code,
-    name: node.name,
-    orderIndex: node.orderIndex,
-    description: node.description,
-    nodeType: node.nodeType,
-    deletedAt: node.deletedAt,
-    requirementsCount: node._count.requirements,
-    linkedActivityLabel: (activityByWbs.get(node.id) ?? []).join("; ") || null,
-  }));
+  const costByWbs = new Map<string, number>();
+  for (const c of costItems) {
+    if (!c.wbsNodeId) continue;
+    costByWbs.set(c.wbsNodeId, (costByWbs.get(c.wbsNodeId) ?? 0) + Number(c.amount));
+  }
+
+  const riskByWbs = new Map<string, string[]>();
+  for (const r of risks) {
+    if (!r.wbsNodeId) continue;
+    const list = riskByWbs.get(r.wbsNodeId) ?? [];
+    list.push(`${r.code} ${r.title}`.trim());
+    riskByWbs.set(r.wbsNodeId, list);
+  }
+
+  const lite: (WbsNodeLite & {
+    requirementsCount: number;
+    linkedActivityLabel: string | null;
+    costTotal: number;
+    riskTitles: string[];
+    plannedStart: Date | null;
+    plannedFinish: Date | null;
+    actualStart: Date | null;
+    actualFinish: Date | null;
+  })[] = nodes.map((node) => {
+    const d = datesByWbs.get(node.id);
+    return {
+      id: node.id,
+      parentId: node.parentId,
+      code: node.code,
+      name: node.name,
+      orderIndex: node.orderIndex,
+      description: node.description,
+      nodeType: node.nodeType,
+      deletedAt: node.deletedAt,
+      requirementsCount: node._count.requirements,
+      linkedActivityLabel: (activityByWbs.get(node.id) ?? []).join("; ") || null,
+      costTotal: costByWbs.get(node.id) ?? 0,
+      riskTitles: riskByWbs.get(node.id) ?? [],
+      plannedStart: d?.ps ?? null,
+      plannedFinish: d?.pf ?? null,
+      actualStart: d?.as ?? null,
+      actualFinish: d?.af ?? null,
+    };
+  });
 
   return buildWbsTree(lite) as WbsNodeRow[];
 }
