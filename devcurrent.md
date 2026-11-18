@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 18/11/2026. Commits `490e6b9` publicados: WBS grafico de arvore com custos, riscos e datas (WbsGraph), exibindo nome da atividade vinculada, custo total por no, riscos e datas plan/real; deploy em producao mici-theta.vercel.app. Backlog: upload de arquivo como evidencia de gate/requisito (implementado em commit anterior).
+**Ultima atualizacao:** 18/11/2026. Commits `312899e` publicados: tooltip do WBS grafico exibido a direita do no (em vez de embaixo). Deploy em producao mici-theta.vercel.app.
 
 Anterior: 07/11/2026 (d). Frente **Onda 4 (módulos faltantes)** iniciada:
 Reuniões/Atas (Fatia 1+2+3) e RFI (interno) + RFI de Fornecedores (Fatia 1)
