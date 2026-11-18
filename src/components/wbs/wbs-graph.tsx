@@ -68,7 +68,7 @@ function NodeBox({
           </div>
         </div>
 
-        <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-1 hidden w-56 -translate-x-1/2 rounded-md border border-border bg-popover p-2 text-xs shadow-lg group-hover:block">
+        <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 hidden w-56 -translate-y-1/2 rounded-md border border-border bg-popover p-2 text-xs shadow-lg group-hover:block">
           <div className="font-semibold mb-1">Recursos / custos / riscos</div>
           <div className="mb-1">
             <span className="font-medium">Recursos:</span>{" "}
