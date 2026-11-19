@@ -6,6 +6,7 @@ export interface SupplierRfiRecipientRow {
   supplierId: string;
   supplierName: string;
   supplierEmail: string | null;
+  supplierPhone: string | null;
   status: string;
   quotedAmount: string | null;
   leadTimeDays: number | null;
@@ -35,7 +36,7 @@ export async function listSupplierRfis(organizationId: string, projectId?: strin
     orderBy: { createdAt: "desc" },
   });
   const supplierIds = [...new Set(rows.flatMap((r) => r.recipients.map((rec) => rec.supplierId)))];
-  const suppliers = supplierIds.length ? await prisma.supplier.findMany({ where: { id: { in: supplierIds } }, select: { id: true, name: true, email: true } }) : [];
+  const suppliers = supplierIds.length ? await prisma.supplier.findMany({ where: { id: { in: supplierIds } }, select: { id: true, name: true, email: true, phone: true } }) : [];
   const supMap = new Map(suppliers.map((s) => [s.id, s]));
   return rows.map((r) => ({
     id: r.id,
@@ -53,6 +54,7 @@ export async function listSupplierRfis(organizationId: string, projectId?: strin
       supplierId: rec.supplierId,
       supplierName: supMap.get(rec.supplierId)?.name ?? rec.supplierId,
       supplierEmail: supMap.get(rec.supplierId)?.email ?? null,
+      supplierPhone: supMap.get(rec.supplierId)?.phone ?? null,
       status: rec.status,
       quotedAmount: rec.quotedAmount ? rec.quotedAmount.toString() : null,
       leadTimeDays: rec.leadTimeDays,
@@ -67,7 +69,7 @@ export async function getSupplierRfi(organizationId: string, id: string): Promis
   const r = await prisma.supplierRfi.findFirst({ where: { id, organizationId, deletedAt: null }, include: { recipients: true } });
   if (!r) throw new AppError("NOT_FOUND", "RFI de fornecedor não encontrado.");
   const supplierIds = r.recipients.map((rec) => rec.supplierId);
-  const suppliers = supplierIds.length ? await prisma.supplier.findMany({ where: { id: { in: supplierIds } }, select: { id: true, name: true, email: true } }) : [];
+  const suppliers = supplierIds.length ? await prisma.supplier.findMany({ where: { id: { in: supplierIds } }, select: { id: true, name: true, email: true, phone: true } }) : [];
   const supMap = new Map(suppliers.map((s) => [s.id, s]));
   return {
     id: r.id,
@@ -85,6 +87,7 @@ export async function getSupplierRfi(organizationId: string, id: string): Promis
       supplierId: rec.supplierId,
       supplierName: supMap.get(rec.supplierId)?.name ?? rec.supplierId,
       supplierEmail: supMap.get(rec.supplierId)?.email ?? null,
+      supplierPhone: supMap.get(rec.supplierId)?.phone ?? null,
       status: rec.status,
       quotedAmount: rec.quotedAmount ? rec.quotedAmount.toString() : null,
       leadTimeDays: rec.leadTimeDays,

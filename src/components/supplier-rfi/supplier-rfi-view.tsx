@@ -142,6 +142,15 @@ export function SupplierRfiView({
     }
   };
 
+  const whatsappHref = (rfi: SupplierRfiRow) => {
+    const rec = rfi.recipients.find((r) => r.supplierId === rfi.selectedSupplierId) ?? rfi.recipients[0];
+    if (!rec?.supplierPhone) return null;
+    const phone = rec.supplierPhone.replace(/\\D/g, "");
+    if (!phone) return null;
+    const msg = `Olá! RFI de fornecedores: ${rfi.title}${rfi.dueDate ? ` (prazo: ${rfi.dueDate})` : ""}. Por favor responda com sua cotação.`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {error && <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
@@ -230,6 +239,7 @@ export function SupplierRfiView({
                     <div className="flex flex-wrap gap-1">
                       {canEdit && r.status === "DRAFT" && <Button size="sm" onClick={() => send(r.id)}>Enviar</Button>}
                       {canEdit && r.status === "SELECTED" && <Button size="sm" onClick={() => convert(r.id)}>Converter em cotação</Button>}
+                      {(() => { const href = whatsappHref(r); return href ? <a href={href} target="_blank" rel="noopener noreferrer"><Button size="sm" variant="outline">WhatsApp</Button></a> : null; })()}
                       {r.status === "CONVERTED" && r.convertedQuotationId && (
                         <span className="text-xs font-medium text-emerald-600">Convertido (cotação gerada)</span>
                       )}
