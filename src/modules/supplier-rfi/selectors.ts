@@ -7,6 +7,7 @@ export interface SupplierRfiRecipientRow {
   supplierName: string;
   supplierEmail: string | null;
   supplierPhone: string | null;
+  responseToken: string | null;
   status: string;
   quotedAmount: string | null;
   leadTimeDays: number | null;
@@ -35,6 +36,16 @@ export async function listSupplierRfis(organizationId: string, projectId?: strin
     include: { recipients: true },
     orderBy: { createdAt: "desc" },
   });
+  // Garante responseToken para recipients antigos (criados antes da migration).
+  for (const r of rows) {
+    for (const rec of r.recipients) {
+      if (!rec.responseToken) {
+        const tok = (await import("node:crypto")).randomBytes(32).toString("hex");
+        await prisma.supplierRfiRecipient.update({ where: { id: rec.id }, data: { responseToken: tok } });
+        rec.responseToken = tok;
+      }
+    }
+  }
   const supplierIds = [...new Set(rows.flatMap((r) => r.recipients.map((rec) => rec.supplierId)))];
   const suppliers = supplierIds.length ? await prisma.supplier.findMany({ where: { id: { in: supplierIds } }, select: { id: true, name: true, email: true, phone: true } }) : [];
   const supMap = new Map(suppliers.map((s) => [s.id, s]));
@@ -55,6 +66,7 @@ export async function listSupplierRfis(organizationId: string, projectId?: strin
       supplierName: supMap.get(rec.supplierId)?.name ?? rec.supplierId,
       supplierEmail: supMap.get(rec.supplierId)?.email ?? null,
       supplierPhone: supMap.get(rec.supplierId)?.phone ?? null,
+      responseToken: rec.responseToken ?? null,
       status: rec.status,
       quotedAmount: rec.quotedAmount ? rec.quotedAmount.toString() : null,
       leadTimeDays: rec.leadTimeDays,
@@ -68,6 +80,13 @@ export async function listSupplierRfis(organizationId: string, projectId?: strin
 export async function getSupplierRfi(organizationId: string, id: string): Promise<SupplierRfiRow> {
   const r = await prisma.supplierRfi.findFirst({ where: { id, organizationId, deletedAt: null }, include: { recipients: true } });
   if (!r) throw new AppError("NOT_FOUND", "RFI de fornecedor não encontrado.");
+  for (const rec of r.recipients) {
+    if (!rec.responseToken) {
+      const tok = (await import("node:crypto")).randomBytes(32).toString("hex");
+      await prisma.supplierRfiRecipient.update({ where: { id: rec.id }, data: { responseToken: tok } });
+      rec.responseToken = tok;
+    }
+  }
   const supplierIds = r.recipients.map((rec) => rec.supplierId);
   const suppliers = supplierIds.length ? await prisma.supplier.findMany({ where: { id: { in: supplierIds } }, select: { id: true, name: true, email: true, phone: true } }) : [];
   const supMap = new Map(suppliers.map((s) => [s.id, s]));
@@ -88,6 +107,7 @@ export async function getSupplierRfi(organizationId: string, id: string): Promis
       supplierName: supMap.get(rec.supplierId)?.name ?? rec.supplierId,
       supplierEmail: supMap.get(rec.supplierId)?.email ?? null,
       supplierPhone: supMap.get(rec.supplierId)?.phone ?? null,
+      responseToken: rec.responseToken ?? null,
       status: rec.status,
       quotedAmount: rec.quotedAmount ? rec.quotedAmount.toString() : null,
       leadTimeDays: rec.leadTimeDays,

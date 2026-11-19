@@ -147,8 +147,10 @@ export function SupplierRfiView({
     if (!rec?.supplierPhone) return null;
     const phone = rec.supplierPhone.replace(/\\D/g, "");
     if (!phone) return null;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const link = rec.responseToken ? `${origin}/rfi-resposta/${rec.responseToken}` : "";
     const desc = rfi.description ? ` ${rfi.description}` : "";
-    const msg = `Olá! RFI de fornecedores: ${rfi.title}${desc}${rfi.dueDate ? ` (prazo: ${rfi.dueDate})` : ""}. Por favor responda com sua cotação.`;
+    const msg = `Olá! RFI de fornecedores: ${rfi.title}${desc}${rfi.dueDate ? ` (prazo: ${rfi.dueDate})` : ""}. Responda sua cotação aqui: ${link}`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
   };
 

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
 import { enqueueJob } from "@/modules/integrations/jobs";
@@ -46,7 +47,7 @@ export async function createSupplierRfi(
       createdBy: input.actorId,
       updatedBy: input.actorId,
       ...(input.supplierIds && input.supplierIds.length
-        ? { recipients: { create: input.supplierIds.map((sid) => ({ organizationId: input.organizationId, supplierId: sid })) } }
+        ? { recipients: { create: input.supplierIds.map((sid) => ({ organizationId: input.organizationId, supplierId: sid, responseToken: randomBytes(32).toString("hex") })) } }
         : {}),
     },
   });
@@ -58,7 +59,7 @@ export async function addRecipient(input: ActorContext & { rfiId: string; suppli
   if (!rfi) throw new AppError("NOT_FOUND", "RFI não encontrado.");
   const existing = await prisma.supplierRfiRecipient.findUnique({ where: { rfiId_supplierId: { rfiId: rfi.id, supplierId: input.supplierId } } });
   if (existing) return existing;
-  return prisma.supplierRfiRecipient.create({ data: { organizationId: input.organizationId, rfiId: rfi.id, supplierId: input.supplierId } });
+  return prisma.supplierRfiRecipient.create({ data: { organizationId: input.organizationId, rfiId: rfi.id, supplierId: input.supplierId, responseToken: randomBytes(32).toString("hex") } });
 }
 
 export async function removeRecipient(input: ActorContext & { rfiId: string; supplierId: string }) {
@@ -132,6 +133,47 @@ export async function sendRfi(input: ActorContext & { rfiId: string }) {
     });
   }
   return updated;
+}
+
+export async function ensureResponseToken(recipientId: string): Promise<string> {
+  const rec = await prisma.supplierRfiRecipient.findUnique({ where: { id: recipientId } });
+  if (!rec) throw new AppError("NOT_FOUND", "Recipient não encontrado.");
+  if (rec.responseToken) return rec.responseToken;
+  const token = randomBytes(32).toString("hex");
+  await prisma.supplierRfiRecipient.update({ where: { id: recipientId }, data: { responseToken: token } });
+  return token;
+}
+
+export async function getRfiResponseByToken(token: string) {
+  let rec = await prisma.supplierRfiRecipient.findUnique({ where: { responseToken: token } });
+  if (!rec) throw new AppError("NOT_FOUND", "Link de resposta inválido ou expirado.");
+  const rfi = await prisma.supplierRfi.findFirst({ where: { id: rec.rfiId, deletedAt: null } });
+  if (!rfi) throw new AppError("NOT_FOUND", "RFI não encontrado.");
+  const supplier = await prisma.supplier.findUnique({ where: { id: rec.supplierId }, select: { id: true, name: true } });
+  return {
+    rfi: { id: rfi.id, code: rfi.code, title: rfi.title, description: rfi.description, dueDate: rfi.dueDate ? rfi.dueDate.toISOString().slice(0, 10) : null, status: rfi.status },
+    recipient: { id: rec.id, supplierId: rec.supplierId, supplierName: supplier?.name ?? rec.supplierId, status: rec.status, quotedAmount: rec.quotedAmount ? rec.quotedAmount.toString() : null, leadTimeDays: rec.leadTimeDays, notes: rec.notes },
+  };
+}
+
+export async function submitRfiResponseByToken(token: string, data: { quotedAmount?: number; leadTimeDays?: number; notes?: string | null }) {
+  const rec = await prisma.supplierRfiRecipient.findUnique({ where: { responseToken: token } });
+  if (!rec) throw new AppError("NOT_FOUND", "Link de resposta inválido ou expirado.");
+  const rfi = await prisma.supplierRfi.findFirst({ where: { id: rec.rfiId, deletedAt: null } });
+  if (!rfi) throw new AppError("NOT_FOUND", "RFI não encontrado.");
+  if (rfi.status === "CANCELLED" || rfi.status === "CONVERTED") throw new AppError("VALIDATION_ERROR", "RFI não aceita mais respostas.");
+  const updated = await prisma.supplierRfiRecipient.update({
+    where: { id: rec.id },
+    data: {
+      status: "RESPONDED",
+      quotedAmount: data.quotedAmount != null ? data.quotedAmount : rec.quotedAmount,
+      leadTimeDays: data.leadTimeDays != null ? data.leadTimeDays : rec.leadTimeDays,
+      notes: data.notes !== undefined ? data.notes : rec.notes,
+      respondedAt: new Date(),
+    },
+  });
+  await prisma.supplierRfi.update({ where: { id: rfi.id }, data: { status: "RESPONDED", updatedBy: rfi.updatedBy } });
+  return { rfi, recipient: updated };
 }
 
 export async function cancelRfi(input: ActorContext & { rfiId: string }) {
