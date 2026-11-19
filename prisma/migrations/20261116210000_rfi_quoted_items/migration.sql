@@ -1,0 +1,1 @@
+ALTER TABLE "supplier_rfi_recipients" ADD COLUMN "quoted_items" JSONB;

@@ -3325,6 +3325,7 @@ model SupplierRfiRecipient {
   supplierId     String    @map("supplier_id") @db.Uuid
   status         String    @default("PENDING") @db.VarChar(16)
   quotedAmount   Decimal?  @map("quoted_amount") @db.Decimal(14, 2)
+  quotedItems    Json?     @map("quoted_items")
   leadTimeDays   Int?      @map("lead_time_days")
   notes          String?   @db.Text
   respondedAt    DateTime? @map("responded_at")

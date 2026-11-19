@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
 import { enqueueJob } from "@/modules/integrations/jobs";
+import { assertProcurementProject, audit, emitDomainEvent, nextProcurementCode } from "@/modules/procurement/common";
 
 interface ActorContext {
   organizationId: string;
@@ -141,4 +142,114 @@ export async function cancelRfi(input: ActorContext & { rfiId: string }) {
     data: { status: "CANCELLED", updatedBy: input.actorId },
   });
   return updated;
+}
+
+export async function convertToQuotation(input: ActorContext & { rfiId: string }) {
+  const rfi = await prisma.supplierRfi.findFirst({
+    where: { id: input.rfiId, organizationId: input.organizationId, deletedAt: null },
+    include: { recipients: true },
+  });
+  if (!rfi) throw new AppError("NOT_FOUND", "RFI não encontrado.");
+  if (rfi.status !== "SELECTED") throw new AppError("VALIDATION_ERROR", "Apenas RFIs com fornecedor selecionado podem ser convertidos em cotação.");
+  if (!rfi.selectedSupplierId) throw new AppError("VALIDATION_ERROR", "Nenhum fornecedor selecionado.");
+
+  const recipient = rfi.recipients.find((r) => r.supplierId === rfi.selectedSupplierId);
+  if (!recipient || recipient.status !== "RESPONDED") {
+    throw new AppError("VALIDATION_ERROR", "O fornecedor selecionado não possui resposta registrada.");
+  }
+
+  await assertProcurementProject(input.organizationId, rfi.projectId);
+
+  const supplier = await prisma.supplier.findFirst({ where: { id: rfi.selectedSupplierId, organizationId: input.organizationId, deletedAt: null } });
+  if (!supplier) throw new AppError("NOT_FOUND", "Fornecedor selecionado não encontrado.");
+
+  const quotedAmount = recipient.quotedAmount ? Number(recipient.quotedAmount) : 0;
+  const leadTimeDays = recipient.leadTimeDays ?? null;
+
+  const prCode = await nextProcurementCode(rfi.projectId, "PR");
+  const qtCode = await nextProcurementCode(rfi.projectId, "QT");
+
+  const { request, quotation } = await prisma.$transaction(async (tx) => {
+    const createdRequest = await tx.purchaseRequest.create({
+      data: {
+        organizationId: input.organizationId,
+        projectId: rfi.projectId,
+        code: prCode,
+        title: rfi.title,
+        description: rfi.description,
+        priority: "MEDIUM",
+        status: "DRAFT",
+        wbsNodeId: rfi.wbsNodeId,
+        activityId: rfi.activityId,
+        createdBy: input.actorId,
+        updatedBy: input.actorId,
+        items: {
+          create: [{
+            itemNumber: 1,
+            description: rfi.title,
+            quantity: 1,
+            unit: "un",
+            estimatedUnitPrice: quotedAmount || null,
+            estimatedTotalPrice: quotedAmount || null,
+            notes: recipient.notes ?? null,
+          }],
+        },
+      },
+      include: { items: true },
+    });
+
+    const createdQuotation = await tx.quotation.create({
+      data: {
+        organizationId: input.organizationId,
+        projectId: rfi.projectId,
+        requestId: createdRequest.id,
+        supplierId: rfi.selectedSupplierId!,
+        code: qtCode,
+        status: "DRAFT",
+        leadTimeDays,
+        totalAmount: quotedAmount,
+        notes: recipient.notes ?? null,
+        createdBy: input.actorId,
+        updatedBy: input.actorId,
+        items: {
+          create: [{
+            requestItemId: createdRequest.items[0].id,
+            description: rfi.title,
+            quantity: 1,
+            unit: "un",
+            unitPrice: quotedAmount,
+            totalPrice: quotedAmount,
+            leadTimeDays,
+            notes: recipient.notes ?? null,
+          }],
+        },
+      },
+      include: { items: true, supplier: true },
+    });
+
+    await tx.purchaseRequest.update({
+      where: { id: createdRequest.id },
+      data: { status: "QUOTING", updatedBy: input.actorId, version: { increment: 1 } },
+    });
+
+    return { request: createdRequest, quotation: createdQuotation };
+  });
+
+  const updatedRfi = await prisma.supplierRfi.update({
+    where: { id: rfi.id },
+    data: { status: "CONVERTED", convertedQuotationId: quotation.id, updatedBy: input.actorId },
+  });
+
+  await audit(input, rfi.projectId, "SupplierRfi", "CONVERT", {
+    objectId: rfi.id,
+    oldValue: { status: rfi.status },
+    newValue: { status: "CONVERTED", quotationId: quotation.id, requestId: request.id },
+  });
+  await emitDomainEvent(input, rfi.projectId, "SupplierRfi.Converted", "SupplierRfi", rfi.id, {
+    quotationId: quotation.id,
+    requestId: request.id,
+    supplierId: rfi.selectedSupplierId,
+  });
+
+  return { rfi: updatedRfi, quotation, purchaseRequest: request };
 }

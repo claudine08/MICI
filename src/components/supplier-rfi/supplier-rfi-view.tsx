@@ -123,6 +123,25 @@ export function SupplierRfiView({
     }
   };
 
+  const convert = async (rfiId: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await apiRequest<{ quotation: { id: string } }>(`/api/v1/supplier-rfis/${rfiId}/convert`, {
+        method: "POST",
+      });
+      router.refresh();
+      if (result?.quotation?.id) {
+        // redireciona para suprimentos para visualizar a cotação gerada
+        router.push(`/projetos/${projectId}/suprimentos`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao converter em cotação.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {error && <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
@@ -210,6 +229,10 @@ export function SupplierRfiView({
                   <td className="px-4 py-2.5">
                     <div className="flex flex-wrap gap-1">
                       {canEdit && r.status === "DRAFT" && <Button size="sm" onClick={() => send(r.id)}>Enviar</Button>}
+                      {canEdit && r.status === "SELECTED" && <Button size="sm" onClick={() => convert(r.id)}>Converter em cotação</Button>}
+                      {r.status === "CONVERTED" && r.convertedQuotationId && (
+                        <span className="text-xs font-medium text-emerald-600">Convertido (cotação gerada)</span>
+                      )}
                     </div>
                   </td>
                 </tr>
