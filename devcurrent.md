@@ -11,7 +11,7 @@
 > (gerado por `npm run rag:index`); use `npm run rag:query <termo>` para
 > recuperar sÃ³ o chunk relevante e reduzir tokens.
 
-**Ultima atualizacao:** 18/11/2026. Commits `312899e` publicados: tooltip do WBS grafico exibido a direita do no (em vez de embaixo). Deploy em producao mici-theta.vercel.app.
+**Ultima atualizacao:** 19/11/2026. Commits `312899e` publicados: tooltip do WBS grafico exibido a direita do no (em vez de embaixo). Deploy em producao mici-theta.vercel.app. Adicional: RFI de Fornecedores Fatia 2 — conversao em cotacao (convertToQuotation: cria PR+QT a partir do fornecedor selecionado, marca RFI CONVERTED) implementada e validada (build/typecheck/lint ok; rota /api/v1/supplier-rfis/[id]/convert). Smoke autenticado OK (19/11) + commit `9e8550c` + push + deploy `mici-ql2bfje0s` (aliased mici-theta.vercel.app) + migration status "up to date" no Neon. Rota `/api/v1/supplier-rfis/[id]/convert` validada em produção (404 padronizado para id inexistente).
 
 Anterior: 07/11/2026 (d). Frente **Onda 4 (módulos faltantes)** iniciada:
 Reuniões/Atas (Fatia 1+2+3) e RFI (interno) + RFI de Fornecedores (Fatia 1)
