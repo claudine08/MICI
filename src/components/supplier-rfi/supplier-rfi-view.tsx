@@ -147,7 +147,8 @@ export function SupplierRfiView({
     if (!rec?.supplierPhone) return null;
     const phone = rec.supplierPhone.replace(/\\D/g, "");
     if (!phone) return null;
-    const msg = `Olá! RFI de fornecedores: ${rfi.title}${rfi.dueDate ? ` (prazo: ${rfi.dueDate})` : ""}. Por favor responda com sua cotação.`;
+    const desc = rfi.description ? ` ${rfi.description}` : "";
+    const msg = `Olá! RFI de fornecedores: ${rfi.title}${desc}${rfi.dueDate ? ` (prazo: ${rfi.dueDate})` : ""}. Por favor responda com sua cotação.`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
   };
 
