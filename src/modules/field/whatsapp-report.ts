@@ -30,7 +30,11 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
       continue;
     }
 
-    const user = await prisma.user.findFirst({ where: { phone }, select: { id: true, name: true } });
+    const candidates = await prisma.user.findMany({
+      where: { phone: { not: null } },
+      select: { id: true, name: true, phone: true },
+    });
+    const user = candidates.find((u) => normalizePhone(u.phone!) === phone);
     if (!user) {
       skipped += 1;
       continue;
