@@ -2351,7 +2351,7 @@ model Supplier {
   name           String         @db.VarChar(200)
   tradeName      String?        @map("trade_name") @db.VarChar(200)
   taxId          String?        @map("tax_id") @db.VarChar(32)
-  category       String?        @db.VarChar(100)
+  categories     String[]       @default([])
   email          String?        @db.VarChar(320)
   phone          String?        @db.VarChar(50)
   contactName    String?        @map("contact_name") @db.VarChar(200)
@@ -3327,6 +3327,7 @@ model SupplierRfiRecipient {
   quotedAmount   Decimal?  @map("quoted_amount") @db.Decimal(14, 2)
   quotedItems    Json?     @map("quoted_items")
   responseToken  String?   @unique @map("response_token") @db.VarChar(64)
+   requestedCategory String? @map("requested_category") @db.VarChar(100)
   leadTimeDays   Int?      @map("lead_time_days")
   notes          String?   @db.Text
   respondedAt    DateTime? @map("responded_at")
@@ -3346,3 +3347,19 @@ model SupplierRfiRecipient {
   @@map("supplier_rfi_recipients")
 }
 
+
+model FieldResponseToken {
+  id             String   @id @default(cuid())
+  token          String   @unique
+  organizationId String
+  projectId      String
+  entityType     String
+  entityId       String
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime @default(now())
+  createdBy      String?
+
+  @@index([token])
+  @@index([entityType, entityId])
+}
