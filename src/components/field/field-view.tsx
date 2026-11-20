@@ -229,6 +229,27 @@ export function FieldView({
     return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
   };
 
+  const requestResponseLink = async (
+    entityType: "diary" | "task" | "constraint",
+    entityId: string,
+    phone: string | null | undefined
+  ) => {
+    if (!phone) return;
+    try {
+      const res = await apiRequest<{ token: string; url: string }>(
+        `/api/v1/projects/${projectId}/field/response-links`,
+        { method: "POST", body: JSON.stringify({ entityType, entityId }) }
+      );
+      const linkUrl = res.url || `${window.location.origin}/campo-resposta/${res.token}`;
+      const wa = `https://wa.me/${phone.replace(/\\D/g, "")}?text=${encodeURIComponent(
+        `Por favor responda este formulário: ${linkUrl}`
+      )}`;
+      window.open(wa, "_blank");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Falha ao gerar link de resposta.");
+    }
+  };
+
   const [tab, setTab] = useState<Tab>("diarios");
   const [diaries, setDiaries] = useState<DiaryRow[]>(initialDiaries);
   const [tasks, setTasks] = useState<TaskRow[]>(initialTasks);
@@ -1214,17 +1235,18 @@ export function FieldView({
                             </Button>
                           )}
                           {(() => {
-                            const url = whatsappUrl(
-                              members.find((m) => m.id === task.assigneeId)?.phone,
-                              `Olá! Preciso da sua resposta sobre a tarefa ${task.code} - ${task.title}. Projeto: ${projectId}`
+                            const phone = members.find((m) => m.id === task.assigneeId)?.phone;
+                            if (!phone) return null;
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Solicitar resposta via WhatsApp"
+                                onClick={() => void requestResponseLink("task", task.id, phone)}
+                              >
+                                <MessageCircle className="h-3.5 w-3.5" />
+                              </Button>
                             );
-                            return url ? (
-                              <a href={url} target="_blank" rel="noopener noreferrer">
-                                <Button variant="ghost" size="icon" title="Solicitar via WhatsApp">
-                                  <MessageCircle className="h-3.5 w-3.5" />
-                                </Button>
-                              </a>
-                            ) : null;
                           })()}
                         </div>
                       </td>
@@ -1338,17 +1360,18 @@ export function FieldView({
                             </Button>
                           )}
                           {(() => {
-                            const url = whatsappUrl(
-                              members.find((m) => m.id === constraint.ownerId)?.phone,
-                              `Olá! Preciso da sua resposta sobre a restrição ${constraint.code} - ${constraint.title}. Projeto: ${projectId}`
+                            const phone = members.find((m) => m.id === constraint.ownerId)?.phone;
+                            if (!phone) return null;
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Solicitar resposta via WhatsApp"
+                                onClick={() => void requestResponseLink("constraint", constraint.id, phone)}
+                              >
+                                <MessageCircle className="h-3.5 w-3.5" />
+                              </Button>
                             );
-                            return url ? (
-                              <a href={url} target="_blank" rel="noopener noreferrer">
-                                <Button variant="ghost" size="icon" title="Solicitar via WhatsApp">
-                                  <MessageCircle className="h-3.5 w-3.5" />
-                                </Button>
-                              </a>
-                            ) : null;
                           })()}
                         </div>
                       </td>

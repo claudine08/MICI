@@ -3,6 +3,7 @@ import { AppError } from "@/core/errors";
 import { randomBytes } from "crypto";
 import { updateDiary } from "@/modules/field/diaries";
 import { updateTask } from "@/modules/field/tasks";
+import { updateConstraint } from "@/modules/field/constraints";
 
 export interface ResponseLink {
   token: string;
@@ -18,7 +19,7 @@ export interface ResponseLink {
 export async function createResponseLink(input: {
   organizationId: string;
   projectId: string;
-  entityType: "diary" | "task";
+  entityType: "diary" | "task" | "constraint";
   entityId: string;
   createdBy: string;
 }): Promise<string> {
@@ -72,6 +73,22 @@ export async function submitTaskResponse(token: string, payload: Record<string, 
     actorId: link.createdBy ?? "whatsapp",
     actorLabel: "WhatsApp",
     taskId: link.entityId,
+    ...payload,
+  } as any);
+  await prisma.fieldResponseToken.update({ where: { token }, data: { usedAt: new Date() } });
+}
+
+export async function submitConstraintResponse(token: string, payload: Record<string, unknown>) {
+  const link = await getResponseLink(token);
+  if (link.entityType !== "constraint") throw new AppError("VALIDATION_ERROR", "Tipo inválido.");
+  if (link.usedAt) throw new AppError("FORBIDDEN", "Link já utilizado.");
+  const constraint = await prisma.constraint.findFirst({ where: { id: link.entityId, organizationId: link.organizationId, deletedAt: null } });
+  if (!constraint) throw new AppError("NOT_FOUND", "Restrição não encontrada.");
+  await updateConstraint({
+    organizationId: link.organizationId,
+    actorId: link.createdBy ?? "whatsapp",
+    actorLabel: "WhatsApp",
+    constraintId: link.entityId,
     ...payload,
   } as any);
   await prisma.fieldResponseToken.update({ where: { token }, data: { usedAt: new Date() } });

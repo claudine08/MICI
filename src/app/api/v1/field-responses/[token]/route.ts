@@ -2,9 +2,8 @@ import type { NextRequest } from "next/server";
 import { apiHandler } from "@/core/api";
 import { AppError } from "@/core/errors";
 import { getResponseLink } from "@/modules/field/response-links";
-import { getDiaryRow } from "@/modules/field/selectors";
-import { getTaskRow } from "@/modules/field/selectors";
-import { submitDiaryResponse, submitTaskResponse } from "@/modules/field/response-links";
+import { getDiaryRow, getTaskRow, getConstraintRow } from "@/modules/field/selectors";
+import { submitDiaryResponse, submitTaskResponse, submitConstraintResponse } from "@/modules/field/response-links";
 
 export const { GET, POST } = apiHandler({
   GET: async (_request: NextRequest, context) => {
@@ -18,6 +17,10 @@ export const { GET, POST } = apiHandler({
       const task = await getTaskRow(link.organizationId, link.entityId);
       return Response.json({ type: "task", link, entity: task });
     }
+    if (link.entityType === "constraint") {
+      const constraint = await getConstraintRow(link.organizationId, link.entityId);
+      return Response.json({ type: "constraint", link, entity: constraint });
+    }
     throw new AppError("VALIDATION_ERROR", "Tipo não suportado.");
   },
   POST: async (request: NextRequest, context) => {
@@ -30,6 +33,10 @@ export const { GET, POST } = apiHandler({
     }
     if (link.entityType === "task") {
       await submitTaskResponse(token, body ?? {});
+      return Response.json({ ok: true });
+    }
+    if (link.entityType === "constraint") {
+      await submitConstraintResponse(token, body ?? {});
       return Response.json({ ok: true });
     }
     throw new AppError("VALIDATION_ERROR", "Tipo não suportado.");

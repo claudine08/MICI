@@ -13,6 +13,7 @@ export function FieldResponseView({ token }: { token: string }) {
 
   const [diaryForm, setDiaryForm] = useState({ team: "", workHours: "", activities: "", occurrences: "" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "MEDIUM" });
+  const [constraintForm, setConstraintForm] = useState({ title: "", description: "", priority: "MEDIUM" });
 
   useEffect(() => {
     fetch(`/api/v1/field-responses/${token}`)
@@ -34,6 +35,12 @@ export function FieldResponseView({ token }: { token: string }) {
               description: d.entity.description ?? "",
               priority: d.entity.priority ?? "MEDIUM",
             });
+          } else if (d.type === "constraint") {
+            setConstraintForm({
+              title: d.entity.title ?? "",
+              description: d.entity.description ?? "",
+              priority: d.entity.priority ?? "MEDIUM",
+            });
           }
         }
       })
@@ -51,10 +58,16 @@ export function FieldResponseView({ token }: { token: string }) {
             activities: diaryForm.activities || undefined,
             occurrences: diaryForm.occurrences || undefined,
           }
-        : {
+        : data.type === "task"
+        ? {
             title: taskForm.title || undefined,
             description: taskForm.description || undefined,
             priority: taskForm.priority || undefined,
+          }
+        : {
+            title: constraintForm.title || undefined,
+            description: constraintForm.description || undefined,
+            priority: constraintForm.priority || undefined,
           };
       const res = await fetch(`/api/v1/field-responses/${token}`, {
         method: "POST",
@@ -97,7 +110,7 @@ export function FieldResponseView({ token }: { token: string }) {
             <Input value={diaryForm.occurrences} onChange={(e) => setDiaryForm({ ...diaryForm, occurrences: e.target.value })} />
           </div>
         </>
-      ) : (
+      ) : data.type === "task" ? (
         <>
           <div className="grid gap-1.5">
             <Label>Título</Label>
@@ -110,6 +123,26 @@ export function FieldResponseView({ token }: { token: string }) {
           <div className="grid gap-1.5">
             <Label>Prioridade</Label>
             <select className="rounded border p-2" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}>
+              <option value="LOW">Baixa</option>
+              <option value="MEDIUM">Média</option>
+              <option value="HIGH">Alta</option>
+              <option value="CRITICAL">Crítica</option>
+            </select>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="grid gap-1.5">
+            <Label>Título</Label>
+            <Input value={constraintForm.title} onChange={(e) => setConstraintForm({ ...constraintForm, title: e.target.value })} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Descrição</Label>
+            <Input value={constraintForm.description} onChange={(e) => setConstraintForm({ ...constraintForm, description: e.target.value })} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Prioridade</Label>
+            <select className="rounded border p-2" value={constraintForm.priority} onChange={(e) => setConstraintForm({ ...constraintForm, priority: e.target.value })}>
               <option value="LOW">Baixa</option>
               <option value="MEDIUM">Média</option>
               <option value="HIGH">Alta</option>
