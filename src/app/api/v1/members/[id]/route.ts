@@ -36,6 +36,7 @@ export const { PATCH, DELETE } = apiHandler({
       actorLabel: tenant.userEmail,
       roleCodes: parsed.data.roleCodes,
       status: parsed.data.status,
+      phone: parsed.data.phone,
       correlationId: request.headers.get("x-correlation-id") ?? undefined,
       ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? undefined,
     });
