@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { CloudOff, Plus, Pencil, Trash2, ArrowRightLeft, Camera, Eye } from "lucide-react";
+import { CloudOff, Plus, Pencil, Trash2, ArrowRightLeft, Camera, Eye, MessageCircle } from "lucide-react";
 import { apiRequest } from "@/lib/api-client";
 import {
   discardFailedItems,
@@ -58,6 +58,7 @@ import type {
 interface OptionLite {
   id: string;
   label: string;
+  phone?: string | null;
 }
 
 interface Props {
@@ -220,6 +221,13 @@ export function FieldView({
   const constraintBase = `/api/v1/projects/${projectId}/field/constraints`;
   const photoBase = `/api/v1/projects/${projectId}/field/photos`;
   const progressBase = `/api/v1/projects/${projectId}/field/progress`;
+
+  const whatsappUrl = (phone: string | null | undefined, text: string) => {
+    if (!phone) return null;
+    const digits = phone.replace(/\\D/g, "");
+    if (!digits) return null;
+    return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+  };
 
   const [tab, setTab] = useState<Tab>("diarios");
   const [diaries, setDiaries] = useState<DiaryRow[]>(initialDiaries);
@@ -1205,6 +1213,19 @@ export function FieldView({
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
+                          {(() => {
+                            const url = whatsappUrl(
+                              members.find((m) => m.id === task.assigneeId)?.phone,
+                              `Olá! Preciso da sua resposta sobre a tarefa ${task.code} - ${task.title}. Projeto: ${projectId}`
+                            );
+                            return url ? (
+                              <a href={url} target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="icon" title="Solicitar via WhatsApp">
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                </Button>
+                              </a>
+                            ) : null;
+                          })()}
                         </div>
                       </td>
                     )}
@@ -1316,6 +1337,19 @@ export function FieldView({
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
+                          {(() => {
+                            const url = whatsappUrl(
+                              members.find((m) => m.id === constraint.ownerId)?.phone,
+                              `Olá! Preciso da sua resposta sobre a restrição ${constraint.code} - ${constraint.title}. Projeto: ${projectId}`
+                            );
+                            return url ? (
+                              <a href={url} target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="icon" title="Solicitar via WhatsApp">
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                </Button>
+                              </a>
+                            ) : null;
+                          })()}
                         </div>
                       </td>
                     )}

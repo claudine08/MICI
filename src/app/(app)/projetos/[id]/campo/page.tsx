@@ -67,7 +67,7 @@ export default async function ProjetoCampoPage({
 
   const activeMembers = members
     .filter((member) => member.membershipStatus === "ACTIVE" && member.userStatus === "ACTIVE")
-    .map((member) => ({ id: member.userId, label: member.name }));
+    .map((member) => ({ id: member.userId, label: member.name, phone: member.phone }));
 
   const today = new Date().toISOString().slice(0, 10);
   const weekEndDate = new Date();
