@@ -277,3 +277,15 @@ UI: `src/app/(app)/administracao/integracoes/page.tsx` +
 - Edicao manual das datas reais (implementado).
 - Origem da execucao (executionSource): seletor + badge + bloqueio de percentual manual para CAMPO + integracao Suprimentos.
 - Detalhes: docs/cronograma-execucao-origem.md.
+
+## 11. Gantt interativo (E19) - implementado (19/11/2026)
+
+## 12. Reporte de Campo via WhatsApp (E12+) - em andamento (19/11/2026)
+- Fatia 1 implementada: inbound webhook (GET/POST), identificação por telefone, criação de diário, confirmação WhatsApp.
+- Fatia 2 (parcial): comando "restricao:" cria restrição; demais mensagens criam diário.
+- Arquivos: src/modules/field/whatsapp-report.ts, src/app/api/v1/integrations/whatsapp/inbound/route.ts.
+- Pendente: Fatias 2–5.
+- Spec: campo-report-whatsapp.md.
+- Entregue: zoom Dia/Semana/Mes, barras por status/critico, progresso, realizado (verde), folga, marcos, setas de dependencias, linha hoje/as-of, tooltip rico, legenda.
+- Arquivos: src/components/dashboard/gantt-chart.tsx, src/modules/dashboard/project.ts, src/app/(app)/projetos/[id]/dashboard/page.tsx.
+- Backlog (sugestoes): drag & drop replanejar + CPM; baseline sobreposta; agrupamento/colapso WBS + filtros; exportacao PNG/PDF + tela cheia; virtualizacao; mini-mapa.

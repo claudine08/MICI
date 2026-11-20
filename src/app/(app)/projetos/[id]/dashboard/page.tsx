@@ -1,7 +1,6 @@
 import { getTenantContext } from "@/core/tenant";
 import { getProjectDashboard } from "@/modules/dashboard/project";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { CurveSChart, BurndownChart, RiskHeatmap } from "@/components/dashboard/project-charts";
 import { GanttChart } from "@/components/dashboard/gantt-chart";
@@ -81,7 +80,7 @@ export default async function ProjetoDashboardPage({
         </CardContent>
       </Card>
 
-      <GanttChart rows={data.gantt} />
+      <GanttChart rows={data.gantt} dependencies={data.ganttDependencies} asOf={asOf} />
 
       <Card>
         <CardHeader><CardTitle>Heat map de riscos (probabilidade x impacto)</CardTitle></CardHeader>

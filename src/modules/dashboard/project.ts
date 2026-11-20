@@ -38,6 +38,18 @@ export interface GanttRow {
   critical: boolean;
   float: number;
   progress: number;
+  status?: string;
+  wbsNodeCode?: string | null;
+  actualStart?: string | null;
+  actualEnd?: string | null;
+  forecastStart?: string | null;
+  forecastEnd?: string | null;
+}
+
+export interface GanttDependency {
+  from: string;
+  to: string;
+  type?: string;
 }
 
 export interface RiskCell {
@@ -52,6 +64,7 @@ export interface ProjectDashboard {
   curve: CurvePoint[];
   burndown: BurndownPoint[];
   gantt: GanttRow[];
+  ganttDependencies: GanttDependency[];
   riskHeatmap: RiskCell[];
   alerts: string[];
 }
@@ -110,7 +123,7 @@ export async function getProjectDashboard(
   // Schedule
   const acts = await prisma.scheduleActivity.findMany({
     where: { projectId, organizationId, deletedAt: null },
-    select: { code: true, name: true, plannedStart: true, plannedFinish: true, actualStart: true, actualFinish: true, duration: true, critical: true, totalFloat: true, physicalProgress: true, status: true },
+    select: { id: true, code: true, name: true, plannedStart: true, plannedFinish: true, actualStart: true, actualFinish: true, forecastStart: true, forecastFinish: true, duration: true, critical: true, totalFloat: true, physicalProgress: true, status: true, wbsNode: { select: { code: true } } },
     orderBy: { plannedStart: "asc" },
   });
   const physicalProgress = acts.length > 0
@@ -189,6 +202,23 @@ export async function getProjectDashboard(
     critical: a.critical ?? false,
     float: a.totalFloat ?? 0,
     progress: a.physicalProgress ?? 0,
+    status: a.status,
+    wbsNodeCode: a.wbsNode?.code ?? null,
+    actualStart: a.actualStart ? a.actualStart.toISOString().slice(0, 10) : null,
+    actualEnd: a.actualFinish ? a.actualFinish.toISOString().slice(0, 10) : null,
+    forecastStart: a.forecastStart ? a.forecastStart.toISOString().slice(0, 10) : null,
+    forecastEnd: a.forecastFinish ? a.forecastFinish.toISOString().slice(0, 10) : null,
+  }));
+
+  // Gantt dependencies
+  const deps = await prisma.scheduleDependency.findMany({
+    where: { projectId, organizationId },
+    select: { predecessor: { select: { code: true } }, successor: { select: { code: true } }, type: true },
+  });
+  const ganttDependencies: GanttDependency[] = deps.map((d) => ({
+    from: d.predecessor.code,
+    to: d.successor.code,
+    type: d.type,
   }));
 
   // Risk heatmap
@@ -221,5 +251,5 @@ export async function getProjectDashboard(
   if (criticalRisks > 0) alerts.push(`${criticalRisks} risco(s) crítico(s) (prob≥4, impacto≥4).`);
   if (alerts.length === 0) alerts.push("Sem alertas críticos.");
 
-  return { asOf: asOfDate, kpis, curve, burndown, gantt, riskHeatmap, alerts };
+  return { asOf: asOfDate, kpis, curve, burndown, gantt, ganttDependencies, riskHeatmap, alerts };
 }

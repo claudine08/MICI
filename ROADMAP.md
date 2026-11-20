@@ -380,3 +380,20 @@ Tarefas:
 - [x] Edicao manual das datas reais.
 - [ ] Origem da execucao (executionSource) + badge + bloqueio + integracao Suprimentos.
 - Detalhes: docs/cronograma-execucao-origem.md.
+
+### Reporte de Campo via WhatsApp (E12+) - em andamento (19/11/2026)
+- Canal padrão da equipe de campo; reusa módulo de Integrações (E20) e Campo (E12).
+- Fatia 1 implementada: inbound webhook (GET/POST) + identificação por telefone + criação de diário + confirmação WhatsApp.
+- Fatia 2 (parcial): comando "restricao:" cria restrição de campo via WhatsApp; demais mensagens criam diário.
+- Arquivos: src/modules/field/whatsapp-report.ts, src/app/api/v1/integrations/whatsapp/inbound/route.ts.
+- Pendente: Fatias 2–5 (wizard, fotos, consultas/notificações, texto livre/analytics).
+- Detalhes: campo-report-whatsapp.md.
+
+### Gantt interativo (E19 Project Dashboard) - evolucao (19/11/2026)
+- [x] Gantt interativo no dashboard: zoom Dia/Semana/Mes, barras por status/critico, progresso, realizado (verde), folga, marcos, setas de dependencias, linha de hoje/as-of, tooltip rico, legenda.
+- [ ] Drag & drop para replanejar datas + recalcular CPM.
+- [ ] Baseline sobreposta (fantasma) para comparar planejado vs. aprovado.
+- [ ] Agrupamento/colapso por WBS e filtros por status/origem.
+- [ ] Exportacao (PNG/PDF) e modo tela cheia.
+- [ ] Virtualizacao de linhas para projetos grandes.
+- [ ] Mini-mapa de navegacao horizontal.
