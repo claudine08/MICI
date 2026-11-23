@@ -1897,9 +1897,10 @@ model PhotoEvidence {
   id             String   @id @default(uuid()) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
   projectId      String   @map("project_id") @db.Uuid
-  diaryId        String?  @map("diary_id") @db.Uuid
-  taskId         String?  @map("task_id") @db.Uuid
-  code           String   @db.VarChar(32)
+  diaryId                String?  @map("diary_id") @db.Uuid
+  taskId                 String?  @map("task_id") @db.Uuid
+  progressMeasurementId  String?  @map("progress_measurement_id") @db.Uuid
+  code                   String   @db.VarChar(32)
   caption        String?  @db.VarChar(300)
   fileName       String   @map("file_name") @db.VarChar(255)
   mimeType       String   @map("mime_type") @db.VarChar(127)
@@ -1921,8 +1922,9 @@ model PhotoEvidence {
   deletedBy String?   @map("deleted_by") @db.Uuid
 
   project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  diary    FieldDiary?       @relation(fields: [diaryId], references: [id], onDelete: SetNull)
-  task     FieldTask?        @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  diary              FieldDiary?            @relation(fields: [diaryId], references: [id], onDelete: SetNull)
+  task               FieldTask?             @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  progressMeasurement ProgressMeasurement?  @relation(fields: [progressMeasurementId], references: [id], onDelete: SetNull)
   wbsNode  WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
   activity ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
   inspection Inspection?     @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
@@ -1982,6 +1984,7 @@ model ProgressMeasurement {
   project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wbsNode  WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
   activity ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  photos   PhotoEvidence[]
 
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])

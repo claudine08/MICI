@@ -52,6 +52,7 @@ export interface CreatePhotoInput {
   takenAt?: string;
   diaryId?: string | null;
   taskId?: string | null;
+  progressId?: string | null;
   wbsNodeId?: string | null;
   activityId?: string | null;
   inspectionId?: string | null;
@@ -69,6 +70,7 @@ export function photoUploadFields(formData: FormData) {
     takenAt: formData.get("takenAt")?.toString() || undefined,
     diaryId: formData.get("diaryId")?.toString() || undefined,
     taskId: formData.get("taskId")?.toString() || undefined,
+    progressMeasurementId: formData.get("progressMeasurementId")?.toString() || undefined,
     wbsNodeId: formData.get("wbsNodeId")?.toString() || undefined,
     activityId: formData.get("activityId")?.toString() || undefined,
     inspectionId: formData.get("inspectionId")?.toString() || undefined,
@@ -103,6 +105,16 @@ async function assertTask(organizationId: string, projectId: string, taskId: str
   }
 }
 
+async function assertProgress(organizationId: string, projectId: string, progressId: string) {
+  const measurement = await prisma.progressMeasurement.findFirst({
+    where: { id: progressId, organizationId, projectId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!measurement) {
+    throw new AppError("VALIDATION_ERROR", "Medição de avanço inválida para este projeto.");
+  }
+}
+
 // Vínculo de evidência à inspeção (E13-US02): precisa ser inspeção viva do
 // mesmo projeto — é o que sustenta PASS/FAIL (§33 "evidência adequada").
 async function assertInspection(organizationId: string, projectId: string, inspectionId: string) {
@@ -133,6 +145,7 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
   });
   if (input.diaryId) await assertDiary(input.organizationId, input.projectId, input.diaryId);
   if (input.taskId) await assertTask(input.organizationId, input.projectId, input.taskId);
+  if (input.progressId) await assertProgress(input.organizationId, input.projectId, input.progressId);
   if (input.inspectionId) {
     await assertInspection(input.organizationId, input.projectId, input.inspectionId);
   }
@@ -155,6 +168,7 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
       projectId: input.projectId,
       diaryId: input.diaryId ?? null,
       taskId: input.taskId ?? null,
+      progressMeasurementId: input.progressId ?? null,
       code,
       caption: input.caption?.trim() || null,
       fileName: input.file.fileName,
@@ -192,6 +206,7 @@ export async function updatePhoto(
     takenAt?: string | null;
     diaryId?: string | null;
     taskId?: string | null;
+    progressId?: string | null;
     wbsNodeId?: string | null;
     activityId?: string | null;
     inspectionId?: string | null;
@@ -218,6 +233,7 @@ export async function updatePhoto(
   const immutableChecks: Array<[string, unknown, unknown]> = [
     ["diaryId", photo.diaryId, input.diaryId],
     ["taskId", photo.taskId, input.taskId],
+    ["progressId", photo.progressMeasurementId, input.progressId],
     ["activityId", photo.activityId, input.activityId],
     ["wbsNodeId", photo.wbsNodeId, input.wbsNodeId],
     ["inspectionId", photo.inspectionId, input.inspectionId],
@@ -237,6 +253,7 @@ export async function updatePhoto(
   if (input.takenAt !== undefined) data.takenAt = input.takenAt ? new Date(input.takenAt) : null;
   if (input.diaryId !== undefined) data.diaryId = input.diaryId;
   if (input.taskId !== undefined) data.taskId = input.taskId;
+  if (input.progressId !== undefined) data.progressMeasurementId = input.progressId;
   if (input.wbsNodeId !== undefined) data.wbsNodeId = input.wbsNodeId;
   if (input.activityId !== undefined) data.activityId = input.activityId;
   if (input.inspectionId !== undefined) data.inspectionId = input.inspectionId;

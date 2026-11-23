@@ -131,6 +131,7 @@ export const uploadPhotoFieldsSchema = z.object({
   takenAt: z.string().datetime({ offset: true }).optional(),
   diaryId: z.string().uuid().nullable().optional(),
   taskId: z.string().uuid().nullable().optional(),
+  progressMeasurementId: z.string().uuid().nullable().optional(),
   wbsNodeId: z.string().uuid().nullable().optional(),
   activityId: z.string().uuid().nullable().optional(),
   // Evidência de inspeção (E13-US02, §33): foto pode servir de prova de
@@ -144,6 +145,7 @@ export const updatePhotoSchema = z.object({
   takenAt: z.string().datetime({ offset: true }).nullable().optional(),
   diaryId: z.string().uuid().nullable().optional(),
   taskId: z.string().uuid().nullable().optional(),
+  progressMeasurementId: z.string().uuid().nullable().optional(),
   wbsNodeId: z.string().uuid().nullable().optional(),
   activityId: z.string().uuid().nullable().optional(),
   inspectionId: z.string().uuid().nullable().optional(),

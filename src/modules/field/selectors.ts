@@ -413,6 +413,8 @@ export interface PhotoRow {
   diaryCode: string | null;
   taskId: string | null;
   taskCode: string | null;
+  progressMeasurementId: string | null;
+  progressCode: string | null;
   wbsNodeId: string | null;
   wbsNodeCode: string | null;
   activityId: string | null;
@@ -436,6 +438,8 @@ interface PhotoRecord {
   diary: { code: string } | null;
   taskId: string | null;
   task: { code: string } | null;
+  progressMeasurementId: string | null;
+  progressMeasurement: { code: string } | null;
   wbsNodeId: string | null;
   wbsNode: { code: string } | null;
   activityId: string | null;
@@ -449,6 +453,7 @@ interface PhotoRecord {
 const photoInclude = {
   diary: { select: { code: true } },
   task: { select: { code: true } },
+  progressMeasurement: { select: { code: true } },
   wbsNode: { select: { code: true } },
   activity: { select: { code: true } },
   inspection: { select: { code: true } },
@@ -468,6 +473,8 @@ function toPhotoRow(row: PhotoRecord): PhotoRow {
     diaryCode: row.diary?.code ?? null,
     taskId: row.taskId,
     taskCode: row.task?.code ?? null,
+    progressMeasurementId: row.progressMeasurementId,
+    progressCode: row.progressMeasurement?.code ?? null,
     wbsNodeId: row.wbsNodeId,
     wbsNodeCode: row.wbsNode?.code ?? null,
     activityId: row.activityId,

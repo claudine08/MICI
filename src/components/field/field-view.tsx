@@ -299,6 +299,7 @@ export function FieldView({
   const [photoClientUuid, setPhotoClientUuid] = useState("");
   const [viewingPhoto, setViewingPhoto] = useState<PhotoRow | null>(null);
   const [photoTaskFilter, setPhotoTaskFilter] = useState<string | null>(null);
+  const [photoProgressFilter, setPhotoProgressFilter] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadAll = async () => {
@@ -1403,15 +1404,15 @@ export function FieldView({
       {tab === "fotos" && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold">Fotos de evidência</h2>
-          {photoTaskFilter && (
+          {(photoTaskFilter || photoProgressFilter) && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              Filtrando fotos da tarefa selecionada.
-              <Button variant="ghost" size="sm" onClick={() => setPhotoTaskFilter(null)}>
+              Filtrando fotos selecionadas.
+              <Button variant="ghost" size="sm" onClick={() => { setPhotoTaskFilter(null); setPhotoProgressFilter(null); }}>
                 Limpar filtro
               </Button>
             </div>
           )}
-          {photos.filter((p) => !photoTaskFilter || p.taskId === photoTaskFilter).length === 0 && (
+          {photos.filter((p) => (!photoTaskFilter || p.taskId === photoTaskFilter) && (!photoProgressFilter || p.progressMeasurementId === photoProgressFilter)).length === 0 && (
             <Empty text="Nenhuma foto enviada." />
           )}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -1445,6 +1446,7 @@ export function FieldView({
                     {[
                       photo.diaryCode ? `Diário ${photo.diaryCode}` : "",
                       photo.taskCode ? `Tarefa ${photo.taskCode}` : "",
+                      photo.progressCode ? `Avanço ${photo.progressCode}` : "",
                       photo.wbsNodeCode ? `WBS ${photo.wbsNodeCode}` : "",
                       photo.activityCode ? `Ativ. ${photo.activityCode}` : "",
                       photo.inspectionCode ? `Insp. ${photo.inspectionCode}` : "",
@@ -1523,13 +1525,14 @@ export function FieldView({
                   <th className="px-4 py-2.5 text-right">Avanço</th>
                   <th className="px-4 py-2.5 text-right">Qtd. real</th>
                   <th className="px-4 py-2.5">Critério</th>
+                  <th className="px-4 py-2.5 text-center">Anexos</th>
                   {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody>
                 {progress.length === 0 && (
                   <tr>
-                    <td colSpan={9}>
+                    <td colSpan={10}>
                       <Empty text="Nenhuma medição registrada." />
                     </td>
                   </tr>
@@ -1561,6 +1564,20 @@ export function FieldView({
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       <span className="line-clamp-2">{measurement.criterion}</span>
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Ver fotos vinculadas"
+                        onClick={() => {
+                          setPhotoTaskFilter(null);
+                          setPhotoProgressFilter(measurement.id);
+                          setTab("fotos");
+                        }}
+                      >
+                        <Camera className="h-3.5 w-3.5" />
+                      </Button>
                     </td>
                     {(canEdit || canDelete) && (
                       <td className="px-4 py-2.5">
@@ -2226,6 +2243,7 @@ export function FieldView({
                 {[
                   viewingPhoto.diaryCode ? `Diário ${viewingPhoto.diaryCode}` : "",
                   viewingPhoto.taskCode ? `Tarefa ${viewingPhoto.taskCode}` : "",
+                  viewingPhoto.progressCode ? `Avanço ${viewingPhoto.progressCode}` : "",
                   viewingPhoto.wbsNodeCode ? `WBS ${viewingPhoto.wbsNodeCode}` : "",
                   viewingPhoto.activityCode ? `Ativ. ${viewingPhoto.activityCode}` : "",
                   viewingPhoto.inspectionCode ? `Insp. ${viewingPhoto.inspectionCode}` : "",
