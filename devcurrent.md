@@ -280,11 +280,12 @@ UI: `src/app/(app)/administracao/integracoes/page.tsx` +
 
 ## 11. Gantt interativo (E19) - implementado (19/11/2026)
 
-## 12. Reporte de Campo via WhatsApp (E12+) - em andamento (19/11/2026)
+## 12. Reporte de Campo via WhatsApp (E12+) - em andamento (23/11/2026)
 - Fatia 1 implementada: inbound webhook (GET/POST), identificação por telefone, criação de diário, confirmação WhatsApp.
-- Fatia 2 (parcial): comando "restricao:" cria restrição; demais mensagens criam diário.
+- Fatia 2: comando "restricao:" cria restrição; comando "avanco/progresso A001 50%" cria ProgressMeasurement (BR-006) e sincroniza avanço da atividade; demais mensagens criam diário. Confirmação via template.
+- Fatia 3: imagens inbound (media id) baixadas via Graph API, validadas (MIME + 4 MB) e salvas como PhotoEvidence, vinculadas ao diário do dia e à atividade (se a legenda for código A001). Confirmação via template.
 - Arquivos: src/modules/field/whatsapp-report.ts, src/app/api/v1/integrations/whatsapp/inbound/route.ts.
-- Pendente: Fatias 2–5.
+- Pendente: Fatias 4–5 (consultas/notificações, parsing texto livre + analytics).
 - Spec: campo-report-whatsapp.md.
 - Entregue: zoom Dia/Semana/Mes, barras por status/critico, progresso, realizado (verde), folga, marcos, setas de dependencias, linha hoje/as-of, tooltip rico, legenda.
 - Arquivos: src/components/dashboard/gantt-chart.tsx, src/modules/dashboard/project.ts, src/app/(app)/projetos/[id]/dashboard/page.tsx.
