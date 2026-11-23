@@ -37,6 +37,7 @@ export interface CreateProgressInput {
   criterion: string;
   notes?: string;
   clientUuid?: string;
+  source?: string;
 }
 
 export interface UpdateProgressInput extends Partial<Omit<CreateProgressInput, "projectId">> {
@@ -142,6 +143,7 @@ export async function createProgress(input: ActorContext & CreateProgressInput) 
       criterion: input.criterion.trim(),
       notes: input.notes?.trim() || null,
       clientUuid: input.clientUuid ?? null,
+      source: input.source ?? "APP",
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

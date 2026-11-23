@@ -22,6 +22,7 @@ export interface CreateTaskInput {
   projectId: string;
   code?: string;
   clientUuid?: string;
+  source?: string;
   title: string;
   description?: string;
   priority?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -96,6 +97,7 @@ export async function createTask(input: ActorContext & CreateTaskInput) {
       wbsNodeId: input.wbsNodeId ?? null,
       activityId: input.activityId ?? null,
       clientUuid: input.clientUuid ?? null,
+      source: input.source ?? "APP",
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

@@ -48,6 +48,7 @@ export interface CreatePhotoInput {
   projectId: string;
   code?: string;
   clientUuid?: string;
+  source?: string;
   caption?: string;
   takenAt?: string;
   diaryId?: string | null;
@@ -181,6 +182,7 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
       activityId: input.activityId ?? null,
       inspectionId: input.inspectionId ?? null,
       clientUuid: input.clientUuid ?? null,
+      source: input.source ?? "APP",
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

@@ -21,6 +21,7 @@ export interface CreateConstraintInput {
   projectId: string;
   code?: string;
   clientUuid?: string;
+  source?: string;
   title: string;
   description?: string;
   type?: "SCOPE" | "SCHEDULE" | "COST" | "RESOURCE" | "TECHNICAL" | "EXTERNAL" | "REGULATORY" | "SAFETY";
@@ -85,6 +86,7 @@ export async function createConstraint(input: ActorContext & CreateConstraintInp
       activityId: input.activityId ?? null,
       identifiedAt: new Date(),
       clientUuid: input.clientUuid ?? null,
+      source: input.source ?? "APP",
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

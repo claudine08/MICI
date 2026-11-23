@@ -24,6 +24,7 @@ export interface CreateDiaryInput {
   projectId: string;
   code?: string;
   clientUuid?: string;
+  source?: string;
   entryDate: string;
   team?: string;
   workHours?: number;
@@ -111,6 +112,7 @@ export async function createDiary(input: ActorContext & CreateDiaryInput) {
       energy: input.energy ?? null,
       wasteNotes: input.wasteNotes?.trim() || null,
       clientUuid: input.clientUuid ?? null,
+      source: input.source ?? "APP",
       createdBy: input.actorId,
       updatedBy: input.actorId,
     },

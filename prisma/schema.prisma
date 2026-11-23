@@ -1734,6 +1734,7 @@ model FieldDiary {
   // IdempotÃªncia offline (Â§38): UUID gerado no cliente; reenvio do mesmo
   // registro retorna o existente em vez de duplicar.
   clientUuid     String?  @map("client_uuid") @db.Uuid
+  source         String   @default("APP") @db.VarChar(16)
 
   submittedAt DateTime? @map("submitted_at")
   submittedBy String?   @map("submitted_by") @db.Uuid
@@ -1802,6 +1803,7 @@ model FieldTask {
   completedAt    DateTime? @map("completed_at")
   cancelReason   String?   @map("cancel_reason") @db.VarChar(1000)
   clientUuid     String?   @map("client_uuid") @db.Uuid
+  source         String    @default("APP") @db.VarChar(16)
 
   createdAt DateTime  @default(now()) @map("created_at")
   createdBy String?   @map("created_by") @db.Uuid
@@ -1870,6 +1872,7 @@ model Constraint {
   resolution     String? @db.Text
   cancelReason   String? @map("cancel_reason") @db.VarChar(1000)
   clientUuid     String? @map("client_uuid") @db.Uuid
+  source         String  @default("APP") @db.VarChar(16)
 
   createdAt DateTime  @default(now()) @map("created_at")
   createdBy String?   @map("created_by") @db.Uuid
@@ -1901,6 +1904,7 @@ model PhotoEvidence {
   taskId                 String?  @map("task_id") @db.Uuid
   progressMeasurementId  String?  @map("progress_measurement_id") @db.Uuid
   code                   String   @db.VarChar(32)
+  source                 String   @default("APP") @db.VarChar(16)
   caption        String?  @db.VarChar(300)
   fileName       String   @map("file_name") @db.VarChar(255)
   mimeType       String   @map("mime_type") @db.VarChar(127)
@@ -1972,6 +1976,7 @@ model ProgressMeasurement {
   notes            String?        @db.Text
 
   clientUuid     String? @map("client_uuid") @db.Uuid
+  source         String  @default("APP") @db.VarChar(16)
 
   createdAt DateTime  @default(now()) @map("created_at")
   createdBy String?   @map("created_by") @db.Uuid

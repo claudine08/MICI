@@ -88,7 +88,11 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
     const membership = { projectId: project.id, organizationId: orgMembership.organizationId };
 
     const today = new Date().toISOString().slice(0, 10);
-    const text = msg.text.trim();
+    const lines = (msg.text || "").split(/\\r?\\n/).map((s) => s.trim()).filter(Boolean);
+    const queue = lines.length ? lines : [msg.text.trim()];
+
+    for (const line of queue) {
+    const text = line;
     const lower = text.toLowerCase();
 
     // Fatia 2: comando de avanço físico — "avanco A001 50%" / "avanço A001 50"
@@ -158,6 +162,7 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
           taskId,
           activityId,
           caption: caption || "Foto via WhatsApp",
+          source: "WHATSAPP",
           file,
         });
         await sendWhatsAppTemplate({
@@ -176,6 +181,7 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
           description: text,
           type: "EXTERNAL",
           priority: "MEDIUM",
+          source: "WHATSAPP",
         });
         await sendWhatsAppTemplate({
           to: phone,
@@ -205,6 +211,7 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
             entryDate: today,
             occurrences: text,
             activities: "Reporte via WhatsApp (atividade não encontrada)",
+          source: "WHATSAPP",
           });
           await sendWhatsAppTemplate({
             to: phone,
@@ -224,6 +231,7 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
             progressPercent: percent,
             criterion: "Reporte via WhatsApp",
             notes: extra || text,
+            source: "WHATSAPP",
           });
           await sendWhatsAppTemplate({
             to: phone,
@@ -240,6 +248,7 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
           entryDate: today,
           occurrences: text,
           activities: "Reporte via WhatsApp",
+          source: "WHATSAPP",
         });
         await sendWhatsAppTemplate({
           to: phone,
@@ -251,6 +260,7 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
     } catch {
       skipped += 1;
     }
+  }
   }
 
   return { processed: messages.length, created, skipped };
