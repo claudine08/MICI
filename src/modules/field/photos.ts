@@ -191,6 +191,7 @@ export async function updatePhoto(
     caption?: string;
     takenAt?: string | null;
     diaryId?: string | null;
+    taskId?: string | null;
     wbsNodeId?: string | null;
     activityId?: string | null;
     inspectionId?: string | null;
@@ -212,10 +213,30 @@ export async function updatePhoto(
     await assertInspection(input.organizationId, photo.projectId, input.inspectionId);
   }
 
+  // Segurança: vínculos de origem (diário/tarefa/atividade/WBS/inspeção) são
+  // imutáveis após a criação — evita reutilizar uma imagem em outra entidade.
+  const immutableChecks: Array<[string, unknown, unknown]> = [
+    ["diaryId", photo.diaryId, input.diaryId],
+    ["taskId", photo.taskId, input.taskId],
+    ["activityId", photo.activityId, input.activityId],
+    ["wbsNodeId", photo.wbsNodeId, input.wbsNodeId],
+    ["inspectionId", photo.inspectionId, input.inspectionId],
+  ];
+  for (const [field, current, next] of immutableChecks) {
+    if (next === undefined) continue;
+    if (current !== null && current !== undefined && next !== null && next !== current) {
+      throw new AppError(
+        "FORBIDDEN",
+        `Vínculo de ${field} é imutável: a imagem já está associada a outra entidade.`
+      );
+    }
+  }
+
   const data: Record<string, unknown> = {};
   if (input.caption !== undefined) data.caption = input.caption.trim() || null;
   if (input.takenAt !== undefined) data.takenAt = input.takenAt ? new Date(input.takenAt) : null;
   if (input.diaryId !== undefined) data.diaryId = input.diaryId;
+  if (input.taskId !== undefined) data.taskId = input.taskId;
   if (input.wbsNodeId !== undefined) data.wbsNodeId = input.wbsNodeId;
   if (input.activityId !== undefined) data.activityId = input.activityId;
   if (input.inspectionId !== undefined) data.inspectionId = input.inspectionId;
