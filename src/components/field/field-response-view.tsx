@@ -12,8 +12,9 @@ export function FieldResponseView({ token }: { token: string }) {
   const [done, setDone] = useState(false);
 
   const [diaryForm, setDiaryForm] = useState({ team: "", workHours: "", activities: "", occurrences: "" });
-  const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "MEDIUM" });
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "MEDIUM", status: "" });
   const [constraintForm, setConstraintForm] = useState({ title: "", description: "", priority: "MEDIUM" });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   useEffect(() => {
     fetch(`/api/v1/field-responses/${token}`)
@@ -34,6 +35,7 @@ export function FieldResponseView({ token }: { token: string }) {
               title: d.entity.title ?? "",
               description: d.entity.description ?? "",
               priority: d.entity.priority ?? "MEDIUM",
+              status: "",
             });
           } else if (d.type === "constraint") {
             setConstraintForm({
@@ -51,6 +53,13 @@ export function FieldResponseView({ token }: { token: string }) {
     setBusy(true);
     setError(null);
     try {
+      if (photoFile) {
+        const fd = new FormData();
+        fd.append("file", photoFile);
+        const photoRes = await fetch(`/api/v1/field-responses/${token}/photo`, { method: "POST", body: fd });
+        const photoJson = await photoRes.json().catch(() => ({}));
+        if (!photoRes.ok) throw new Error(photoJson.error?.message ?? "Falha ao enviar foto.");
+      }
       const payload = data.type === "diary"
         ? {
             team: diaryForm.team || undefined,
@@ -63,6 +72,7 @@ export function FieldResponseView({ token }: { token: string }) {
             title: taskForm.title || undefined,
             description: taskForm.description || undefined,
             priority: taskForm.priority || undefined,
+            status: taskForm.status || undefined,
           }
         : {
             title: constraintForm.title || undefined,
@@ -129,6 +139,13 @@ export function FieldResponseView({ token }: { token: string }) {
               <option value="CRITICAL">Crítica</option>
             </select>
           </div>
+          <div className="grid gap-1.5">
+            <Label>Status</Label>
+            <select className="rounded border p-2" value={taskForm.status} onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}>
+              <option value="">Manter atual ({data.entity.status})</option>
+              <option value="DONE">Concluída</option>
+            </select>
+          </div>
         </>
       ) : (
         <>
@@ -151,6 +168,10 @@ export function FieldResponseView({ token }: { token: string }) {
           </div>
         </>
       )}
+      <div className="grid gap-1.5">
+        <Label>Foto (opcional)</Label>
+        <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
+      </div>
       <Button onClick={submit} disabled={busy}>{busy ? "Enviando…" : "Enviar resposta"}</Button>
     </div>
   );
