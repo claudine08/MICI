@@ -295,6 +295,7 @@ export function FieldView({
   const [photoDiaryId, setPhotoDiaryId] = useState("");
   const [photoWbsNodeId, setPhotoWbsNodeId] = useState("");
   const [photoActivityId, setPhotoActivityId] = useState("");
+  const [photoProgressId, setPhotoProgressId] = useState("");
   const [photoInspectionId, setPhotoInspectionId] = useState("");
   const [photoClientUuid, setPhotoClientUuid] = useState("");
   const [viewingPhoto, setViewingPhoto] = useState<PhotoRow | null>(null);
@@ -826,6 +827,7 @@ export function FieldView({
     setPhotoDiaryId("");
     setPhotoWbsNodeId("");
     setPhotoActivityId("");
+    setPhotoProgressId("");
     setPhotoInspectionId("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -844,6 +846,7 @@ export function FieldView({
     setPhotoDiaryId(photo.diaryId ?? "");
     setPhotoWbsNodeId(photo.wbsNodeId ?? "");
     setPhotoActivityId(photo.activityId ?? "");
+    setPhotoProgressId(photo.progressMeasurementId ?? "");
     setPhotoInspectionId(photo.inspectionId ?? "");
     setError(null);
     setPhotoDialog(true);
@@ -873,6 +876,7 @@ export function FieldView({
             diaryId: photoDiaryId || null,
             wbsNodeId: photoWbsNodeId || null,
             activityId: photoActivityId || null,
+            progressMeasurementId: photoProgressId || null,
             inspectionId: photoInspectionId || null,
           }),
         });
@@ -901,6 +905,7 @@ export function FieldView({
         if (photoDiaryId) meta.diaryId = photoDiaryId;
         if (photoWbsNodeId) meta.wbsNodeId = photoWbsNodeId;
         if (photoActivityId) meta.activityId = photoActivityId;
+        if (photoProgressId) meta.progressMeasurementId = photoProgressId;
         if (photoInspectionId) meta.inspectionId = photoInspectionId;
         if (photoClientUuid) meta.clientUuid = photoClientUuid;
         const outcome = await sendOrQueuePhoto({
@@ -1566,18 +1571,33 @@ export function FieldView({
                       <span className="line-clamp-2">{measurement.criterion}</span>
                     </td>
                     <td className="px-4 py-2.5 text-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Ver fotos vinculadas"
-                        onClick={() => {
-                          setPhotoTaskFilter(null);
-                          setPhotoProgressFilter(measurement.id);
-                          setTab("fotos");
-                        }}
-                      >
-                        <Camera className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Enviar foto"
+                          onClick={() => {
+                            resetPhotoForm();
+                            setPhotoProgressId(measurement.id);
+                            setPhotoClientUuid(crypto.randomUUID());
+                            setPhotoDialog(true);
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Ver fotos vinculadas"
+                          onClick={() => {
+                            setPhotoTaskFilter(null);
+                            setPhotoProgressFilter(measurement.id);
+                            setTab("fotos");
+                          }}
+                        >
+                          <Camera className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </td>
                     {(canEdit || canDelete) && (
                       <td className="px-4 py-2.5">
