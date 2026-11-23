@@ -107,10 +107,11 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
           buffer: downloaded.buffer,
         });
 
-        // Vinculação: atividade (se a legenda for um código A001) e diário mais recente do dia.
+        // Vinculação automática: legenda pode ser código de atividade (A001) ou tarefa (FT001).
         let activityId: string | null = null;
+        let taskId: string | null = null;
         const caption = (msg.imageCaption || text || "").trim();
-        const activityCodeMatch = caption.match(/^[A-Z]\d{3,}$/i);
+        const activityCodeMatch = caption.match(/^A\d{3,}$/i);
         if (activityCodeMatch) {
           const act = await prisma.scheduleActivity.findFirst({
             where: {
@@ -122,6 +123,19 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
             select: { id: true },
           });
           activityId = act?.id ?? null;
+        }
+        const taskCodeMatch = caption.match(/^FT\d{3,}$/i);
+        if (taskCodeMatch) {
+          const t = await prisma.fieldTask.findFirst({
+            where: {
+              projectId: membership.projectId,
+              organizationId: membership.organizationId,
+              code: taskCodeMatch[0].toUpperCase(),
+              deletedAt: null,
+            },
+            select: { id: true },
+          });
+          taskId = t?.id ?? null;
         }
         const diary = await prisma.fieldDiary.findFirst({
           where: {
@@ -141,6 +155,7 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
           actorLabel: user.name ?? "WhatsApp",
           correlationId: msg.messageId,
           diaryId: diary?.id ?? null,
+          taskId,
           activityId,
           caption: caption || "Foto via WhatsApp",
           file,
