@@ -17,6 +17,7 @@ export type Action = (typeof ACTIONS)[number];
 
 export const MODULES = [
   "PROJECT",
+  "PMO",
   "REQUIREMENT",
   "WBS",
   "SCHEDULE",
@@ -122,6 +123,7 @@ export const ROLE_GRANTS: Record<RoleCode, RoleGrant[]> = {
     {
       modules: [
         "PROJECT",
+        "PMO",
         "REQUIREMENT",
         "WBS",
         "SCHEDULE",
