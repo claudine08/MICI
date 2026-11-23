@@ -88,6 +88,35 @@ export default async function ProjetoDetalhePage({
       ? `RFIs de fornecedores em aberto:\n${openSupplierRfis.map((r) => `${r.code} — ${r.title}`).join("\n")}`
       : undefined;
 
+  const openFieldTasks = await prisma.fieldTask.findMany({
+    where: {
+      projectId: id,
+      organizationId: context.organizationId,
+      deletedAt: null,
+      assigneeId: context.userId,
+      status: { in: ["OPEN", "IN_PROGRESS", "BLOCKED"] },
+    },
+    select: { code: true, title: true },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+  const openFieldConstraints = await prisma.constraint.findMany({
+    where: {
+      projectId: id,
+      organizationId: context.organizationId,
+      deletedAt: null,
+      ownerId: context.userId,
+      status: { in: ["OPEN", "ADDRESSED"] },
+    },
+    select: { code: true, title: true },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+  const openFieldItems = [...openFieldTasks.map((t) => `${t.code} — ${t.title} (tarefa)`), ...openFieldConstraints.map((c) => `${c.code} — ${c.title} (restrição)`)];
+  const openFieldCount = openFieldItems.length;
+  const openFieldTooltip =
+    openFieldItems.length > 0 ? `Pendências de campo para você:\n${openFieldItems.join("\n")}` : undefined;
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div>
@@ -119,6 +148,13 @@ export default async function ProjetoDetalhePage({
           </a>
           <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/mudancas`}>
             Mudanças
+          </a>
+          <a
+            title={openFieldTooltip}
+            className={`rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover ${openFieldCount > 0 ? "border-red-300 bg-red-50 text-red-600 animate-pulse" : ""}`}
+            href={`/projetos/${id}/campo`}
+          >
+            Campo{openFieldCount > 0 ? ` (${openFieldCount})` : ""}
           </a>
           <a className="rounded-md border border-border bg-surface px-2 py-1.5 text-center font-medium transition-colors hover:border-primary/50 hover:bg-surface-hover" href={`/projetos/${id}/qualidade`}>
             Qualidade
