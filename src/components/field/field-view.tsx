@@ -63,6 +63,7 @@ interface OptionLite {
 
 interface Props {
   projectId: string;
+  currentUserId?: string | null;
   initialDiaries: DiaryRow[];
   initialTasks: TaskRow[];
   initialConstraints: ConstraintRow[];
@@ -198,6 +199,7 @@ function cleanPayload<T extends Record<string, unknown>>(form: T) {
 
 export function FieldView({
   projectId,
+  currentUserId = null,
   initialDiaries,
   initialTasks,
   initialConstraints,
@@ -1025,7 +1027,17 @@ export function FieldView({
               className={
                 tab === item.id
                   ? "rounded-md bg-accent px-3 py-1.5 text-sm font-medium"
-                  : "rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                  : `rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground ${
+                      (item.id === "tarefas" &&
+                        tasks.some((t) => t.assigneeId === currentUserId && ["OPEN", "IN_PROGRESS", "BLOCKED"].includes(t.status))) ||
+                      (item.id === "restricoes" &&
+                        constraints.some((c) => c.ownerId === currentUserId && ["OPEN", "ADDRESSED"].includes(c.status))) ||
+                      (item.id === "pendencias" &&
+                        (tasks.some((t) => t.assigneeId === currentUserId && ["OPEN", "IN_PROGRESS", "BLOCKED"].includes(t.status)) ||
+                          constraints.some((c) => c.ownerId === currentUserId && ["OPEN", "ADDRESSED"].includes(c.status))))
+                        ? "border-red-300 bg-red-50 text-red-600 animate-pulse"
+                        : ""
+                    }`
               }
             >
               {item.label} <span className="text-xs">({item.count})</span>

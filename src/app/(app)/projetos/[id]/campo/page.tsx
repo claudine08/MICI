@@ -104,6 +104,7 @@ export default async function ProjetoCampoPage({
       </div>
       <FieldView
         projectId={id}
+        currentUserId={context.userId}
         initialDiaries={diaries}
         initialTasks={tasks}
         initialConstraints={constraints}
