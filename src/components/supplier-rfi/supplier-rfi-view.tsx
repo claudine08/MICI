@@ -4,13 +4,14 @@ import { useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
 import type { SupplierRfiRow } from "@/modules/supplier-rfi/selectors";
+import { SUPPLIER_CATEGORY_LABELS_PT } from "@/modules/procurement/engine";
 import { apiRequest } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog } from "@/components/ui/dialog";
 
-interface Supplier { id: string; name: string }
+interface Supplier { id: string; name: string; categories?: string[] }
 
 export function SupplierRfiView({
   projectId,
@@ -31,6 +32,7 @@ export function SupplierRfiView({
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [supplierIds, setSupplierIds] = useState<string[]>([]);
+  const [requestedCategories, setRequestedCategories] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +44,17 @@ export function SupplierRfiView({
   const [leadTimeDays, setLeadTimeDays] = useState("");
   const [notes, setNotes] = useState("");
 
-  const toggleSupplier = (id: string) => setSupplierIds((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
+  const toggleSupplier = (id: string) => {
+    setSupplierIds((p) => {
+      if (p.includes(id)) {
+        setRequestedCategories((prev) => { const { [id]: _, ...rest } = prev; return rest; });
+        return p.filter((x) => x !== id);
+      }
+      const sup = suppliers.find((s) => s.id === id);
+      if (sup?.categories?.length) setRequestedCategories((prev) => ({ ...prev, [id]: sup.categories![0] }));
+      return [...p, id];
+    });
+  };
   const toggleExpand = (id: string) => setExpanded((p) => ({ ...p, [id]: !p[id] }));
 
   const create = async () => {
@@ -51,10 +63,10 @@ export function SupplierRfiView({
     try {
       await apiRequest("/api/v1/supplier-rfis", {
         method: "POST",
-        body: JSON.stringify({ projectId, title, description: description || null, dueDate: dueDate || null, supplierIds }),
+        body: JSON.stringify({ projectId, title, description: description || null, dueDate: dueDate || null, supplierIds, supplierCategories: requestedCategories }),
       });
       setDialogOpen(false);
-      setTitle(""); setDescription(""); setDueDate(""); setSupplierIds([]);
+      setTitle(""); setDescription(""); setDueDate(""); setSupplierIds([]); setRequestedCategories({});
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao criar RFI.");
@@ -147,7 +159,7 @@ export function SupplierRfiView({
     if (!rec?.supplierPhone) return null;
     const phone = rec.supplierPhone.replace(/\\D/g, "");
     if (!phone) return null;
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
     const link = rec.responseToken ? `${origin}/rfi-resposta/${rec.responseToken}` : "";
     const desc = rfi.description ? ` ${rfi.description}` : "";
     const msg = `Olá! RFI de fornecedores: ${rfi.title}${desc}${rfi.dueDate ? ` (prazo: ${rfi.dueDate})` : ""}. Responda sua cotação aqui: ${link}`;
@@ -179,13 +191,29 @@ export function SupplierRfiView({
           </div>
           <div className="grid gap-2">
             <Label>Fornecedores</Label>
-            <div className="flex flex-wrap gap-2">
-              {suppliers.map((s) => (
-                <label key={s.id} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={supplierIds.includes(s.id)} onChange={() => toggleSupplier(s.id)} />
-                  {s.name}
-                </label>
-              ))}
+            <div className="flex flex-col gap-2">
+              {suppliers.map((s) => {
+                const selected = supplierIds.includes(s.id);
+                return (
+                  <div key={s.id} className="flex items-center gap-2 text-sm">
+                    <label className="flex items-center gap-1">
+                      <input type="checkbox" checked={selected} onChange={() => toggleSupplier(s.id)} />
+                      {s.name}
+                    </label>
+                    {selected && (s.categories?.length ?? 0) > 0 && (
+                      <select
+                        className="rounded-md border border-input bg-background px-2 py-1 text-xs"
+                        value={requestedCategories[s.id] ?? s.categories?.[0] ?? ""}
+                        onChange={(e) => setRequestedCategories((p) => ({ ...p, [s.id]: e.target.value }))}
+                      >
+                        {s.categories!.map((c) => (
+                          <option key={c} value={c}>{SUPPLIER_CATEGORY_LABELS_PT[c as keyof typeof SUPPLIER_CATEGORY_LABELS_PT] ?? c}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
           <Button onClick={create} disabled={busy}>Criar</Button>

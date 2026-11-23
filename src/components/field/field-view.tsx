@@ -298,6 +298,7 @@ export function FieldView({
   const [photoInspectionId, setPhotoInspectionId] = useState("");
   const [photoClientUuid, setPhotoClientUuid] = useState("");
   const [viewingPhoto, setViewingPhoto] = useState<PhotoRow | null>(null);
+  const [photoTaskFilter, setPhotoTaskFilter] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadAll = async () => {
@@ -1248,6 +1249,17 @@ export function FieldView({
                               </Button>
                             );
                           })()}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Ver fotos vinculadas"
+                            onClick={() => {
+                              setPhotoTaskFilter(task.id);
+                              setTab("fotos");
+                            }}
+                          >
+                            <Camera className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </td>
                     )}
@@ -1387,9 +1399,21 @@ export function FieldView({
       {tab === "fotos" && (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold">Fotos de evidência</h2>
-          {photos.length === 0 && <Empty text="Nenhuma foto enviada." />}
+          {photoTaskFilter && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              Filtrando fotos da tarefa selecionada.
+              <Button variant="ghost" size="sm" onClick={() => setPhotoTaskFilter(null)}>
+                Limpar filtro
+              </Button>
+            </div>
+          )}
+          {photos.filter((p) => !photoTaskFilter || p.taskId === photoTaskFilter).length === 0 && (
+            <Empty text="Nenhuma foto enviada." />
+          )}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {photos.map((photo) => (
+            {photos
+              .filter((p) => !photoTaskFilter || p.taskId === photoTaskFilter)
+              .map((photo) => (
               <div
                 key={photo.id}
                 className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-2"
@@ -1416,6 +1440,7 @@ export function FieldView({
                   <div className="text-muted-foreground">
                     {[
                       photo.diaryCode ? `Diário ${photo.diaryCode}` : "",
+                      photo.taskCode ? `Tarefa ${photo.taskCode}` : "",
                       photo.wbsNodeCode ? `WBS ${photo.wbsNodeCode}` : "",
                       photo.activityCode ? `Ativ. ${photo.activityCode}` : "",
                       photo.inspectionCode ? `Insp. ${photo.inspectionCode}` : "",

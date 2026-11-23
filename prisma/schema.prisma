@@ -1815,6 +1815,7 @@ model FieldTask {
   diary      FieldDiary?       @relation(fields: [diaryId], references: [id], onDelete: SetNull)
   wbsNode    WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
   activity   ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  photos     PhotoEvidence[]
 
   @@unique([projectId, code])
   @@unique([projectId, clientUuid])
@@ -1897,6 +1898,7 @@ model PhotoEvidence {
   organizationId String   @map("organization_id") @db.Uuid
   projectId      String   @map("project_id") @db.Uuid
   diaryId        String?  @map("diary_id") @db.Uuid
+  taskId         String?  @map("task_id") @db.Uuid
   code           String   @db.VarChar(32)
   caption        String?  @db.VarChar(300)
   fileName       String   @map("file_name") @db.VarChar(255)
@@ -1920,6 +1922,7 @@ model PhotoEvidence {
 
   project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   diary    FieldDiary?       @relation(fields: [diaryId], references: [id], onDelete: SetNull)
+  task     FieldTask?        @relation(fields: [taskId], references: [id], onDelete: SetNull)
   wbsNode  WBSNode?          @relation(fields: [wbsNodeId], references: [id], onDelete: SetNull)
   activity ScheduleActivity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
   inspection Inspection?     @relation(fields: [inspectionId], references: [id], onDelete: SetNull)

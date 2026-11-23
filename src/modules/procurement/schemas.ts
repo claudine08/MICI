@@ -37,6 +37,7 @@ export const createSupplierSchema = z.object({
   name: z.string().trim().min(1, "Nome/Razão Social obrigatório.").max(200),
   tradeName: z.string().trim().max(200).optional(),
   taxId: z.string().trim().max(32).optional(),
+  categories: z.array(supplierCategorySchema).optional(),
   category: supplierCategorySchema.optional(),
   email: z.string().trim().email("E-mail inválido.").max(320).optional().or(z.literal("")),
   phone: z.string().trim().max(50).optional(),

@@ -411,6 +411,8 @@ export interface PhotoRow {
   takenAt: string | null;
   diaryId: string | null;
   diaryCode: string | null;
+  taskId: string | null;
+  taskCode: string | null;
   wbsNodeId: string | null;
   wbsNodeCode: string | null;
   activityId: string | null;
@@ -432,6 +434,8 @@ interface PhotoRecord {
   takenAt: Date | null;
   diaryId: string | null;
   diary: { code: string } | null;
+  taskId: string | null;
+  task: { code: string } | null;
   wbsNodeId: string | null;
   wbsNode: { code: string } | null;
   activityId: string | null;
@@ -444,6 +448,7 @@ interface PhotoRecord {
 
 const photoInclude = {
   diary: { select: { code: true } },
+  task: { select: { code: true } },
   wbsNode: { select: { code: true } },
   activity: { select: { code: true } },
   inspection: { select: { code: true } },
@@ -461,6 +466,8 @@ function toPhotoRow(row: PhotoRecord): PhotoRow {
     takenAt: isoDateTime(row.takenAt),
     diaryId: row.diaryId,
     diaryCode: row.diary?.code ?? null,
+    taskId: row.taskId,
+    taskCode: row.task?.code ?? null,
     wbsNodeId: row.wbsNodeId,
     wbsNodeCode: row.wbsNode?.code ?? null,
     activityId: row.activityId,

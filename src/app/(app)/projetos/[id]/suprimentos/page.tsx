@@ -116,7 +116,7 @@ export default async function ProjetoSuprimentosPage({
     name: s.name,
     tradeName: s.tradeName,
     taxId: s.taxId,
-    category: s.category,
+    categories: s.categories,
     email: s.email,
     phone: s.phone,
     status: s.status as SupplierRow["status"],

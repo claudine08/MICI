@@ -16,7 +16,7 @@ curl "http://localhost:3000/api/v1/integrations/whatsapp/inbound?hub.mode=subscr
 Esperado: `12345`.
 
 ## 2) Criar diário (mensagem comum)
-```bash
+```bashcr
 curl -X POST http://localhost:3000/api/v1/integrations/whatsapp/inbound \
   -H "Content-Type: application/json" \
   -d '{

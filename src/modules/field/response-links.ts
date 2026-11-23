@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { AppError } from "@/core/errors";
 import { randomBytes } from "crypto";
 import { updateDiary } from "@/modules/field/diaries";
-import { updateTask } from "@/modules/field/tasks";
+import { updateTask, transitionTask } from "@/modules/field/tasks";
 import { updateConstraint } from "@/modules/field/constraints";
 
 export interface ResponseLink {
@@ -68,13 +68,39 @@ export async function submitTaskResponse(token: string, payload: Record<string, 
   if (link.usedAt) throw new AppError("FORBIDDEN", "Link já utilizado.");
   const task = await prisma.fieldTask.findFirst({ where: { id: link.entityId, organizationId: link.organizationId, deletedAt: null } });
   if (!task) throw new AppError("NOT_FOUND", "Tarefa não encontrada.");
-  await updateTask({
-    organizationId: link.organizationId,
-    actorId: link.createdBy ?? "whatsapp",
-    actorLabel: "WhatsApp",
-    taskId: link.entityId,
-    ...payload,
-  } as any);
+
+  const actor = { organizationId: link.organizationId, actorId: link.createdBy ?? "whatsapp", actorLabel: "WhatsApp" } as const;
+  const { status: desiredStatus, ...rest } = payload ?? {};
+
+  // Atualiza os campos editáveis (título/descrição/prioridade) antes de
+  // concluir — tarefa concluída vira histórico e não aceita mais edições.
+  const editable = Object.fromEntries(
+    Object.entries(rest).filter(([, v]) => v !== undefined)
+  );
+  if (Object.keys(editable).length > 0 || task.status !== "DONE") {
+    await updateTask({
+      ...actor,
+      taskId: link.entityId,
+      ...editable,
+    } as any);
+  }
+
+  // Aplica a transição de status solicitada (ex.: concluir a tarefa) no MICI.
+  if (desiredStatus === "DONE" && task.status !== "DONE") {
+    let current = task.status;
+    if (current === "BLOCKED") {
+      await transitionTask({ ...actor, taskId: link.entityId, action: "UNBLOCK" });
+      current = "IN_PROGRESS";
+    }
+    if (current === "OPEN") {
+      await transitionTask({ ...actor, taskId: link.entityId, action: "START" });
+      current = "IN_PROGRESS";
+    }
+    if (current === "IN_PROGRESS") {
+      await transitionTask({ ...actor, taskId: link.entityId, action: "COMPLETE" });
+    }
+  }
+
   await prisma.fieldResponseToken.update({ where: { token }, data: { usedAt: new Date() } });
 }
 

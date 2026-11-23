@@ -8,6 +8,7 @@ export const createSupplierRfiSchema = z.object({
   wbsNodeId: z.string().uuid().optional().nullable(),
   activityId: z.string().uuid().optional().nullable(),
   supplierIds: z.array(z.string().uuid()).optional(),
+  supplierCategories: z.record(z.string(), z.string()).optional(),
 });
 
 export const updateSupplierRfiSchema = z.object({

@@ -28,6 +28,7 @@ export const { POST } = apiHandler({
       actorLabel: "Resposta de Campo",
       projectId: link.projectId,
       diaryId: link.entityType === "diary" ? link.entityId : (fields.diaryId ?? null),
+      taskId: link.entityType === "task" ? link.entityId : (fields.taskId ?? null),
       activityId: fields.activityId ?? null,
       wbsNodeId: fields.wbsNodeId ?? null,
       caption: fields.caption,

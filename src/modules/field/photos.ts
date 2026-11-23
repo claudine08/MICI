@@ -51,6 +51,7 @@ export interface CreatePhotoInput {
   caption?: string;
   takenAt?: string;
   diaryId?: string | null;
+  taskId?: string | null;
   wbsNodeId?: string | null;
   activityId?: string | null;
   inspectionId?: string | null;
@@ -67,6 +68,7 @@ export function photoUploadFields(formData: FormData) {
     caption: formData.get("caption")?.toString() || undefined,
     takenAt: formData.get("takenAt")?.toString() || undefined,
     diaryId: formData.get("diaryId")?.toString() || undefined,
+    taskId: formData.get("taskId")?.toString() || undefined,
     wbsNodeId: formData.get("wbsNodeId")?.toString() || undefined,
     activityId: formData.get("activityId")?.toString() || undefined,
     inspectionId: formData.get("inspectionId")?.toString() || undefined,
@@ -88,6 +90,16 @@ async function assertDiary(organizationId: string, projectId: string, diaryId: s
   });
   if (!diary) {
     throw new AppError("VALIDATION_ERROR", "Diário inválido para este projeto.");
+  }
+}
+
+async function assertTask(organizationId: string, projectId: string, taskId: string) {
+  const task = await prisma.fieldTask.findFirst({
+    where: { id: taskId, organizationId, projectId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!task) {
+    throw new AppError("VALIDATION_ERROR", "Tarefa inválida para este projeto.");
   }
 }
 
@@ -120,6 +132,7 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
     activityId: input.activityId,
   });
   if (input.diaryId) await assertDiary(input.organizationId, input.projectId, input.diaryId);
+  if (input.taskId) await assertTask(input.organizationId, input.projectId, input.taskId);
   if (input.inspectionId) {
     await assertInspection(input.organizationId, input.projectId, input.inspectionId);
   }
@@ -141,6 +154,7 @@ export async function createPhoto(input: ActorContext & CreatePhotoInput) {
       organizationId: input.organizationId,
       projectId: input.projectId,
       diaryId: input.diaryId ?? null,
+      taskId: input.taskId ?? null,
       code,
       caption: input.caption?.trim() || null,
       fileName: input.file.fileName,

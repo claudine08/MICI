@@ -20,6 +20,7 @@ import { Dialog } from "@/components/ui/dialog";
 import {
   PURCHASE_REQUEST_STATUS_LABELS_PT,
   QUOTATION_STATUS_LABELS_PT,
+  SUPPLIER_CATEGORIES,
   SUPPLIER_CATEGORY_LABELS_PT,
   SUPPLIER_STATUS_LABELS_PT,
   type ProcurementBoardSummary,
@@ -80,7 +81,7 @@ export interface SupplierRow {
   name: string;
   tradeName?: string | null;
   taxId?: string | null;
-  category?: string | null;
+  categories?: string[] | null;
   email?: string | null;
   phone?: string | null;
   status: SupplierStatus;
@@ -186,6 +187,7 @@ export function ProcurementView({
   const [isNewQuotationOpen, setIsNewQuotationOpen] = useState(false);
   const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null);
   const [isNewSupplierOpen, setIsNewSupplierOpen] = useState(false);
+  const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null);
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
   const [isNewReceiptOpen, setIsNewReceiptOpen] = useState(false);
 
@@ -240,7 +242,7 @@ export function ProcurementView({
   const [supName, setSupName] = useState("");
   const [supTradeName, setSupTradeName] = useState("");
   const [supTaxId, setSupTaxId] = useState("");
-  const [supCategory, setSupCategory] = useState<SupplierCategory>("MATERIAIS");
+  const [supCategories, setSupCategories] = useState<SupplierCategory[]>(["MATERIAIS"]);
   const [supEmail, setSupEmail] = useState("");
   const [supPhone, setSupPhone] = useState("");
   const [supContactName, setSupContactName] = useState("");
@@ -345,29 +347,71 @@ export function ProcurementView({
     }
   };
 
-  const handleCreateSupplier = async (e: React.FormEvent) => {
+  const resetSupplierForm = () => {
+    setSupName("");
+    setSupTradeName("");
+    setSupTaxId("");
+    setSupCategories(["MATERIAIS"]);
+    setSupEmail("");
+    setSupPhone("");
+    setSupContactName("");
+    setSupAddress("");
+  };
+
+  const openEditSupplier = (s: SupplierRow) => {
+    setEditingSupplierId(s.id);
+    setSupName(s.name ?? "");
+    setSupTradeName(s.tradeName ?? "");
+    setSupTaxId(s.taxId ?? "");
+    setSupCategories(s.categories && s.categories.length ? (s.categories as SupplierCategory[]) : ["MATERIAIS"]);
+    setSupEmail(s.email ?? "");
+    setSupPhone(s.phone ?? "");
+    setSupContactName("");
+    setSupAddress("");
+    setIsNewSupplierOpen(true);
+  };
+
+  const handleSaveSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      await apiRequest("/api/v1/suppliers", {
-        method: "POST",
-        body: JSON.stringify({
-          name: supName,
-          tradeName: supTradeName || undefined,
-          taxId: supTaxId || undefined,
-          category: supCategory,
-          email: supEmail || undefined,
-          phone: supPhone || undefined,
-          contactName: supContactName || undefined,
-          address: supAddress || undefined,
-          clientUuid: crypto.randomUUID(),
-        }),
-      });
+      if (editingSupplierId) {
+        await apiRequest(`/api/v1/suppliers/${editingSupplierId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: supName,
+            tradeName: supTradeName || undefined,
+            taxId: supTaxId || undefined,
+            categories: supCategories,
+            email: supEmail || undefined,
+            phone: supPhone || undefined,
+            contactName: supContactName || undefined,
+            address: supAddress || undefined,
+          }),
+        });
+      } else {
+        await apiRequest("/api/v1/suppliers", {
+          method: "POST",
+          body: JSON.stringify({
+            name: supName,
+            tradeName: supTradeName || undefined,
+            taxId: supTaxId || undefined,
+            categories: supCategories,
+            email: supEmail || undefined,
+            phone: supPhone || undefined,
+            contactName: supContactName || undefined,
+            address: supAddress || undefined,
+            clientUuid: crypto.randomUUID(),
+          }),
+        });
+      }
       setIsNewSupplierOpen(false);
+      setEditingSupplierId(null);
+      resetSupplierForm();
       await loadAll();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Falha ao cadastrar fornecedor.");
+      setError(err instanceof Error ? err.message : "Falha ao salvar fornecedor.");
     } finally {
       setLoading(false);
     }
@@ -1018,10 +1062,15 @@ export function ProcurementView({
                   <div className="mt-2 text-xs">
                     <span className="text-muted-foreground">Categoria: </span>
                     <span className="font-medium">
-                      {SUPPLIER_CATEGORY_LABELS_PT[s.category as SupplierCategory] ?? s.category ?? "Geral"}
+                      {(s.categories ?? []).map((c) => SUPPLIER_CATEGORY_LABELS_PT[c as SupplierCategory] ?? c).join(", ") || "Geral"}
                     </span>
                   </div>
                 </div>
+                {canEdit && (
+                  <div className="mt-2 flex justify-end">
+                    <Button size="sm" variant="outline" onClick={() => openEditSupplier(s)}>Editar</Button>
+                  </div>
+                )}
                 <div className="mt-4 border-t border-border pt-2 text-xs text-muted-foreground">
                   <div>{s.email || "Sem e-mail"}</div>
                   <div>{s.phone || "Sem telefone"}</div>
@@ -1517,10 +1566,10 @@ export function ProcurementView({
       </Dialog>
 
       {/* DIALOG: NOVO FORNECEDOR */}
-      <Dialog open={isNewSupplierOpen} title="Cadastrar Fornecedor" onClose={() => setIsNewSupplierOpen(false)}>
+      <Dialog open={isNewSupplierOpen} title={editingSupplierId ? "Editar Fornecedor" : "Cadastrar Fornecedor"} onClose={() => { setIsNewSupplierOpen(false); setEditingSupplierId(null); resetSupplierForm(); }}>
         <div className="flex flex-col gap-4 p-4">
           <h2 className="text-base font-semibold">Cadastrar Fornecedor</h2>
-          <form onSubmit={handleCreateSupplier} className="flex flex-col gap-3">
+          <form onSubmit={handleSaveSupplier} className="flex flex-col gap-3">
             <div>
               <Label>Razão Social / Nome *</Label>
               <Input
@@ -1550,19 +1599,23 @@ export function ProcurementView({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>Categoria</Label>
-                <select
-                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                  value={supCategory}
-                  onChange={(e) => setSupCategory(e.target.value as SupplierCategory)}
-                >
-                  <option value="MATERIAIS">Materiais</option>
-                  <option value="SERVICOS">Serviços</option>
-                  <option value="EQUIPAMENTOS">Equipamentos</option>
-                  <option value="EMPREITEIRO">Empreiteiro</option>
-                  <option value="PROJETOS">Projetos</option>
-                  <option value="OUTROS">Outros</option>
-                </select>
+                <Label>Categorias</Label>
+                <div className="flex flex-wrap gap-2 text-sm">
+                  {SUPPLIER_CATEGORIES.map((c) => (
+                    <label key={c} className="flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        checked={supCategories.includes(c)}
+                        onChange={() =>
+                          setSupCategories((prev) =>
+                            prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
+                          )
+                        }
+                      />
+                      {SUPPLIER_CATEGORY_LABELS_PT[c]}
+                    </label>
+                  ))}
+                </div>
               </div>
               <div>
                 <Label>Contato Comercial</Label>

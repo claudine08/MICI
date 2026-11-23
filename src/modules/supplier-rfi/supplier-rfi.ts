@@ -31,6 +31,7 @@ export async function createSupplierRfi(
     wbsNodeId?: string | null;
     activityId?: string | null;
     supplierIds?: string[];
+    supplierCategories?: Record<string, string>;
   }
 ) {
   const code = await nextCode(input.projectId);
@@ -47,7 +48,7 @@ export async function createSupplierRfi(
       createdBy: input.actorId,
       updatedBy: input.actorId,
       ...(input.supplierIds && input.supplierIds.length
-        ? { recipients: { create: input.supplierIds.map((sid) => ({ organizationId: input.organizationId, supplierId: sid, responseToken: randomBytes(32).toString("hex") })) } }
+        ? { recipients: { create: input.supplierIds.map((sid) => ({ organizationId: input.organizationId, supplierId: sid, requestedCategory: input.supplierCategories?.[sid] ?? null, responseToken: randomBytes(32).toString("hex") })) } }
         : {}),
     },
   });
@@ -149,10 +150,10 @@ export async function getRfiResponseByToken(token: string) {
   if (!rec) throw new AppError("NOT_FOUND", "Link de resposta inválido ou expirado.");
   const rfi = await prisma.supplierRfi.findFirst({ where: { id: rec.rfiId, deletedAt: null } });
   if (!rfi) throw new AppError("NOT_FOUND", "RFI não encontrado.");
-  const supplier = await prisma.supplier.findUnique({ where: { id: rec.supplierId }, select: { id: true, name: true } });
+  const supplier = await prisma.supplier.findUnique({ where: { id: rec.supplierId }, select: { id: true, name: true, categories: true } });
   return {
     rfi: { id: rfi.id, code: rfi.code, title: rfi.title, description: rfi.description, dueDate: rfi.dueDate ? rfi.dueDate.toISOString().slice(0, 10) : null, status: rfi.status },
-    recipient: { id: rec.id, supplierId: rec.supplierId, supplierName: supplier?.name ?? rec.supplierId, status: rec.status, quotedAmount: rec.quotedAmount ? rec.quotedAmount.toString() : null, leadTimeDays: rec.leadTimeDays, notes: rec.notes },
+    recipient: { id: rec.id, supplierId: rec.supplierId, supplierName: supplier?.name ?? rec.supplierId, supplierCategories: supplier?.categories ?? [], requestedCategory: rec.requestedCategory ?? null, status: rec.status, quotedAmount: rec.quotedAmount ? rec.quotedAmount.toString() : null, leadTimeDays: rec.leadTimeDays, notes: rec.notes },
   };
 }
 

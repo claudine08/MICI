@@ -24,7 +24,7 @@ export default async function ProjetoSupplierRfiPage({ params }: { params: Promi
         <h1 className="text-xl font-semibold tracking-tight">RFI de Fornecedores — {project.code} {project.name}</h1>
         <p className="text-sm text-muted-foreground">Consulta de preços a fornecedores (sem vínculo formal de compra).</p>
       </div>
-      <SupplierRfiView projectId={id} rfis={rfis} suppliers={suppliers.map((s) => ({ id: s.id, name: s.name }))} canCreate={can(permissions, "PROCUREMENT", "CREATE")} canEdit={can(permissions, "PROCUREMENT", "EDIT")} />
+      <SupplierRfiView projectId={id} rfis={rfis} suppliers={suppliers.map((s) => ({ id: s.id, name: s.name, categories: s.categories ?? [] }))} canCreate={can(permissions, "PROCUREMENT", "CREATE")} canEdit={can(permissions, "PROCUREMENT", "EDIT")} />
     </div>
   );
 }
