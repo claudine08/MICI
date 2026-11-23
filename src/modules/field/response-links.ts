@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { updateDiary } from "@/modules/field/diaries";
 import { updateTask, transitionTask } from "@/modules/field/tasks";
 import { updateConstraint } from "@/modules/field/constraints";
+import { updateProgress } from "@/modules/field/progress";
 
 export interface ResponseLink {
   token: string;
@@ -19,7 +20,7 @@ export interface ResponseLink {
 export async function createResponseLink(input: {
   organizationId: string;
   projectId: string;
-  entityType: "diary" | "task" | "constraint";
+  entityType: "diary" | "task" | "constraint" | "progress";
   entityId: string;
   createdBy: string;
 }): Promise<string> {
@@ -115,6 +116,22 @@ export async function submitConstraintResponse(token: string, payload: Record<st
     actorId: link.createdBy ?? "whatsapp",
     actorLabel: "WhatsApp",
     constraintId: link.entityId,
+    ...payload,
+  } as any);
+  await prisma.fieldResponseToken.update({ where: { token }, data: { usedAt: new Date() } });
+}
+
+export async function submitProgressResponse(token: string, payload: Record<string, unknown>) {
+  const link = await getResponseLink(token);
+  if (link.entityType !== "progress") throw new AppError("VALIDATION_ERROR", "Tipo inválido.");
+  if (link.usedAt) throw new AppError("FORBIDDEN", "Link já utilizado.");
+  const measurement = await prisma.progressMeasurement.findFirst({ where: { id: link.entityId, organizationId: link.organizationId, deletedAt: null } });
+  if (!measurement) throw new AppError("NOT_FOUND", "Medição não encontrada.");
+  await updateProgress({
+    organizationId: link.organizationId,
+    actorId: link.createdBy ?? "whatsapp",
+    actorLabel: "WhatsApp",
+    progressId: link.entityId,
     ...payload,
   } as any);
   await prisma.fieldResponseToken.update({ where: { token }, data: { usedAt: new Date() } });

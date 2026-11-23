@@ -14,6 +14,7 @@ export function FieldResponseView({ token }: { token: string }) {
   const [diaryForm, setDiaryForm] = useState({ team: "", workHours: "", activities: "", occurrences: "" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "MEDIUM", status: "" });
   const [constraintForm, setConstraintForm] = useState({ title: "", description: "", priority: "MEDIUM" });
+  const [progressForm, setProgressForm] = useState({ progressPercent: "", criterion: "", notes: "" });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -42,6 +43,12 @@ export function FieldResponseView({ token }: { token: string }) {
               title: d.entity.title ?? "",
               description: d.entity.description ?? "",
               priority: d.entity.priority ?? "MEDIUM",
+            });
+          } else if (d.type === "progress") {
+            setProgressForm({
+              progressPercent: d.entity.progressPercent?.toString() ?? "",
+              criterion: d.entity.criterion ?? "",
+              notes: d.entity.notes ?? "",
             });
           }
         }
@@ -73,6 +80,12 @@ export function FieldResponseView({ token }: { token: string }) {
             description: taskForm.description || undefined,
             priority: taskForm.priority || undefined,
             status: taskForm.status || undefined,
+          }
+        : data.type === "progress"
+        ? {
+            progressPercent: progressForm.progressPercent ? Number(progressForm.progressPercent) : undefined,
+            criterion: progressForm.criterion || undefined,
+            notes: progressForm.notes || undefined,
           }
         : {
             title: constraintForm.title || undefined,
@@ -145,6 +158,21 @@ export function FieldResponseView({ token }: { token: string }) {
               <option value="">Manter atual ({data.entity.status})</option>
               <option value="DONE">Concluída</option>
             </select>
+          </div>
+        </>
+      ) : data.type === "progress" ? (
+        <>
+          <div className="grid gap-1.5">
+            <Label>Avanço (%)</Label>
+            <Input type="number" value={progressForm.progressPercent} onChange={(e) => setProgressForm({ ...progressForm, progressPercent: e.target.value })} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Critério</Label>
+            <Input value={progressForm.criterion} onChange={(e) => setProgressForm({ ...progressForm, criterion: e.target.value })} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Observações</Label>
+            <Input value={progressForm.notes} onChange={(e) => setProgressForm({ ...progressForm, notes: e.target.value })} />
           </div>
         </>
       ) : (

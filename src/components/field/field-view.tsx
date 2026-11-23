@@ -230,7 +230,7 @@ export function FieldView({
   };
 
   const requestResponseLink = async (
-    entityType: "diary" | "task" | "constraint",
+    entityType: "diary" | "task" | "constraint" | "progress",
     entityId: string,
     phone: string | null | undefined
   ) => {
@@ -1597,6 +1597,20 @@ export function FieldView({
                         >
                           <Camera className="h-3.5 w-3.5" />
                         </Button>
+                        {(() => {
+                          const phone = members.find((m) => m.phone)?.phone;
+                          if (!phone) return null;
+                          return (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Solicitar resposta via WhatsApp"
+                              onClick={() => void requestResponseLink("progress", measurement.id, phone)}
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </Button>
+                          );
+                        })()}
                       </div>
                     </td>
                     {(canEdit || canDelete) && (
