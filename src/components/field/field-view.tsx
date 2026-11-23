@@ -81,7 +81,7 @@ interface Props {
   canReject: boolean;
 }
 
-type Tab = "diarios" | "tarefas" | "restricoes" | "fotos" | "avancos";
+type Tab = "diarios" | "tarefas" | "restricoes" | "fotos" | "avancos" | "pendencias";
 
 const TASK_STATUS_VARIANT: Record<TaskStatus, "secondary" | "default" | "warning" | "destructive"> =
   {
@@ -953,6 +953,7 @@ export function FieldView({
     { id: "restricoes", label: "Restrições", count: constraints.filter((c) => c.isOpen).length },
     { id: "fotos", label: "Fotos", count: photos.length },
     { id: "avancos", label: "Avanço", count: progress.length },
+    { id: "pendencias", label: "Pendências", count: pendingTasks.filter((t) => t.isOverdue).length + constraints.filter((c) => c.isOpen).length },
   ];
 
   return (
@@ -1592,6 +1593,40 @@ export function FieldView({
               </tbody>
             </table>
           </div>
+        </section>
+      )}
+
+      {tab === "pendencias" && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold">Pendências e status</h2>
+          <div className="rounded-lg border border-border bg-surface p-4 text-sm">
+            <p className={diaries.some((d) => d.entryDate === new Date().toISOString().slice(0, 10)) ? "text-success" : "text-destructive"}>
+              Diário de hoje: {diaries.some((d) => d.entryDate === new Date().toISOString().slice(0, 10)) ? "registrado" : "pendente"}
+            </p>
+            <p className="mt-1">Tarefas atrasadas: {pendingTasks.filter((t) => t.isOverdue).length}</p>
+            <p className="mt-1">Restrições abertas: {constraints.filter((c) => c.isOpen).length}</p>
+            <p className="mt-1">Fotos: {photos.length}</p>
+          </div>
+          {pendingTasks.filter((t) => t.isOverdue).length > 0 && (
+            <div className="rounded-lg border border-border bg-surface p-4">
+              <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Tarefas atrasadas</h3>
+              <ul className="flex flex-col gap-1 text-sm">
+                {pendingTasks.filter((t) => t.isOverdue).map((t) => (
+                  <li key={t.id}>{t.code} — {t.title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {constraints.filter((c) => c.isOpen).length > 0 && (
+            <div className="rounded-lg border border-border bg-surface p-4">
+              <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Restrições abertas</h3>
+              <ul className="flex flex-col gap-1 text-sm">
+                {constraints.filter((c) => c.isOpen).map((c) => (
+                  <li key={c.id}>{c.code} — {c.title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       )}
 
