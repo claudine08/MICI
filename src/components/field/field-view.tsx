@@ -1164,13 +1164,14 @@ export function FieldView({
                   <th className="px-4 py-2.5">Responsável</th>
                   <th className="px-4 py-2.5">Prazo</th>
                   <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5 text-center">Anexos</th>
                   {(canEdit || canDelete) && <th className="px-4 py-2.5 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody>
                 {tasks.length === 0 && (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <Empty text="Nenhuma tarefa cadastrada." />
                     </td>
                   </tr>
@@ -1249,20 +1250,22 @@ export function FieldView({
                               </Button>
                             );
                           })()}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Ver fotos vinculadas"
-                            onClick={() => {
-                              setPhotoTaskFilter(task.id);
-                              setTab("fotos");
-                            }}
-                          >
-                            <Camera className="h-3.5 w-3.5" />
-                          </Button>
                         </div>
                       </td>
                     )}
+                    <td className="px-4 py-2.5 text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Ver fotos vinculadas"
+                        onClick={() => {
+                          setPhotoTaskFilter(task.id);
+                          setTab("fotos");
+                        }}
+                      >
+                        <Camera className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -2187,6 +2190,7 @@ export function FieldView({
               <div className="text-xs text-muted-foreground">
                 {[
                   viewingPhoto.diaryCode ? `Diário ${viewingPhoto.diaryCode}` : "",
+                  viewingPhoto.taskCode ? `Tarefa ${viewingPhoto.taskCode}` : "",
                   viewingPhoto.wbsNodeCode ? `WBS ${viewingPhoto.wbsNodeCode}` : "",
                   viewingPhoto.activityCode ? `Ativ. ${viewingPhoto.activityCode}` : "",
                   viewingPhoto.inspectionCode ? `Insp. ${viewingPhoto.inspectionCode}` : "",
