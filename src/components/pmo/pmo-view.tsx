@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 interface ProjectRow {
   id: string;
@@ -41,6 +42,46 @@ export function PmoView() {
             <div className="text-lg font-semibold">{String(v)}</div>
           </div>
         ))}
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border border-border bg-surface p-3">
+          <div className="mb-2 text-sm font-semibold">Métricas por projeto</div>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={data.projects.map((p) => ({ name: p.code, tarefas: p.metrics.tasks, riscos: p.metrics.risks, ncs: p.metrics.quality.nonConformities, punch: p.metrics.quality.punchItems }))}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="tarefas" fill="#3b82f6" />
+              <Bar dataKey="riscos" fill="#f59e0b" />
+              <Bar dataKey="ncs" fill="#ef4444" />
+              <Bar dataKey="punch" fill="#8b5cf6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="rounded-lg border border-border bg-surface p-3">
+          <div className="mb-2 text-sm font-semibold">Saúde do portfólio</div>
+          <ResponsiveContainer width="100%" height={260}>
+            <PieChart>
+              <Pie
+                data={[
+                  { name: "Verde", value: data.projects.filter((p) => p.health === "GREEN").length },
+                  { name: "Âmbar", value: data.projects.filter((p) => p.health === "AMBER").length },
+                  { name: "Vermelho", value: data.projects.filter((p) => p.health === "RED").length },
+                ]}
+                dataKey="value"
+                nameKey="name"
+                outerRadius={90}
+                label
+              >
+                <Cell fill="#22c55e" />
+                <Cell fill="#f59e0b" />
+                <Cell fill="#ef4444" />
+              </Pie>
+              <Legend />
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-sm">
