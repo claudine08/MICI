@@ -3,7 +3,7 @@ import { createDiary } from "@/modules/field/diaries";
 import { createConstraint } from "@/modules/field/constraints";
 import { createProgress } from "@/modules/field/progress";
 import { createPhoto, preparePhotoUpload } from "@/modules/field/photos";
-import { sendWhatsAppTemplate } from "@/modules/integrations/whatsapp";
+import { sendWhatsAppTemplate, sendWhatsAppText } from "@/modules/integrations/whatsapp";
 
 export interface WhatsAppInboundMessage {
   from: string;
@@ -85,9 +85,102 @@ export async function handleInboundWhatsApp(messages: WhatsAppInboundMessage[]):
       skipped += 1;
       continue;
     }
+    const today = new Date().toISOString().slice(0, 10);
     const membership = { projectId: project.id, organizationId: orgMembership.organizationId };
 
-    const today = new Date().toISOString().slice(0, 10);
+    // Fatia 4: consultas via WhatsApp (pendências e status do projeto).
+    const cmd = (msg.text || "").trim().toLowerCase();
+    if (cmd === "pendencias" || cmd === "pendência" || cmd === "pendencia" || cmd === "pendências") {
+      const tasks = await prisma.fieldTask.findMany({
+        where: {
+          projectId: membership.projectId,
+          organizationId: membership.organizationId,
+          status: { notIn: ["DONE", "CANCELLED"] },
+          deletedAt: null,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: { code: true, title: true, status: true },
+      });
+      const constraints = await prisma.constraint.findMany({
+        where: {
+          projectId: membership.projectId,
+          organizationId: membership.organizationId,
+          status: { notIn: ["REMOVED", "CANCELLED"] },
+          deletedAt: null,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: { code: true, title: true, status: true },
+      });
+      const lines: string[] = ["Pendências do projeto:"];
+      if (tasks.length) {
+        lines.push("Tarefas:");
+        for (const t of tasks) lines.push(`- ${t.code} ${t.title} (${t.status})`);
+      } else {
+        lines.push("Sem tarefas pendentes.");
+      }
+      if (constraints.length) {
+        lines.push("Restrições:");
+        for (const c of constraints) lines.push(`- ${c.code} ${c.title} (${c.status})`);
+      } else {
+        lines.push("Sem restrições abertas.");
+      }
+      await sendWhatsAppText({ to: phone, text: lines.join("\\n") });
+      created += 1;
+      continue;
+    }
+    if (cmd === "status") {
+      const diary = await prisma.fieldDiary.findFirst({
+        where: {
+          projectId: membership.projectId,
+          organizationId: membership.organizationId,
+          entryDate: new Date(`${today}T00:00:00.000Z`),
+          deletedAt: null,
+        },
+        select: { code: true, status: true },
+      });
+      const openTasks = await prisma.fieldTask.count({
+        where: {
+          projectId: membership.projectId,
+          organizationId: membership.organizationId,
+          status: { notIn: ["DONE", "CANCELLED"] },
+          deletedAt: null,
+        },
+      });
+      const openConstraints = await prisma.constraint.count({
+        where: {
+          projectId: membership.projectId,
+          organizationId: membership.organizationId,
+          status: { notIn: ["REMOVED", "CANCELLED"] },
+          deletedAt: null,
+        },
+      });
+      const text = [
+        `Status do projeto:`,
+        `Diário de hoje: ${diary ? `${diary.code} (${diary.status})` : "não registrado"}`,
+        `Tarefas pendentes: ${openTasks}`,
+        `Restrições abertas: ${openConstraints}`,
+      ].join("\\n");
+      await sendWhatsAppText({ to: phone, text });
+      created += 1;
+      continue;
+    }
+    if (cmd === "ajuda" || cmd === "help" || cmd === "menu") {
+      const text = [
+        "Comandos disponíveis:",
+        "- pendencias: listar tarefas e restrições pendentes",
+        "- status: resumo do projeto",
+        "- restricao: <título>: registrar restrição",
+        "- avanco <código> <percent>%: registrar avanço",
+        "- envie uma foto com legenda (ex.: A001) para anexar",
+        "- qualquer outra mensagem vira diário de obra",
+      ].join("\\n");
+      await sendWhatsAppText({ to: phone, text });
+      created += 1;
+      continue;
+    }
+
     const lines = (msg.text || "").split(/\\r?\\n/).map((s) => s.trim()).filter(Boolean);
     const queue = lines.length ? lines : [msg.text.trim()];
 
