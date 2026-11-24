@@ -1,7 +1,10 @@
+import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
 import { OrgSwitcher, type OrgOption } from "@/components/shell/org-switcher";
 import { UserMenu } from "@/components/shell/user-menu";
 import { GuideTrigger } from "@/components/shell/guide-trigger";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 
 export function Topbar({
   userName,
@@ -9,12 +12,14 @@ export function Topbar({
   roleCodes,
   organizations,
   activeOrganizationId,
+  hasPmoAccess = false,
 }: {
   userName: string;
   userEmail: string;
   roleCodes: string[];
   organizations: OrgOption[];
   activeOrganizationId: string | null;
+  hasPmoAccess?: boolean;
 }) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-4">
@@ -34,6 +39,16 @@ export function Topbar({
           </div>
         )}
       </div>
+      {hasPmoAccess && (
+        <Link
+          href="/pmo"
+          title="Dashboard PMO"
+          className={buttonVariants({ variant: "outline", size: "sm", className: "gap-1.5" })}
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          <span className="hidden sm:inline">PMO</span>
+        </Link>
+      )}
       <GuideTrigger />
       <UserMenu userName={userName} userEmail={userEmail} />
     </header>
