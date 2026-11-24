@@ -16,6 +16,7 @@ interface ProjectRow {
 export function PmoView() {
   const [data, setData] = useState<{ projects: ProjectRow[]; totals: any } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>("health");
 
   useEffect(() => {
     fetch("/api/v1/pmo/overview")
@@ -37,10 +38,15 @@ export function PmoView() {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
         {Object.entries(data.totals).map(([k, v]) => (
-          <div key={k} className="rounded-lg border border-border bg-surface p-3">
+          <button
+            key={k}
+            type="button"
+            onClick={() => setSortBy(k)}
+            className={`rounded-lg border bg-surface p-3 text-left transition hover:border-primary/50 ${sortBy === k ? "border-primary" : "border-border"}`}
+          >
             <div className="text-xs uppercase text-muted-foreground">{k}</div>
             <div className="text-lg font-semibold">{String(v)}</div>
-          </div>
+          </button>
         ))}
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -101,7 +107,21 @@ export function PmoView() {
             </tr>
           </thead>
           <tbody>
-            {data.projects.map((p) => (
+            {[...data.projects]
+              .sort((a, b) => {
+                const get = (p: ProjectRow) => {
+                  if (sortBy === "tasks") return p.metrics.tasks;
+                  if (sortBy === "constraints") return p.metrics.constraints;
+                  if (sortBy === "risks") return p.metrics.risks;
+                  if (sortBy === "changes") return p.metrics.changes;
+                  if (sortBy === "ncs") return p.metrics.quality.nonConformities;
+                  if (sortBy === "punch") return p.metrics.quality.punchItems;
+                  if (sortBy === "requirements") return p.metrics.requirements;
+                  return 0;
+                };
+                return get(b) - get(a);
+              })
+              .map((p) => (
               <tr key={p.id} className="border-b border-border last:border-0">
                 <td className="px-3 py-2 font-medium">{p.code} — {p.name}</td>
                 <td className="px-3 py-2">{p.phase}</td>
